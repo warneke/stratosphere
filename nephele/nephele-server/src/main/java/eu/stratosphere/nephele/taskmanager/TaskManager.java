@@ -81,7 +81,7 @@ import eu.stratosphere.nephele.protocols.PluginCommunicationProtocol;
 import eu.stratosphere.nephele.protocols.TaskOperationProtocol;
 import eu.stratosphere.nephele.services.iomanager.IOManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryManager;
-import eu.stratosphere.nephele.services.memorymanager.spi.DefaultMemoryManager;
+import eu.stratosphere.nephele.services.memorymanager.spi.DynamicMemoryManager;
 import eu.stratosphere.nephele.taskmanager.bytebuffered.ByteBufferedChannelManager;
 import eu.stratosphere.nephele.taskmanager.bytebuffered.InsufficientResourcesException;
 import eu.stratosphere.nephele.taskmanager.runtime.EnvelopeConsumptionLog;
@@ -223,7 +223,7 @@ public class TaskManager implements TaskOperationProtocol, PluginCommunicationPr
 		// Try to create local stub of the global input split provider
 		InputSplitProviderProtocol globalInputSplitProvider = null;
 		try {
-			globalInputSplitProvider = RPC.getProxy(InputSplitProviderProtocol.class, jobManagerAddress, 
+			globalInputSplitProvider = RPC.getProxy(InputSplitProviderProtocol.class, jobManagerAddress,
 				NetUtils.getSocketFactory());
 		} catch (IOException e) {
 			LOG.error(StringUtils.stringifyException(e));
@@ -244,7 +244,7 @@ public class TaskManager implements TaskOperationProtocol, PluginCommunicationPr
 		// Try to create local stub for the plugin communication service
 		PluginCommunicationProtocol pluginCommunicationService = null;
 		try {
-			pluginCommunicationService = RPC.getProxy(PluginCommunicationProtocol.class, jobManagerAddress, 
+			pluginCommunicationService = RPC.getProxy(PluginCommunicationProtocol.class, jobManagerAddress,
 				NetUtils.getSocketFactory());
 		} catch (IOException e) {
 			LOG.error(StringUtils.stringifyException(e));
@@ -313,13 +313,12 @@ public class TaskManager implements TaskOperationProtocol, PluginCommunicationPr
 		this.hardwareDescription = hardware;
 
 		// Initialize the memory manager
-		LOG.info("Initializing memory manager with " + (hardware.getSizeOfFreeMemory() >>> 20) + " megabytes of memory");
+		LOG.info("Initializing dynamic memory manager");
 		try {
-			this.memoryManager = new DefaultMemoryManager(hardware.getSizeOfFreeMemory());
-		} catch (RuntimeException rte) {
-			LOG.fatal("Unable to initialize memory manager with " + (hardware.getSizeOfFreeMemory() >>> 20)
-				+ " megabytes of memory", rte);
-			throw rte;
+			this.memoryManager = new DynamicMemoryManager();
+		} catch (IOException ioe) {
+			LOG.fatal("Unable to initialize dynamic memory manager", ioe);
+			throw ioe;
 		}
 
 		this.ioManager = new IOManager(tmpDirPaths);
@@ -445,7 +444,7 @@ public class TaskManager implements TaskOperationProtocol, PluginCommunicationPr
 
 		if (task == null) {
 			final TaskKillResult taskKillResult = new TaskKillResult(id,
-					AbstractTaskResult.ReturnCode.TASK_NOT_FOUND);
+				AbstractTaskResult.ReturnCode.TASK_NOT_FOUND);
 			taskKillResult.setDescription("No task with ID + " + id + " is currently running");
 			return taskKillResult;
 		}
@@ -476,7 +475,7 @@ public class TaskManager implements TaskOperationProtocol, PluginCommunicationPr
 
 		if (task == null) {
 			final TaskCheckpointResult taskCheckpointResult = new TaskCheckpointResult(id,
-					AbstractTaskResult.ReturnCode.TASK_NOT_FOUND);
+				AbstractTaskResult.ReturnCode.TASK_NOT_FOUND);
 			taskCheckpointResult.setDescription("No task with ID + " + id + " is currently running");
 			return taskCheckpointResult;
 		}
@@ -752,7 +751,7 @@ public class TaskManager implements TaskOperationProtocol, PluginCommunicationPr
 		}
 
 		if (newExecutionState == ExecutionState.FINISHED || newExecutionState == ExecutionState.CANCELED
-				|| newExecutionState == ExecutionState.FAILED) {
+			|| newExecutionState == ExecutionState.FAILED) {
 
 			// Unregister the task (free all buffers, remove all channels, task-specific class loaders, etc...)
 			unregisterTask(id);
