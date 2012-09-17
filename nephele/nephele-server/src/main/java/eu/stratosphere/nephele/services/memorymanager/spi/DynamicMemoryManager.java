@@ -186,7 +186,7 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 		if (LOG.isInfoEnabled()) {
 			LOG.info("Physical memory size is " + ClientUtils.getPhysicalMemorySize(pid) +
 				", granted memory share is " + this.grantedMemoryShare + " (added " + added +
-				" memory segments, reliquished " + removed + ")");
+				" memory segments, reliquished " + removed + ", total " + this.freeSegments.size() + ")");
 		}
 	}
 
