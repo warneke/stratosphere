@@ -34,12 +34,12 @@ import edu.berkeley.icsi.memngt.protocols.DaemonToClientProtocol;
 import edu.berkeley.icsi.memngt.protocols.RegistrationException;
 import edu.berkeley.icsi.memngt.rpc.RPCService;
 import edu.berkeley.icsi.memngt.utils.ClientUtils;
+import eu.stratosphere.nephele.services.memorymanager.DynamicMemoryManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryAllocationException;
-import eu.stratosphere.nephele.services.memorymanager.MemoryManager;
 import eu.stratosphere.nephele.services.memorymanager.MemorySegment;
 import eu.stratosphere.nephele.template.AbstractInvokable;
 
-public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtocol {
+public class DefaultDynamicMemoryManager implements DynamicMemoryManager, DaemonToClientProtocol {
 
 	/**
 	 * The default memory page size. Currently set to 32 kilobytes.
@@ -94,11 +94,11 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 	// Constructors / Destructors
 	// ------------------------------------------------------------------------
 
-	public DynamicMemoryManager() throws IOException {
+	public DefaultDynamicMemoryManager() throws IOException {
 		this(DEFAULT_PAGE_SIZE, DEFAULT_ADAPTATION_GRANULARITY);
 	}
 
-	public DynamicMemoryManager(int pageSize, final int adaptationGranularity) throws IOException {
+	public DefaultDynamicMemoryManager(int pageSize, final int adaptationGranularity) throws IOException {
 
 		if (pageSize <= MIN_PAGE_SIZE) {
 			throw new IllegalArgumentException("The page size must be at least " + MIN_PAGE_SIZE + " bytes.");
@@ -176,6 +176,12 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 					break;
 				}
 			}
+
+			// No more free segments to relinquish
+			if (this.freeSegments.isEmpty()) {
+				break;
+			}
+
 			System.gc();
 		}
 
@@ -186,8 +192,11 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 		if (LOG.isInfoEnabled()) {
 			LOG.info("Physical memory size is " + ClientUtils.getPhysicalMemorySize(pid) +
 				", granted memory share is " + this.grantedMemoryShare + " (added " + added +
-				" memory segments, reliquished " + removed + ")");
+				" memory segments, reliquished " + removed + ", now " + this.freeSegments.size()
+				+ " free pages are available)");
 		}
+
+		ClientUtils.dumpMemoryUtilization();
 	}
 
 	/*
@@ -258,6 +267,8 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 		if (target instanceof ArrayList) {
 			((ArrayList<MemorySegment>) target).ensureCapacity(numPages);
 		}
+
+		System.out.println(owner.getEnvironment().getTaskName() + " asks for " + numPages + " pages");
 
 		// -------------------- BEGIN CRITICAL SECTION -------------------
 		synchronized (this.lock) {
@@ -542,5 +553,10 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 
 		// With a dynamic number of segments this check does not make sense, so we always return <code>true</code>
 		return true;
+	}
+
+	@Override
+	public void allocateAdditionalPages(AbstractInvokable owner, List<MemorySegment> target, int numPages)
+			throws MemoryAllocationException {
 	}
 }
