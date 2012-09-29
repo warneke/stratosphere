@@ -1,14 +1,19 @@
 package eu.stratosphere.pact.runtime.sort;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import eu.stratosphere.nephele.execution.Environment;
 import eu.stratosphere.nephele.services.iomanager.IOManager;
 import eu.stratosphere.nephele.services.memorymanager.DynamicMemoryManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryAllocationException;
 import eu.stratosphere.nephele.services.memorymanager.MemoryManager;
+import eu.stratosphere.nephele.services.memorymanager.MemorySegment;
 import eu.stratosphere.nephele.template.AbstractInvokable;
 import eu.stratosphere.pact.common.generic.types.TypeComparator;
 import eu.stratosphere.pact.common.generic.types.TypeSerializer;
@@ -19,9 +24,15 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 
 	private static final Log LOG = LogFactory.getLog(DynamicUnilateralSortMerger.class);
 
-	private final float startSpillingFraction;
+	private final AbstractInvokable parentTask;
+
+	private final TypeSerializer<E> serializer;
+
+	private final TypeComparator<E> comparator;
 
 	private final DynamicMemoryManager dynamicMemoryManager;
+
+	private AtomicInteger nextIDforElement;
 
 	public DynamicUnilateralSortMerger(final MemoryManager memoryManager, final IOManager ioManager,
 			final MutableObjectIterator<E> input, final AbstractInvokable parentTask,
@@ -39,8 +50,9 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 				"The dynamic unilateral sort merger can only be used together with the dynamic memory manager");
 		}
 
-		this.startSpillingFraction = startSpillingFraction;
-
+		this.parentTask = parentTask;
+		this.serializer = serializer;
+		this.comparator = comparator;
 		this.dynamicMemoryManager = (DynamicMemoryManager) memoryManager;
 	}
 
@@ -62,8 +74,18 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 
 		LOG.info("Determined the number of segments per sort buffer to be " + numberOfSegments);
 
+		long totalMemory = 0L;
+		final Iterator<CircularElement<E>> it = queues.empty.iterator();
+		while (it.hasNext()) {
+			totalMemory += it.next().buffer.getCapacity();
+		}
+
+		final float startSpillingFraction = (float) startSpillingBytes / (float) totalMemory;
+
+		this.nextIDforElement = new AtomicInteger(queues.empty.size());
+
 		return new DynamicReadingThread<E>(exceptionHandler, reader, queues, serializer.createInstance(), parentTask,
-			startSpillingBytes, this.startSpillingFraction, numberOfSegments, this);
+			totalMemory, startSpillingBytes, startSpillingFraction, numberOfSegments, this);
 	}
 
 	private static final class DynamicReadingThread<E> extends ThreadBase<E> {
@@ -81,9 +103,11 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 		/**
 		 * The fraction of the buffers that must be full before the spilling starts.
 		 */
-		private final long startSpillingBytes;
+		private long startSpillingBytes;
 
 		private final float startSpillingFraction;
+
+		private long totalMemory;
 
 		private final DynamicUnilateralSortMerger<E> sortMerger;
 
@@ -91,11 +115,12 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 
 		public DynamicReadingThread(final ExceptionHandler<IOException> exceptionHandler,
 				final MutableObjectIterator<E> reader, final CircularQueues<E> queues, final E readTarget,
-				final AbstractInvokable parentTask, final long startSpillingBytes, final float startSpillingFraction,
-				final int numberOfSegmentsPerSortBuffer, final DynamicUnilateralSortMerger<E> sortMerger) {
+				final AbstractInvokable parentTask, final long totalMemory, final long startSpillingBytes,
+				final float startSpillingFraction, final int numberOfSegmentsPerSortBuffer,
+				final DynamicUnilateralSortMerger<E> sortMerger) {
 
-			super(exceptionHandler, "SortMerger Reading Thread of " + parentTask.getEnvironment().getTaskName() + " ("
-				+ parentTask.getEnvironment().getIndexInSubtaskGroup() + ")", queues, parentTask);
+			super(exceptionHandler,
+				"SortMerger Reading Thread of " + getTaskNameWithIndex(parentTask.getEnvironment()), queues, parentTask);
 
 			// members
 			this.reader = reader;
@@ -104,7 +129,7 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 			this.startSpillingFraction = startSpillingFraction;
 			this.sortMerger = sortMerger;
 			this.numberOfSegmentsPerSortBuffer = numberOfSegmentsPerSortBuffer;
-
+			this.totalMemory = totalMemory;
 		}
 
 		/**
@@ -186,8 +211,8 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 						}
 						if (bytesUntilSpilling - buffer.getOccupancy() <= 0) {
 
-							if (!requestMoreMemory()) {
-
+							bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+							if (bytesUntilSpilling < 0L) {
 								bytesUntilSpilling = 0L;
 
 								// send the spilling marker
@@ -207,8 +232,10 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 						// spilling threshold, so check it
 						if (bytesUntilSpilling > 0L) {
 							bytesUntilSpilling -= buffer.getCapacity();
-							if (bytesUntilSpilling <= 0) {
-								if (!requestMoreMemory()) {
+							if (bytesUntilSpilling <= 0L) {
+
+								bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+								if (bytesUntilSpilling < 0L) {
 									bytesUntilSpilling = 0L;
 									// send the spilling marker
 									System.out.println("Requesting spilling 3");
@@ -232,7 +259,9 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 					// the input is exhausted.
 					bytesUntilSpilling -= buffer.getCapacity();
 					if (bytesUntilSpilling <= 0L) {
-						if (!requestMoreMemory()) {
+
+						bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+						if (bytesUntilSpilling < 0L) {
 							bytesUntilSpilling = 0L;
 							// send the spilling marker
 							System.out.println("Requesting spilling 4");
@@ -284,23 +313,65 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 			final CircularElement<E> EOF_MARKER = endMarker();
 			this.queues.sort.add(EOF_MARKER);
 			LOG.debug("Reading thread done.");
+			System.out.println("Reader finished with " + this.totalMemory);
 		}
 
-		private boolean requestMoreMemory() {
+		private long requestMoreMemory(long bytesUntilSpilling) {
+
+			System.out.println("Old value for bytes until spilling: " + bytesUntilSpilling);
 
 			final CircularElement<E> element = this.sortMerger.requestMoreMemory(this.numberOfSegmentsPerSortBuffer);
 			if (element == null) {
-				return false;
+				return -1L;
 			}
 
-			throw new IllegalStateException("Method not yet implemented");
+			if (!this.queues.empty.add(element)) {
+				throw new IllegalStateException("Unable to add newly allocated sort buffer to queue");
+			}
+
+			// Update amount of total memory
+			final long bytesProcessed = this.startSpillingBytes - bytesUntilSpilling;
+			System.out.println("Bytes processed: " + bytesProcessed);
+			this.totalMemory += element.buffer.getCapacity();
+			System.out.println("New total memory: " + this.totalMemory);
+			this.startSpillingBytes = (long) (this.totalMemory * this.startSpillingFraction);
+			System.out.println("New start spilling bytes: " + this.startSpillingBytes);
+			bytesUntilSpilling = this.startSpillingBytes - bytesProcessed;
+
+			System.out.println("New value for bytes until spilling: " + bytesUntilSpilling);
+
+			return bytesUntilSpilling;
 		}
 	}
 
 	private CircularElement<E> requestMoreMemory(final int numberOfSegments) {
 
-		System.out.println("Requested additional " + numberOfSegments + " segments");
+		final ArrayList<MemorySegment> newSegments = new ArrayList<MemorySegment>(numberOfSegments);
 
-		return null;
+		try {
+			this.dynamicMemoryManager.allocateAdditionalPages(this.parentTask, newSegments, numberOfSegments);
+		} catch (MemoryAllocationException e) {
+			return null;
+		}
+
+		LOG.info("Allocated " + newSegments.size() + " additional memory segments for "
+			+ getTaskNameWithIndex(this.parentTask.getEnvironment()));
+
+		final TypeComparator<E> comp = this.comparator.duplicate();
+		final NormalizedKeySorter<E> buffer = new NormalizedKeySorter<E>(this.serializer, comp, newSegments);
+
+		return new CircularElement<E>(this.nextIDforElement.getAndIncrement(), buffer);
+	}
+
+	private static String getTaskNameWithIndex(final Environment environment) {
+
+		final StringBuilder sb = new StringBuilder(environment.getTaskName());
+		sb.append(" (");
+		sb.append(environment.getIndexInSubtaskGroup() + 1);
+		sb.append('/');
+		sb.append(environment.getCurrentNumberOfSubtasks());
+		sb.append(')');
+
+		return sb.toString();
 	}
 }

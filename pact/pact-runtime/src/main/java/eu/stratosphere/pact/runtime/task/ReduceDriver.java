@@ -28,7 +28,6 @@ import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.util.MutableObjectIterator;
 import eu.stratosphere.pact.runtime.sort.CombiningUnilateralSortMerger;
 import eu.stratosphere.pact.runtime.sort.DynamicUnilateralSortMerger;
-import eu.stratosphere.pact.runtime.sort.UnilateralSortMerger;
 import eu.stratosphere.pact.runtime.task.util.CloseableInputProvider;
 import eu.stratosphere.pact.runtime.task.util.SimpleCloseableInputProvider;
 import eu.stratosphere.pact.runtime.task.util.TaskConfig;

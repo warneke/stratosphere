@@ -555,8 +555,50 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void allocateAdditionalPages(AbstractInvokable owner, List<MemorySegment> target, int numPages)
-			throws MemoryAllocationException {
+	public void allocateAdditionalPages(final AbstractInvokable owner, final List<MemorySegment> target,
+			final int numPages) throws MemoryAllocationException {
+
+		// sanity check
+		if (owner == null) {
+			throw new IllegalAccessError("The memory owner must not be null.");
+		}
+
+		// reserve array space, if applicable
+		if (target instanceof ArrayList) {
+			((ArrayList<MemorySegment>) target).ensureCapacity(numPages);
+		}
+
+		synchronized (this.lock) {
+
+			if (this.isShutDown) {
+				throw new IllegalStateException("Memory manager has been shut down.");
+			}
+
+			if (numPages <= this.freeSegments.size()) {
+
+				final Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
+				if (segmentsForOwner == null) {
+					throw new IllegalStateException("No segmentsForOwner data structure found");
+				}
+
+				for (int i = 0; i < numPages; ++i) {
+					final byte[] buffer = this.freeSegments.poll();
+					final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
+					target.add(segment);
+					segmentsForOwner.add(segment);
+				}
+				return;
+
+			} else {
+				// TODO: Talk to memory negotiator here
+			}
+		}
+
+		throw new MemoryAllocationException("Could not allocate " + numPages + " pages. Only " +
+			this.freeSegments.size() + " pages are remaining.");
 	}
 }
