@@ -102,6 +102,9 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 
 	private boolean isShutDown; // flag whether the close() has already been invoked.
 
+	private final int initiallyGrantedMemoryShare; // size of the initially granted memory share from the memory
+													// negotiator daemon
+
 	private int grantedMemoryShare; // the size of the granted memory share from the memory negotiator daemon
 
 	// ------------------------------------------------------------------------
@@ -153,12 +156,15 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		this.memoryNegiatorDaemon = this.rpcService.getProxy(new InetSocketAddress(8000), ClientToDaemonProtocol.class);
 
 		// determine granted memory share
+		int grantedMemoryShare;
 		try {
-			this.grantedMemoryShare = this.memoryNegiatorDaemon.registerClient("Nephele Task Manager", this.pid,
+			grantedMemoryShare = this.memoryNegiatorDaemon.registerClient("Nephele Task Manager", this.pid,
 				MEMORY_NEGOTIATOR_RPC_PORT);
 		} catch (NegotiationException re) {
 			throw new IOException(re);
 		}
+		this.grantedMemoryShare = grantedMemoryShare;
+		this.initiallyGrantedMemoryShare = grantedMemoryShare;
 
 		LOG.info("Memory negotiator daemon granted memory share of " + this.grantedMemoryShare + " kilobytes");
 
@@ -352,8 +358,8 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	 * .MemorySegment)
 	 */
 	@Override
-	public void release(final MemorySegment segment)
-	{
+	public void release(final MemorySegment segment) {
+
 		// check if segment is null or has already been freed
 		if (segment == null || segment.isFreed() || !(segment instanceof DefaultMemorySegment)) {
 			return;
