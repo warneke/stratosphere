@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import edu.berkeley.icsi.memngt.protocols.ClientToDaemonProtocol;
 import edu.berkeley.icsi.memngt.protocols.DaemonToClientProtocol;
 import edu.berkeley.icsi.memngt.protocols.NegotiationException;
+import edu.berkeley.icsi.memngt.protocols.ProcessType;
 import edu.berkeley.icsi.memngt.rpc.RPCService;
 import edu.berkeley.icsi.memngt.utils.ClientUtils;
 import eu.stratosphere.nephele.services.memorymanager.DynamicMemoryManager;
@@ -159,7 +160,7 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		int grantedMemoryShare;
 		try {
 			grantedMemoryShare = this.memoryNegiatorDaemon.registerClient("Nephele Task Manager", this.pid,
-				MEMORY_NEGOTIATOR_RPC_PORT);
+				MEMORY_NEGOTIATOR_RPC_PORT, ProcessType.USER_PROCESS);
 		} catch (NegotiationException re) {
 			throw new IOException(re);
 		}
@@ -663,5 +664,16 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 			* this.adaptationGranularity;
 
 		return Math.max(roundedNumPages * (this.pageSize / 1024), this.minimumRequestSize);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public int additionalMemoryOffered(final int amountOfAdditionalMemory) throws IOException {
+
+		LOG.error("additionalMemoryOffered called on user-type process");
+
+		return 0;
 	}
 }
