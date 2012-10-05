@@ -31,15 +31,17 @@ import org.apache.commons.logging.LogFactory;
 
 import edu.berkeley.icsi.memngt.protocols.ClientToDaemonProtocol;
 import edu.berkeley.icsi.memngt.protocols.DaemonToClientProtocol;
-import edu.berkeley.icsi.memngt.protocols.RegistrationException;
+import edu.berkeley.icsi.memngt.protocols.NegotiationException;
+import edu.berkeley.icsi.memngt.protocols.ProcessType;
 import edu.berkeley.icsi.memngt.rpc.RPCService;
 import edu.berkeley.icsi.memngt.utils.ClientUtils;
+import eu.stratosphere.nephele.services.memorymanager.DynamicMemoryManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryAllocationException;
-import eu.stratosphere.nephele.services.memorymanager.MemoryManager;
 import eu.stratosphere.nephele.services.memorymanager.MemorySegment;
 import eu.stratosphere.nephele.template.AbstractInvokable;
+import eu.stratosphere.nephele.util.StringUtils;
 
-public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtocol {
+public class DefaultDynamicMemoryManager implements DynamicMemoryManager, DaemonToClientProtocol {
 
 	/**
 	 * The default memory page size. Currently set to 32 kilobytes.
@@ -52,9 +54,14 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 	public static final int MIN_PAGE_SIZE = 4 * 1024;
 
 	/**
-	 * The default value for the minimum number of pages to be requested/relinquished per adaptation.
+	 * The default value for the minimum number of pages to be allocated/released per adaptation.
 	 */
-	public static final int DEFAULT_ADAPTATION_GRANULARITY = 128;
+	public static final int DEFAULT_ADAPTATION_GRANULARITY = 1024;
+
+	/**
+	 * The default value for the minimum amount of additional memory to request from the memory negotiator in kilobytes.
+	 */
+	public static final int DEFAULT_MINIMUM_REQUEST_SIZE = 512 * 1024;
 
 	/**
 	 * The Log.
@@ -72,6 +79,11 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 
 	private final RPCService rpcService;
 
+	/**
+	 * The operating system process ID of this process.
+	 */
+	private final int pid;
+
 	private final ClientToDaemonProtocol memoryNegiatorDaemon;
 
 	private final ArrayDeque<byte[]> freeSegments; // the free memory segments
@@ -84,9 +96,15 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 
 	private final int pageSizeBits; // the number of bits that the power-of-two page size corresponds to
 
-	private final int adaptationGranularity; // the minimum number of pages that requested/relinquish per adaptation
+	private final int adaptationGranularity; // the minimum number of pages allocated/released per adaptation
+
+	private final int minimumRequestSize; // minimum amount of additional memory to request from the memory negotiator
+											// in kilobytes.
 
 	private boolean isShutDown; // flag whether the close() has already been invoked.
+
+	private final int initiallyGrantedMemoryShare; // size of the initially granted memory share from the memory
+													// negotiator daemon
 
 	private int grantedMemoryShare; // the size of the granted memory share from the memory negotiator daemon
 
@@ -94,11 +112,12 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 	// Constructors / Destructors
 	// ------------------------------------------------------------------------
 
-	public DynamicMemoryManager() throws IOException {
-		this(DEFAULT_PAGE_SIZE, DEFAULT_ADAPTATION_GRANULARITY);
+	public DefaultDynamicMemoryManager() throws IOException {
+		this(DEFAULT_PAGE_SIZE, DEFAULT_ADAPTATION_GRANULARITY, DEFAULT_MINIMUM_REQUEST_SIZE);
 	}
 
-	public DynamicMemoryManager(int pageSize, final int adaptationGranularity) throws IOException {
+	public DefaultDynamicMemoryManager(int pageSize, final int adaptationGranularity, final int minimumRequestSize)
+			throws IOException {
 
 		if (pageSize <= MIN_PAGE_SIZE) {
 			throw new IllegalArgumentException("The page size must be at least " + MIN_PAGE_SIZE + " bytes.");
@@ -118,6 +137,7 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 
 		// set the adaptation granularity
 		this.adaptationGranularity = adaptationGranularity;
+		this.minimumRequestSize = minimumRequestSize;
 
 		// initialize the free segments and allocated segments tracking structures
 		this.freeSegments = new ArrayDeque<byte[]>();
@@ -127,17 +147,25 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 		this.rpcService = new RPCService(MEMORY_NEGOTIATOR_RPC_PORT);
 		this.rpcService.setProtocolCallbackHandler(DaemonToClientProtocol.class, this);
 
+		// figure out the process ID
+		this.pid = ClientUtils.getPID();
+		if (this.pid == -1) {
+			throw new RuntimeException("Dynamic memory manager could not determine its own process ID");
+		}
+
 		// TODO: Make port configurable
 		this.memoryNegiatorDaemon = this.rpcService.getProxy(new InetSocketAddress(8000), ClientToDaemonProtocol.class);
 
 		// determine granted memory share
+		int grantedMemoryShare;
 		try {
-			this.grantedMemoryShare = this.memoryNegiatorDaemon.registerClient("Nephele Task Manager",
-				ClientUtils.getPID(),
-				MEMORY_NEGOTIATOR_RPC_PORT);
-		} catch (RegistrationException re) {
+			grantedMemoryShare = this.memoryNegiatorDaemon.registerClient("Nephele Task Manager", this.pid,
+				MEMORY_NEGOTIATOR_RPC_PORT, ProcessType.USER_PROCESS);
+		} catch (NegotiationException re) {
 			throw new IOException(re);
 		}
+		this.grantedMemoryShare = grantedMemoryShare;
+		this.initiallyGrantedMemoryShare = grantedMemoryShare;
 
 		LOG.info("Memory negotiator daemon granted memory share of " + this.grantedMemoryShare + " kilobytes");
 
@@ -176,6 +204,12 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 					break;
 				}
 			}
+
+			// No more free segments to relinquish
+			if (this.freeSegments.isEmpty()) {
+				break;
+			}
+
 			System.gc();
 		}
 
@@ -186,8 +220,11 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 		if (LOG.isInfoEnabled()) {
 			LOG.info("Physical memory size is " + ClientUtils.getPhysicalMemorySize(pid) +
 				", granted memory share is " + this.grantedMemoryShare + " (added " + added +
-				" memory segments, reliquished " + removed + ", total " + this.freeSegments.size() + ")");
+				" memory segments, reliquished " + removed + ", now " + this.freeSegments.size()
+				+ " free pages are available)");
 		}
+
+		ClientUtils.dumpMemoryUtilization();
 	}
 
 	/*
@@ -259,6 +296,8 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 			((ArrayList<MemorySegment>) target).ensureCapacity(numPages);
 		}
 
+		System.out.println(owner.getEnvironment().getTaskName() + " asks for " + numPages + " pages");
+
 		// -------------------- BEGIN CRITICAL SECTION -------------------
 		synchronized (this.lock) {
 
@@ -320,8 +359,8 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 	 * .MemorySegment)
 	 */
 	@Override
-	public void release(final MemorySegment segment)
-	{
+	public void release(final MemorySegment segment) {
+
 		// check if segment is null or has already been freed
 		if (segment == null || segment.isFreed() || !(segment instanceof DefaultMemorySegment)) {
 			return;
@@ -542,5 +581,99 @@ public class DynamicMemoryManager implements MemoryManager, DaemonToClientProtoc
 
 		// With a dynamic number of segments this check does not make sense, so we always return <code>true</code>
 		return true;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void allocateAdditionalPages(final AbstractInvokable owner, final List<MemorySegment> target,
+			final int numPages) throws MemoryAllocationException {
+
+		// sanity check
+		if (owner == null) {
+			throw new IllegalAccessError("The memory owner must not be null.");
+		}
+
+		// reserve array space, if applicable
+		if (target instanceof ArrayList) {
+			((ArrayList<MemorySegment>) target).ensureCapacity(numPages);
+		}
+
+		while (true) {
+
+			synchronized (this.lock) {
+
+				if (this.isShutDown) {
+					throw new IllegalStateException("Memory manager has been shut down.");
+				}
+
+				if (numPages <= this.freeSegments.size()) {
+
+					final Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
+					if (segmentsForOwner == null) {
+						throw new IllegalStateException("No segmentsForOwner data structure found");
+					}
+
+					for (int i = 0; i < numPages; ++i) {
+						final byte[] buffer = this.freeSegments.poll();
+						final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
+						target.add(segment);
+						segmentsForOwner.add(segment);
+					}
+					return;
+
+				}
+			}
+
+			// Check with memory negotiator daemon if we are allowed to allocated additional memory
+			final int amountOfAdditionallyRequstedMemory = calculateAdditionalAmountOfMemoryToRequest(numPages);
+			if (LOG.isInfoEnabled()) {
+				LOG.info("Requesting " + amountOfAdditionallyRequstedMemory
+					+ " kilobytes of additional memory from memory negotiator daemon");
+			}
+			try {
+				if (!this.memoryNegiatorDaemon.requestAdditionalMemory(this.pid, amountOfAdditionallyRequstedMemory)) {
+					LOG.info("Memory negotiator daemon turned request down");
+					break;
+				}
+			} catch (NegotiationException ne) {
+				LOG.warn(StringUtils.stringifyException(ne));
+				break;
+			} catch (IOException ioe) {
+				LOG.error(StringUtils.stringifyException(ioe));
+				break;
+			}
+
+			synchronized (this) {
+				System.out.println("Adding " + amountOfAdditionallyRequstedMemory);
+				this.grantedMemoryShare += amountOfAdditionallyRequstedMemory;
+
+				adaptMemoryResources();
+			}
+		}
+
+		throw new MemoryAllocationException("Could not allocate " + numPages + " pages. Only " +
+			this.freeSegments.size() + " pages are remaining.");
+	}
+
+	private int calculateAdditionalAmountOfMemoryToRequest(final int numPages) {
+
+		// Round the number of the requested pages to the nearest multiple of this adaptation granularity
+		final int roundedNumPages = ((numPages + this.adaptationGranularity - 1) / this.adaptationGranularity)
+			* this.adaptationGranularity;
+
+		return Math.max(roundedNumPages * (this.pageSize / 1024), this.minimumRequestSize);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public int additionalMemoryOffered(final int amountOfAdditionalMemory) throws IOException {
+
+		LOG.error("additionalMemoryOffered called on user-type process");
+
+		return 0;
 	}
 }

@@ -81,7 +81,7 @@ import eu.stratosphere.nephele.protocols.PluginCommunicationProtocol;
 import eu.stratosphere.nephele.protocols.TaskOperationProtocol;
 import eu.stratosphere.nephele.services.iomanager.IOManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryManager;
-import eu.stratosphere.nephele.services.memorymanager.spi.DynamicMemoryManager;
+import eu.stratosphere.nephele.services.memorymanager.spi.DefaultDynamicMemoryManager;
 import eu.stratosphere.nephele.taskmanager.bytebuffered.ByteBufferedChannelManager;
 import eu.stratosphere.nephele.taskmanager.bytebuffered.InsufficientResourcesException;
 import eu.stratosphere.nephele.taskmanager.runtime.EnvelopeConsumptionLog;
@@ -315,7 +315,7 @@ public class TaskManager implements TaskOperationProtocol, PluginCommunicationPr
 		// Initialize the memory manager
 		LOG.info("Initializing dynamic memory manager");
 		try {
-			this.memoryManager = new DynamicMemoryManager();
+			this.memoryManager = new DefaultDynamicMemoryManager();
 		} catch (IOException ioe) {
 			LOG.fatal("Unable to initialize dynamic memory manager", ioe);
 			throw ioe;

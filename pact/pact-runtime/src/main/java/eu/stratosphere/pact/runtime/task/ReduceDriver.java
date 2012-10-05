@@ -27,7 +27,7 @@ import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.util.MutableObjectIterator;
 import eu.stratosphere.pact.runtime.sort.CombiningUnilateralSortMerger;
-import eu.stratosphere.pact.runtime.sort.UnilateralSortMerger;
+import eu.stratosphere.pact.runtime.sort.DynamicUnilateralSortMerger;
 import eu.stratosphere.pact.runtime.task.util.CloseableInputProvider;
 import eu.stratosphere.pact.runtime.task.util.SimpleCloseableInputProvider;
 import eu.stratosphere.pact.runtime.task.util.TaskConfig;
@@ -154,10 +154,9 @@ public class ReduceDriver<IT, OT> implements PactDriver<GenericReducer<IT, OT>, 
 		// The input is grouped using a sort-merge strategy. An iterator on the sorted pairs is created and returned.
 		case SORT:
 			// instantiate a sort-merger
-			this.input = new UnilateralSortMerger<IT>(memoryManager, ioManager, in,
+			this.input = new DynamicUnilateralSortMerger<IT>(memoryManager, ioManager, in,
 						this.taskContext.getOwningNepheleTask(), this.serializer, sortComparator,
-						availableMemory, maxFileHandles,
-				spillThreshold);
+						availableMemory, maxFileHandles, spillThreshold);
 			break;
 
 		case COMBININGSORT:
