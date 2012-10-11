@@ -23,7 +23,7 @@ public final class MemoryPool extends AbstractMemoryPool<byte[]> {
 	private final int pageSize;
 
 	MemoryPool(int pageSize) {
-		super("Nephele Memory Pool", calculatePoolCapacity(pageSize / 1024));
+		super("Nephele Memory Pool", calculatePoolCapacity(pageSize / 1024), pageSize / 1024);
 		this.pageSize = pageSize;
 	}
 
@@ -38,13 +38,5 @@ public final class MemoryPool extends AbstractMemoryPool<byte[]> {
 	@Override
 	protected byte[] allocatedNewBuffer() {
 		return new byte[this.pageSize];
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected int getSizeOfBuffer(byte[] buffer) {
-		return buffer.length / 1024;
 	}
 }
