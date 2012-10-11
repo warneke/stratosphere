@@ -56,9 +56,11 @@ public class InstanceVisualizationData {
 	// Series for memory data
 	private final XYSeries totalMemorySeries;
 
-	private final XYSeries usedMemorySeries;
+	private final XYSeries stratosphereMemorySeries;
 
-	private final XYSeries cachedMemorySeries;
+	private final XYSeries hdfsMemorySeries;
+
+	private final XYSeries otherMemorySeries;
 
 	private final boolean isProfilingAvailable;
 
@@ -100,14 +102,17 @@ public class InstanceVisualizationData {
 
 		this.totalMemorySeries = new XYSeries("Total", false, false);
 		this.totalMemorySeries.setNotify(false);
-		this.usedMemorySeries = new XYSeries("Used", false, false);
-		this.usedMemorySeries.setNotify(false);
-		this.cachedMemorySeries = new XYSeries("Cached", false, false);
-		this.cachedMemorySeries.setNotify(false);
+		this.stratosphereMemorySeries = new XYSeries("Stratosphere", false, false);
+		this.stratosphereMemorySeries.setNotify(false);
+		this.hdfsMemorySeries = new XYSeries("HDFS", false, false);
+		this.hdfsMemorySeries.setNotify(false);
+		this.otherMemorySeries = new XYSeries("Other", false, false);
+		this.otherMemorySeries.setNotify(false);
 
 		// We do not add the total memory to the collection
-		this.memoryDataSet.addSeries(this.cachedMemorySeries);
-		this.memoryDataSet.addSeries(this.usedMemorySeries);
+		this.memoryDataSet.addSeries(this.stratosphereMemorySeries);
+		this.memoryDataSet.addSeries(this.hdfsMemorySeries);
+		this.memoryDataSet.addSeries(this.otherMemorySeries);
 	}
 
 	public TableXYDataset getCpuDataSet() {
@@ -135,11 +140,11 @@ public class InstanceVisualizationData {
 			this.totalMemoryinMB = instanceMemoryInMB;
 		}
 
-		final long cachedMemory = instanceProfilingEvent.getBufferedMemory() + instanceProfilingEvent.getCachedMemory()
-			+ instanceProfilingEvent.getCachedSwapMemory();
+		final long stratosphereMemory = instanceProfilingEvent.getStratosphereMemory();
 
-		final long usedMemory = instanceProfilingEvent.getTotalMemory() - instanceProfilingEvent.getFreeMemory()
-			- cachedMemory;
+		final long hdfsMemory = instanceProfilingEvent.getHDFSMemory();
+
+		final long otherMemory = instanceProfilingEvent.getOtherMemory();
 
 		this.cpuUsrSeries.addOrUpdate(timestamp, instanceProfilingEvent.getUserCPU());
 		this.cpuSysSeries.addOrUpdate(timestamp, instanceProfilingEvent.getSystemCPU());
@@ -147,8 +152,9 @@ public class InstanceVisualizationData {
 		this.cpuHardIrqSeries.addOrUpdate(timestamp, instanceProfilingEvent.getHardIrqCPU());
 		this.cpuSoftIrqSeries.addOrUpdate(timestamp, instanceProfilingEvent.getSoftIrqCPU());
 		this.totalMemorySeries.addOrUpdate(timestamp, instanceProfilingEvent.getTotalMemory() / KILOBYTE_TO_MEGABYTE);
-		this.usedMemorySeries.addOrUpdate(timestamp, usedMemory / KILOBYTE_TO_MEGABYTE);
-		this.cachedMemorySeries.addOrUpdate(timestamp, cachedMemory / KILOBYTE_TO_MEGABYTE);
+		this.stratosphereMemorySeries.addOrUpdate(timestamp, stratosphereMemory / KILOBYTE_TO_MEGABYTE);
+		this.hdfsMemorySeries.addOrUpdate(timestamp, hdfsMemory / KILOBYTE_TO_MEGABYTE);
+		this.otherMemorySeries.addOrUpdate(timestamp, otherMemory / KILOBYTE_TO_MEGABYTE);
 		this.networkReceivedSeries.addOrUpdate(timestamp, toMBitPerSec(instanceProfilingEvent.getReceivedBytes(),
 			instanceProfilingEvent.getProfilingInterval()));
 		this.networkTransmittedSeries.addOrUpdate(timestamp, toMBitPerSec(instanceProfilingEvent.getTransmittedBytes(),

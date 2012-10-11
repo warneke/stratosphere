@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.berkeley.icsi.memngt.utils.ClientUtils;
 import eu.stratosphere.nephele.instance.InstanceConnectionInfo;
 import eu.stratosphere.nephele.profiling.ProfilingException;
 import eu.stratosphere.nephele.profiling.impl.types.InternalInstanceProfilingData;
@@ -48,6 +49,8 @@ public class InstanceProfiler {
 
 	private final InstanceConnectionInfo instanceConnectionInfo;
 
+	private final int pid;
+
 	private long lastTimestamp = 0;
 
 	// CPU related variables
@@ -73,9 +76,10 @@ public class InstanceProfiler {
 	private long firstTimestamp;
 
 	public InstanceProfiler(InstanceConnectionInfo instanceConnectionInfo)
-																			throws ProfilingException {
+			throws ProfilingException {
 
 		this.instanceConnectionInfo = instanceConnectionInfo;
+		this.pid = ClientUtils.getPID();
 		this.firstTimestamp = System.currentTimeMillis();
 		// Initialize counters by calling generateProfilingData once and ignore the return value
 		generateProfilingData(this.firstTimestamp);
@@ -139,12 +143,19 @@ public class InstanceProfiler {
 				++count;
 			}
 
-			profilingData.setTotalMemory(totalMemory);
-			profilingData.setFreeMemory(freeMemory);
-			profilingData.setBufferedMemory(bufferedMemory);
-			profilingData.setCachedMemory(cachedMemory);
-			profilingData.setCachedSwapMemory(cachedSwapMemory);
+			final long usedMemory = totalMemory - freeMemory - bufferedMemory - cachedMemory - cachedSwapMemory;
+			long stratosphereMemory = ClientUtils.getPhysicalMemorySize(this.pid);
+			long hdfsMemory = 0L; // TODO: Fix me
+			long otherMemory = usedMemory - stratosphereMemory - hdfsMemory;
 
+			profilingData.setTotalMemory(totalMemory);
+			profilingData.setStratosphereMemory(stratosphereMemory);
+			profilingData.setHDFSMemory(hdfsMemory);
+			profilingData.setOtherMemory(otherMemory);
+
+			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!Other " + otherMemory);
+			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!Stratosphere " + stratosphereMemory);
+			
 		} catch (IOException ioe) {
 			throw new ProfilingException("Error while reading network utilization: "
 				+ StringUtils.stringifyException(ioe));

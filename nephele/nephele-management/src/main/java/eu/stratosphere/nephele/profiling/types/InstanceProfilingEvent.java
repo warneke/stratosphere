@@ -72,25 +72,11 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 	 */
 	private long totalMemory;
 
-	/**
-	 * The free amount of this instance's main memory in bytes.
-	 */
-	private long freeMemory;
+	private long stratosphereMemory;
 
-	/**
-	 * The amount of main memory the instance uses for file buffers.
-	 */
-	private long bufferedMemory;
+	private long hdfsMemory;
 
-	/**
-	 * The amount of main memory the instance uses as cache memory.
-	 */
-	private long cachedMemory;
-
-	/**
-	 * The amount of main memory the instance uses for cached swaps.
-	 */
-	private long cachedSwapMemory;
+	private long otherMemory;
 
 	/**
 	 * The number of bytes received via network during the profiling interval.
@@ -102,48 +88,10 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 	 */
 	private long transmittedBytes;
 
-	/**
-	 * Constructs a new instance profiling event.
-	 * 
-	 * @param profilingInterval
-	 *        the interval of time this profiling event covers in milliseconds
-	 * @param ioWaitCPU
-	 *        the percentage of time the CPU(s) spent in state IOWAIT during the profiling interval
-	 * @param idleCPU
-	 *        the percentage of time the CPU(s) spent in state IDLE during the profiling interval
-	 * @param userCPU
-	 *        the percentage of time the CPU(s) spent in state USER during the profiling interval
-	 * @param systemCPU
-	 *        the percentage of time the CPU(s) spent in state SYSTEM during the profiling interval
-	 * @param hardIrqCPU
-	 *        the percentage of time the CPU(s) spent in state HARD_IRQ during the profiling interval
-	 * @param softIrqCPU
-	 *        the percentage of time the CPU(s) spent in state SOFT_IRQ during the profiling interval
-	 * @param totalMemory
-	 *        the total amount of this instance's main memory in bytes
-	 * @param freeMemory
-	 *        the free amount of this instance's main memory in bytes
-	 * @param bufferedMemory
-	 *        the amount of main memory the instance uses for file buffers
-	 * @param cachedMemory
-	 *        the amount of main memory the instance uses as cache memory
-	 * @param cachedSwapMemory
-	 *        The amount of main memory the instance uses for cached swaps
-	 * @param receivedBytes
-	 *        the number of bytes received via network during the profiling interval
-	 * @param transmittedBytes
-	 *        the number of bytes transmitted via network during the profiling interval
-	 * @param jobID
-	 *        the ID of this job this profiling event belongs to
-	 * @param timestamp
-	 *        the time stamp of this profiling event's creation
-	 * @param profilingTimestamp
-	 *        the time stamp relative to the beginning of the job's execution
-	 */
 	public InstanceProfilingEvent(final int profilingInterval, final int ioWaitCPU, final int idleCPU,
 			final int userCPU, final int systemCPU, final int hardIrqCPU, final int softIrqCPU, final long totalMemory,
-			final long freeMemory, final long bufferedMemory, final long cachedMemory, final long cachedSwapMemory,
-			final long receivedBytes, final long transmittedBytes, final JobID jobID, final long timestamp,
+			final long stratosphereMemory, final long hdfsMemory, final long otherMemory, final long receivedBytes,
+			final long transmittedBytes, final JobID jobID, final long timestamp,
 			final long profilingTimestamp) {
 
 		super(jobID, timestamp, profilingTimestamp);
@@ -158,10 +106,9 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 		this.softIrqCPU = softIrqCPU;
 
 		this.totalMemory = totalMemory;
-		this.freeMemory = freeMemory;
-		this.bufferedMemory = bufferedMemory;
-		this.cachedMemory = cachedMemory;
-		this.cachedSwapMemory = cachedSwapMemory;
+		this.stratosphereMemory = stratosphereMemory;
+		this.hdfsMemory = hdfsMemory;
+		this.otherMemory = otherMemory;
 
 		this.receivedBytes = receivedBytes;
 		this.transmittedBytes = transmittedBytes;
@@ -192,40 +139,16 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 		return this.totalMemory;
 	}
 
-	/**
-	 * Returns the amount of free memory of the corresponding instance.
-	 * 
-	 * @return the amount of free memory in bytes.
-	 */
-	public final long getFreeMemory() {
-		return this.freeMemory;
+	public final long getStratosphereMemory() {
+		return this.stratosphereMemory;
 	}
 
-	/**
-	 * Returns the amount of memory, in bytes, used for file buffers.
-	 * 
-	 * @return the amount of memory used for file buffers in bytes
-	 */
-	public final long getBufferedMemory() {
-		return this.bufferedMemory;
+	public final long getHDFSMemory() {
+		return this.hdfsMemory;
 	}
 
-	/**
-	 * Returns the amount of memory, in bytes, used as cache memory.
-	 * 
-	 * @return the amount of memory used as cache memory in bytes
-	 */
-	public final long getCachedMemory() {
-		return this.cachedMemory;
-	}
-
-	/**
-	 * Returns the amount of swap, in bytes, used as cache memory.
-	 * 
-	 * @return the amount of, in bytes, used as cache memory
-	 */
-	public final long getCachedSwapMemory() {
-		return this.cachedSwapMemory;
+	public final long getOtherMemory() {
+		return this.otherMemory;
 	}
 
 	/**
@@ -319,10 +242,9 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 		this.softIrqCPU = in.readInt();
 
 		this.totalMemory = in.readLong();
-		this.freeMemory = in.readLong();
-		this.bufferedMemory = in.readLong();
-		this.cachedMemory = in.readLong();
-		this.cachedSwapMemory = in.readLong();
+		this.stratosphereMemory = in.readLong();
+		this.hdfsMemory = in.readLong();
+		this.otherMemory = in.readLong();
 
 		this.receivedBytes = in.readLong();
 		this.transmittedBytes = in.readLong();
@@ -344,14 +266,13 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 		out.writeInt(this.hardIrqCPU);
 		out.writeInt(this.softIrqCPU);
 
-		out.writeLong(totalMemory);
-		out.writeLong(freeMemory);
-		out.writeLong(bufferedMemory);
-		out.writeLong(cachedMemory);
-		out.writeLong(cachedSwapMemory);
+		out.writeLong(this.totalMemory);
+		out.writeLong(this.stratosphereMemory);
+		out.writeLong(this.hdfsMemory);
+		out.writeLong(this.otherMemory);
 
-		out.writeLong(receivedBytes);
-		out.writeLong(transmittedBytes);
+		out.writeLong(this.receivedBytes);
+		out.writeLong(this.transmittedBytes);
 	}
 
 	/**
@@ -401,19 +322,15 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 			return false;
 		}
 
-		if (this.freeMemory != instanceProfilingEvent.getFreeMemory()) {
+		if (this.stratosphereMemory != instanceProfilingEvent.getStratosphereMemory()) {
 			return false;
 		}
 
-		if (this.bufferedMemory != instanceProfilingEvent.getBufferedMemory()) {
+		if (this.hdfsMemory != instanceProfilingEvent.getHDFSMemory()) {
 			return false;
 		}
 
-		if (this.cachedMemory != instanceProfilingEvent.getCachedMemory()) {
-			return false;
-		}
-
-		if (this.cachedSwapMemory != instanceProfilingEvent.getCachedSwapMemory()) {
+		if (this.otherMemory != instanceProfilingEvent.getOtherMemory()) {
 			return false;
 		}
 
@@ -437,7 +354,7 @@ public abstract class InstanceProfilingEvent extends ProfilingEvent {
 		long hashCode = getJobID().hashCode() + getTimestamp() + getProfilingTimestamp();
 		hashCode += (this.profilingInterval + this.ioWaitCPU + this.idleCPU + this.userCPU + this.systemCPU
 			+ this.hardIrqCPU + this.softIrqCPU);
-		hashCode += (this.totalMemory + this.freeMemory + this.bufferedMemory + this.cachedMemory + this.cachedSwapMemory);
+		hashCode += (this.totalMemory + this.stratosphereMemory + this.hdfsMemory + this.otherMemory);
 		hashCode -= Integer.MAX_VALUE;
 
 		return (int) (hashCode % Integer.MAX_VALUE);

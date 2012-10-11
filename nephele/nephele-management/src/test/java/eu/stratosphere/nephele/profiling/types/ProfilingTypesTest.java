@@ -47,21 +47,19 @@ public class ProfilingTypesTest {
 
 	private static final long TOTAL_MEMORY = 10001L;
 
-	private static final long FREE_MEMORY = 10002L;
+	private static final long STRATOSPHERE_MEMORY = 10002L;
 
-	private static final long BUFFERED_MEMORY = 10003L;
+	private static final long HDFS_MEMORY = 10003L;
 
-	private static final long CACHED_MEMORY = 10004L;
+	private static final long OTHER_MEMORY = 10004L;
 
-	private static final long CACHED_SWAP_MEMORY = 10005L;
+	private static final long RECEIVED_BYTES = 100005L;
 
-	private static final long RECEIVED_BYTES = 100006L;
+	private static final long TRANSMITTED_BYTES = 100006L;
 
-	private static final long TRANSMITTED_BYTES = 100007L;
+	private static final long TIMESTAMP = 100007L;
 
-	private static final long TIMESTAMP = 100008L;
-
-	private static final long PROFILING_TIMESTAMP = 100009L;
+	private static final long PROFILING_TIMESTAMP = 100008L;
 
 	private static final String INSTANCE_NAME = "Test Instance";
 
@@ -86,8 +84,8 @@ public class ProfilingTypesTest {
 	public void testInstanceSummaryProfilingEvent() {
 
 		final InstanceSummaryProfilingEvent orig = new InstanceSummaryProfilingEvent(PROFILING_INTERVAL, IOWAIT_CPU,
-			IDLE_CPU, USER_CPU, SYSTEM_CPU, HARD_IRQ_CPU, SOFT_IRQ_CPU, TOTAL_MEMORY, FREE_MEMORY, BUFFERED_MEMORY,
-			CACHED_MEMORY, CACHED_SWAP_MEMORY, RECEIVED_BYTES, TRANSMITTED_BYTES, new JobID(), TIMESTAMP,
+			IDLE_CPU, USER_CPU, SYSTEM_CPU, HARD_IRQ_CPU, SOFT_IRQ_CPU, TOTAL_MEMORY, STRATOSPHERE_MEMORY, HDFS_MEMORY,
+			OTHER_MEMORY, RECEIVED_BYTES, TRANSMITTED_BYTES, new JobID(), TIMESTAMP,
 			PROFILING_TIMESTAMP);
 
 		final InstanceSummaryProfilingEvent copy = (InstanceSummaryProfilingEvent) ManagementTestUtils.createCopy(orig);
@@ -100,10 +98,9 @@ public class ProfilingTypesTest {
 		assertEquals(orig.getHardIrqCPU(), copy.getHardIrqCPU());
 		assertEquals(orig.getSoftIrqCPU(), copy.getSoftIrqCPU());
 		assertEquals(orig.getTotalMemory(), copy.getTotalMemory());
-		assertEquals(orig.getFreeMemory(), copy.getFreeMemory());
-		assertEquals(orig.getBufferedMemory(), copy.getBufferedMemory());
-		assertEquals(orig.getCachedMemory(), copy.getCachedMemory());
-		assertEquals(orig.getCachedSwapMemory(), copy.getCachedSwapMemory());
+		assertEquals(orig.getStratosphereMemory(), copy.getStratosphereMemory());
+		assertEquals(orig.getHDFSMemory(), copy.getHDFSMemory());
+		assertEquals(orig.getOtherMemory(), copy.getOtherMemory());
 		assertEquals(orig.getReceivedBytes(), copy.getReceivedBytes());
 		assertEquals(orig.getTransmittedBytes(), copy.getTransmittedBytes());
 		assertEquals(orig.getJobID(), copy.getJobID());
@@ -120,8 +117,8 @@ public class ProfilingTypesTest {
 	public void testSingleInstanceProfilingEvent() {
 
 		final SingleInstanceProfilingEvent orig = new SingleInstanceProfilingEvent(PROFILING_INTERVAL, IOWAIT_CPU,
-			IDLE_CPU, USER_CPU, SYSTEM_CPU, HARD_IRQ_CPU, SOFT_IRQ_CPU, TOTAL_MEMORY, FREE_MEMORY, BUFFERED_MEMORY,
-			CACHED_MEMORY, CACHED_SWAP_MEMORY, RECEIVED_BYTES, TRANSMITTED_BYTES, new JobID(), TIMESTAMP,
+			IDLE_CPU, USER_CPU, SYSTEM_CPU, HARD_IRQ_CPU, SOFT_IRQ_CPU, TOTAL_MEMORY, STRATOSPHERE_MEMORY, HDFS_MEMORY,
+			OTHER_MEMORY, RECEIVED_BYTES, TRANSMITTED_BYTES, new JobID(), TIMESTAMP,
 			PROFILING_TIMESTAMP, INSTANCE_NAME);
 
 		final SingleInstanceProfilingEvent copy = (SingleInstanceProfilingEvent) ManagementTestUtils.createCopy(orig);
@@ -134,10 +131,9 @@ public class ProfilingTypesTest {
 		assertEquals(orig.getHardIrqCPU(), copy.getHardIrqCPU());
 		assertEquals(orig.getSoftIrqCPU(), copy.getSoftIrqCPU());
 		assertEquals(orig.getTotalMemory(), copy.getTotalMemory());
-		assertEquals(orig.getFreeMemory(), copy.getFreeMemory());
-		assertEquals(orig.getBufferedMemory(), copy.getBufferedMemory());
-		assertEquals(orig.getCachedMemory(), copy.getCachedMemory());
-		assertEquals(orig.getCachedSwapMemory(), copy.getCachedSwapMemory());
+		assertEquals(orig.getStratosphereMemory(), copy.getStratosphereMemory());
+		assertEquals(orig.getHDFSMemory(), copy.getHDFSMemory());
+		assertEquals(orig.getOtherMemory(), copy.getOtherMemory());
 		assertEquals(orig.getReceivedBytes(), copy.getReceivedBytes());
 		assertEquals(orig.getTransmittedBytes(), copy.getTransmittedBytes());
 		assertEquals(orig.getJobID(), copy.getJobID());

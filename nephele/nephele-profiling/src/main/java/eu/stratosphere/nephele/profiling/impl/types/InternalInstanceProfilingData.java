@@ -41,29 +41,26 @@ public class InternalInstanceProfilingData implements InternalProfilingData {
 
 	private long totalMemory;
 
-	private long freeMemory;
+	private long stratosphereMemory;
 
-	private long bufferedMemory;
+	private long hdfsMemory;
 
-	private long cachedMemory;
-
-	private long cachedSwapMemory;
+	private long otherMemory;
 
 	private long receivedBytes;
 
 	private long transmittedBytes;
 
 	public InternalInstanceProfilingData() {
-		this.freeMemory = -1;
 		this.ioWaitCPU = -1;
 		this.idleCPU = -1;
 		this.instanceConnectionInfo = new InstanceConnectionInfo();
 		this.profilingInterval = -1;
 		this.systemCPU = -1;
 		this.totalMemory = -1;
-		this.bufferedMemory = -1;
-		this.cachedMemory = -1;
-		this.cachedSwapMemory = -1;
+		this.stratosphereMemory = -1;
+		this.hdfsMemory = -1;
+		this.otherMemory = -1;
 		this.userCPU = -1;
 		this.receivedBytes = -1;
 		this.transmittedBytes = -1;
@@ -73,21 +70,16 @@ public class InternalInstanceProfilingData implements InternalProfilingData {
 
 		this.instanceConnectionInfo = instanceConnectionInfo;
 		this.profilingInterval = profilingInterval;
-		this.freeMemory = -1;
 		this.ioWaitCPU = -1;
 		this.idleCPU = -1;
 		this.systemCPU = -1;
 		this.totalMemory = -1;
-		this.bufferedMemory = -1;
-		this.cachedMemory = -1;
-		this.cachedSwapMemory = -1;
+		this.stratosphereMemory = -1;
+		this.hdfsMemory = -1;
+		this.otherMemory = -1;
 		this.userCPU = -1;
 		this.receivedBytes = -1;
 		this.transmittedBytes = -1;
-	}
-
-	public long getFreeMemory() {
-		return this.freeMemory;
 	}
 
 	public int getIOWaitCPU() {
@@ -122,16 +114,16 @@ public class InternalInstanceProfilingData implements InternalProfilingData {
 		return this.totalMemory;
 	}
 
-	public long getBufferedMemory() {
-		return this.bufferedMemory;
+	public long getStratosphereMemory() {
+		return this.stratosphereMemory;
 	}
 
-	public long getCachedMemory() {
-		return this.cachedMemory;
+	public long getHDFSMemory() {
+		return this.hdfsMemory;
 	}
 
-	public long getCachedSwapMemory() {
-		return this.cachedSwapMemory;
+	public long getOtherMemory() {
+		return this.otherMemory;
 	}
 
 	public int getUserCPU() {
@@ -149,16 +141,15 @@ public class InternalInstanceProfilingData implements InternalProfilingData {
 	@Override
 	public void read(DataInput in) throws IOException {
 
-		this.freeMemory = in.readLong();
 		this.ioWaitCPU = in.readInt();
 		this.idleCPU = in.readInt();
 		this.instanceConnectionInfo.read(in);
 		this.profilingInterval = in.readInt();
 		this.systemCPU = in.readInt();
 		this.totalMemory = in.readLong();
-		this.bufferedMemory = in.readLong();
-		this.cachedMemory = in.readLong();
-		this.cachedSwapMemory = in.readLong();
+		this.stratosphereMemory = in.readLong();
+		this.hdfsMemory = in.readLong();
+		this.otherMemory = in.readLong();
 		this.userCPU = in.readInt();
 		this.receivedBytes = in.readLong();
 		this.transmittedBytes = in.readLong();
@@ -170,26 +161,21 @@ public class InternalInstanceProfilingData implements InternalProfilingData {
 	@Override
 	public void write(DataOutput out) throws IOException {
 
-		out.writeLong(this.freeMemory);
 		out.writeInt(this.ioWaitCPU);
 		out.writeInt(this.idleCPU);
 		this.instanceConnectionInfo.write(out);
 		out.writeInt(this.profilingInterval);
 		out.writeInt(this.systemCPU);
 		out.writeLong(this.totalMemory);
-		out.writeLong(this.bufferedMemory);
-		out.writeLong(this.cachedMemory);
-		out.writeLong(this.cachedSwapMemory);
+		out.writeLong(this.stratosphereMemory);
+		out.writeLong(this.hdfsMemory);
+		out.writeLong(this.otherMemory);
 		out.writeInt(this.userCPU);
 		out.writeLong(this.receivedBytes);
 		out.writeLong(this.transmittedBytes);
 		out.writeInt(this.hardIrqCPU);
 		out.writeInt(this.softIrqCPU);
 
-	}
-
-	public void setFreeMemory(long freeMemory) {
-		this.freeMemory = freeMemory;
 	}
 
 	public void setIoWaitCPU(int ioWaitCPU) {
@@ -216,16 +202,16 @@ public class InternalInstanceProfilingData implements InternalProfilingData {
 		this.totalMemory = totalMemory;
 	}
 
-	public void setBufferedMemory(long bufferedMemory) {
-		this.bufferedMemory = bufferedMemory;
+	public void setStratosphereMemory(long stratosphereMemory) {
+		this.stratosphereMemory = stratosphereMemory;
 	}
 
-	public void setCachedMemory(long cachedMemory) {
-		this.cachedMemory = cachedMemory;
+	public void setHDFSMemory(long hdfsMemory) {
+		this.hdfsMemory = hdfsMemory;
 	}
 
-	public void setCachedSwapMemory(long cachedSwapMemory) {
-		this.cachedSwapMemory = cachedSwapMemory;
+	public void setOtherMemory(long otherMemory) {
+		this.otherMemory = otherMemory;
 	}
 
 	public void setUserCPU(int userCPU) {

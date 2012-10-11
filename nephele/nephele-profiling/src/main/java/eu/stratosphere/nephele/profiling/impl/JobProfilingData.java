@@ -87,7 +87,7 @@ public class JobProfilingData {
 			for (int i = 0; i < groupVertex.getCurrentNumberOfGroupMembers(); i++) {
 				final ExecutionVertex executionVertex = groupVertex.getGroupMember(i);
 				final AbstractInstance instance = executionVertex.getAllocatedResource().getInstance();
-				if(!(instance instanceof DummyInstance)) {
+				if (!(instance instanceof DummyInstance)) {
 					tempSet.add(instance);
 				}
 			}
@@ -110,11 +110,10 @@ public class JobProfilingData {
 		final Iterator<InstanceConnectionInfo> instanceIterator = this.collectedInstanceProfilingData.keySet()
 			.iterator();
 
-		long freeMemorySum = 0;
 		long totalMemorySum = 0;
-		long bufferedMemorySum = 0;
-		long cachedMemorySum = 0;
-		long cachedSwapMemorySum = 0;
+		long stratosphereMemorySum = 0;
+		long hdfsMemorySum = 0;
+		long otherMemorySum = 0;
 
 		int ioWaitCPUSum = 0;
 		int idleCPUSum = 0;
@@ -133,7 +132,6 @@ public class JobProfilingData {
 			final InternalInstanceProfilingData profilingData = this.collectedInstanceProfilingData
 				.get(instanceIterator.next());
 
-			freeMemorySum += profilingData.getFreeMemory();
 			ioWaitCPUSum += profilingData.getIOWaitCPU();
 			idleCPUSum += profilingData.getIdleCPU();
 			profilingIntervalSum += profilingData.getProfilingInterval();
@@ -144,19 +142,18 @@ public class JobProfilingData {
 			userCPUSum += profilingData.getUserCPU();
 			receivedBytesSum += profilingData.getReceivedBytes();
 			transmittedBytesSum += profilingData.getTransmittedBytes();
-			bufferedMemorySum += profilingData.getBufferedMemory();
-			cachedMemorySum += profilingData.getCachedMemory();
-			cachedSwapMemorySum += profilingData.getCachedSwapMemory();
+			stratosphereMemorySum += profilingData.getStratosphereMemory();
+			hdfsMemorySum += profilingData.getHDFSMemory();
+			otherMemorySum += profilingData.getOtherMemory();
 		}
 
 		final InstanceSummaryProfilingEvent instanceSummary = new InstanceSummaryProfilingEvent(profilingIntervalSum
 			/ numberOfInstances, ioWaitCPUSum / numberOfInstances, idleCPUSum / numberOfInstances, userCPUSum
 			/ numberOfInstances, systemCPUSum / numberOfInstances, hardIrqCPUSum / numberOfInstances, softIrqCPUSum
-			/ numberOfInstances, totalMemorySum / (long) numberOfInstances, freeMemorySum / (long) numberOfInstances,
-			bufferedMemorySum / (long) numberOfInstances, cachedMemorySum / (long) numberOfInstances,
-			cachedSwapMemorySum / (long) numberOfInstances, receivedBytesSum / (long) numberOfInstances,
-			transmittedBytesSum / (long) numberOfInstances, this.executionGraph.getJobID(), timestamp,
-			(timestamp - this.profilingStart));
+			/ numberOfInstances, totalMemorySum / (long) numberOfInstances, stratosphereMemorySum
+			/ (long) numberOfInstances, hdfsMemorySum / (long) numberOfInstances, otherMemorySum
+			/ (long) numberOfInstances, receivedBytesSum / (long) numberOfInstances, transmittedBytesSum
+			/ (long) numberOfInstances, this.executionGraph.getJobID(), timestamp, (timestamp - this.profilingStart));
 
 		this.collectedInstanceProfilingData.clear();
 

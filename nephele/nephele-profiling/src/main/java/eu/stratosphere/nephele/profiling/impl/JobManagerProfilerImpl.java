@@ -69,7 +69,7 @@ public class JobManagerProfilerImpl implements JobManagerProfiler, ProfilerImplP
 		final int handlerCount = GlobalConfiguration.getInteger(RPC_NUM_HANDLER_KEY, DEFAULT_NUM_HANLDER);
 		final int rpcPort = GlobalConfiguration.getInteger(ProfilingUtils.JOBMANAGER_RPC_PORT_KEY,
 			ProfilingUtils.JOBMANAGER_DEFAULT_RPC_PORT);
-		
+
 		final InetSocketAddress rpcServerAddress = new InetSocketAddress(jobManagerbindAddress, rpcPort);
 		Server profilingServerTmp = null;
 		try {
@@ -162,10 +162,11 @@ public class JobManagerProfilerImpl implements JobManagerProfiler, ProfilerImplP
 				final SingleInstanceProfilingEvent singleInstanceProfilingEvent = new SingleInstanceProfilingEvent(
 					profilingData.getProfilingInterval(), profilingData.getIOWaitCPU(), profilingData.getIdleCPU(),
 					profilingData.getUserCPU(), profilingData.getSystemCPU(), profilingData.getHardIrqCPU(),
-					profilingData.getSoftIrqCPU(), profilingData.getTotalMemory(), profilingData.getFreeMemory(),
-					profilingData.getBufferedMemory(), profilingData.getCachedMemory(), profilingData
-						.getCachedSwapMemory(), profilingData.getReceivedBytes(), profilingData.getTransmittedBytes(),
-					jobID, timestamp, timestamp - jobProfilingData.getProfilingStart(), profilingData
+					profilingData.getSoftIrqCPU(), profilingData.getTotalMemory(),
+					profilingData.getStratosphereMemory(), profilingData.getHDFSMemory(),
+					profilingData.getOtherMemory(), profilingData.getReceivedBytes(),
+					profilingData.getTransmittedBytes(), jobID, timestamp, timestamp
+						- jobProfilingData.getProfilingStart(), profilingData
 						.getInstanceConnectionInfo().toString());
 
 				synchronized (this.registeredListeners) {

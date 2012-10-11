@@ -603,6 +603,8 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		final int amountToRelinquish = this.freeSegments.relinquishMemory(this.minimumRequestSize,
 			this.initiallyAvailableMemory);
 
+		System.out.println("____________________________ Relinquish " + amountToRelinquish);
+		
 		if (amountToRelinquish > 0) {
 			try {
 				this.memoryNegiatorDaemon.relinquishMemory(this.pid, amountToRelinquish);
