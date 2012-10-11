@@ -27,6 +27,12 @@
       <version>1.2</version>
     </dependency>
 
+    <dependency>
+      <groupId>edu.berkeley.icsi</groupId>
+      <artifactId>memngt-common</artifactId>
+      <version>0.1</version>
+    </dependency>
+
   </dependencies>
 
   <build>
