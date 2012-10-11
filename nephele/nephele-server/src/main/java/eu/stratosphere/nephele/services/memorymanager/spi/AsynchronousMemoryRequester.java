@@ -83,6 +83,7 @@ class AsynchronousMemoryRequester implements Runnable {
 
 			synchronized (this) {
 				this.amountOfMemoryToRequest = -1;
+				notifyAll();
 			}
 		}
 	}
@@ -94,7 +95,7 @@ class AsynchronousMemoryRequester implements Runnable {
 		}
 
 		synchronized (this) {
-			notify();
+			notifyAll();
 		}
 
 		this.thread.interrupt();
@@ -114,7 +115,16 @@ class AsynchronousMemoryRequester implements Runnable {
 				return;
 			}
 			this.amountOfMemoryToRequest = amountOfMemoryToRequest;
-			notify();
+			notifyAll();
+		}
+	}
+
+	public void waitForMemoryRequestToFinish() throws InterruptedException {
+
+		synchronized (this) {
+			while (this.amountOfMemoryToRequest > 0) {
+				wait();
+			}
 		}
 	}
 }

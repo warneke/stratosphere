@@ -211,7 +211,15 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 						}
 						if (bytesUntilSpilling - buffer.getOccupancy() <= 0) {
 
-							bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+							try {
+								bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+							} catch (InterruptedException ie) {
+								if (isRunning()) {
+									LOG.error("Reading thread was interrupted (without being shut down) while requesting additional buffer");
+								} else {
+									return;
+								}
+							}
 							if (bytesUntilSpilling < 0L) {
 								bytesUntilSpilling = 0L;
 
@@ -234,7 +242,15 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 							bytesUntilSpilling -= buffer.getCapacity();
 							if (bytesUntilSpilling <= 0L) {
 
-								bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+								try {
+									bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+								} catch (InterruptedException ie) {
+									if (isRunning()) {
+										LOG.error("Reading thread was interrupted (without being shut down) while requesting additional buffer");
+									} else {
+										return;
+									}
+								}
 								if (bytesUntilSpilling < 0L) {
 									bytesUntilSpilling = 0L;
 									// send the spilling marker
@@ -260,7 +276,15 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 					bytesUntilSpilling -= buffer.getCapacity();
 					if (bytesUntilSpilling <= 0L) {
 
-						bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+						try {
+							bytesUntilSpilling = requestMoreMemory(bytesUntilSpilling);
+						} catch (InterruptedException ie) {
+							if (isRunning()) {
+								LOG.error("Reading thread was interrupted (without being shut down) while requesting additional buffer");
+							} else {
+								return;
+							}
+						}
 						if (bytesUntilSpilling < 0L) {
 							bytesUntilSpilling = 0L;
 							// send the spilling marker
@@ -316,7 +340,7 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 			System.out.println("Reader finished with " + this.totalMemory);
 		}
 
-		private long requestMoreMemory(long bytesUntilSpilling) {
+		private long requestMoreMemory(long bytesUntilSpilling) throws InterruptedException {
 
 			System.out.println("Old value for bytes until spilling: " + bytesUntilSpilling);
 
@@ -344,7 +368,7 @@ public class DynamicUnilateralSortMerger<E> extends UnilateralSortMerger<E> {
 		}
 	}
 
-	private CircularElement<E> requestMoreMemory(final int numberOfSegments) {
+	private CircularElement<E> requestMoreMemory(final int numberOfSegments) throws InterruptedException {
 
 		final ArrayList<MemorySegment> newSegments = new ArrayList<MemorySegment>(numberOfSegments);
 

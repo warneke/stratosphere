@@ -62,7 +62,7 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	/**
 	 * The default value for the low memory notification threshold in kilobytes.
 	 */
-	public static final int DEFAULT_LOW_MEMORY_THRESHOLD = 256 * 1024;
+	public static final int DEFAULT_LOW_MEMORY_THRESHOLD = 128 * 1024;
 
 	/**
 	 * The Log.
@@ -507,7 +507,7 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	 */
 	@Override
 	public void allocateAdditionalPages(final AbstractInvokable owner, final List<MemorySegment> target,
-			final int numPages) throws MemoryAllocationException {
+			final int numPages) throws MemoryAllocationException, InterruptedException {
 
 		// sanity check
 		if (owner == null) {
@@ -525,50 +525,35 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 			throw new IllegalStateException("Memory manager has been shut down.");
 		}
 
-		if (numPages <= this.freeSegments.size()) {
+		while (true) {
 
-			final Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
-			if (segmentsForOwner == null) {
-				throw new IllegalStateException("No segmentsForOwner data structure found");
+			if (numPages <= this.freeSegments.size()) {
+
+				final Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
+				if (segmentsForOwner == null) {
+					throw new IllegalStateException("No segmentsForOwner data structure found");
+				}
+
+				for (int i = 0; i < numPages; ++i) {
+					final byte[] buffer = this.freeSegments.requestBuffer();
+					final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
+					target.add(segment);
+					segmentsForOwner.add(segment);
+				}
+				return;
+
 			}
 
-			for (int i = 0; i < numPages; ++i) {
-				final byte[] buffer = this.freeSegments.requestBuffer();
-				final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
-				target.add(segment);
-				segmentsForOwner.add(segment);
-			}
-			return;
+			// Check with memory negotiator daemon if we are allowed to allocated additional memory
+			final int oldGrantedMemory = this.freeSegments.getGrantedMemorySize();
+			this.asynchMemoryRequester.requestAdditionalMemory(this.minimumRequestSize);
+			this.asynchMemoryRequester.waitForMemoryRequestToFinish();
 
+			// The allocation did not succeed
+			if (oldGrantedMemory <= this.freeSegments.getGrantedMemorySize()) {
+				break;
+			}
 		}
-
-		// Check with memory negotiator daemon if we are allowed to allocated additional memory
-		/**
-		 * final int amountOfAdditionallyRequestedMemory = calculateAdditionalAmountOfMemoryToRequest(numPages);
-		 * if (LOG.isInfoEnabled()) {
-		 * LOG.info("Requesting " + amountOfAdditionallyRequestedMemory
-		 * + " kilobytes of additional memory from memory negotiator daemon");
-		 * }
-		 * try {
-		 * if (!this.memoryNegiatorDaemon.requestAdditionalMemory(this.pid, amountOfAdditionallyRequestedMemory)) {
-		 * LOG.info("Memory negotiator daemon turned request down");
-		 * break;
-		 * }
-		 * } catch (NegotiationException ne) {
-		 * LOG.warn(StringUtils.stringifyException(ne));
-		 * break;
-		 * } catch (IOException ioe) {
-		 * LOG.error(StringUtils.stringifyException(ioe));
-		 * break;
-		 * }
-		 * synchronized (this) {
-		 * System.out.println("Adding " + amountOfAdditionallyRequestedMemory);
-		 * this.freeSegments.setGrantedMemorySize(this.freeSegments.getGrantedMemorySize()
-		 * + amountOfAdditionallyRequestedMemory);
-		 * this.freeSegments.adjust();
-		 * }
-		 * }
-		 **/
 
 		throw new MemoryAllocationException("Could not allocate " + numPages + " pages. Only " +
 			this.freeSegments.size() + " pages are remaining.");
