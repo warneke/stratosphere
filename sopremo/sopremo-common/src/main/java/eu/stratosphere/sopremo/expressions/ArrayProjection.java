@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -50,19 +49,19 @@ public class ArrayProjection extends EvaluationExpression implements ExpressionP
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		if (!(node instanceof IArrayNode)) {
 			// virtual projection
 			final PullingStreamArrayNode targetArray = SopremoUtil.ensureType(target, PullingStreamArrayNode.class);
 			targetArray.setSource((IStreamArrayNode) node);
-			targetArray.setExpressionAndContext(this.expression, context);
+			targetArray.setExpressionAndContext(this.expression);
 			return targetArray;
 		}
 		// materialized projection
 		final IArrayNode array = (IArrayNode) node;
 		final IArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
 		for (int index = 0, size = array.size(); index < size; index++)
-			targetArray.add(this.expression.evaluate(array.get(index), targetArray.get(index), context));
+			targetArray.add(this.expression.evaluate(array.get(index), targetArray.get(index)));
 
 		return targetArray;
 	}
@@ -87,10 +86,10 @@ public class ArrayProjection extends EvaluationExpression implements ExpressionP
 	}
 
 	@Override
-	public IJsonNode set(final IJsonNode node, final IJsonNode value, final EvaluationContext context) {
+	public IJsonNode set(final IJsonNode node, final IJsonNode value) {
 		final IArrayNode arrayNode = (ArrayNode) node;
 		for (int index = 0, size = arrayNode.size(); index < size; index++)
-			arrayNode.set(index, this.expression.set(arrayNode.get(index), value, context));
+			arrayNode.set(index, this.expression.set(arrayNode.get(index), value));
 		return arrayNode;
 	}
 

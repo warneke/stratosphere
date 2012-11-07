@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -67,8 +66,8 @@ public class CoerceExpression extends EvaluationExpression implements Expression
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		return TypeCoercer.INSTANCE.coerce(this.valueExpression.evaluate(node, context), target, this.targetType);
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+		return TypeCoercer.INSTANCE.coerce(this.valueExpression.evaluate(node), target, this.targetType);
 	}
 
 	@Override

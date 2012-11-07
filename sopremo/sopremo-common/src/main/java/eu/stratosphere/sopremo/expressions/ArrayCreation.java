@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.ListChildIterator;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -64,11 +63,11 @@ public class ArrayCreation extends EvaluationExpression implements ExpressionPar
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		final IArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
 
 		for (int index = 0; index < this.elements.size(); index++)
-			targetArray.add(this.elements.get(index).evaluate(node, targetArray.get(index), context));
+			targetArray.add(this.elements.get(index).evaluate(node, targetArray.get(index)));
 
 		return targetArray;
 	}

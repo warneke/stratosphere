@@ -30,7 +30,7 @@ public class ObjectCreationTest extends EvaluableExpressionTest<ObjectCreation> 
 	public void shouldCreateObjectAsIntended() {
 		final IJsonNode result = new ObjectCreation(new ObjectCreation.FieldAssignment("name", new ConstantExpression(
 			TextNode.valueOf("testperson"))), new ObjectCreation.FieldAssignment("age", new ConstantExpression(
-			IntNode.valueOf(30)))).evaluate(IntNode.valueOf(0), null, this.context);
+			IntNode.valueOf(30)))).evaluate(IntNode.valueOf(0), null);
 
 		Assert.assertEquals(createObjectNode("name", "testperson", "age", 30), result);
 	}
@@ -56,7 +56,7 @@ public class ObjectCreationTest extends EvaluableExpressionTest<ObjectCreation> 
 
 		object.addMapping("birthday", new ConstantExpression(TextNode.valueOf("01.01.2000")));
 
-		final IJsonNode result = object.evaluate(IntNode.valueOf(0), null, this.context);
+		final IJsonNode result = object.evaluate(IntNode.valueOf(0), null);
 
 		Assert.assertEquals(createObjectNode("name", "testperson", "age", 30, "birthday", "01.01.2000"), result);
 	}
@@ -67,8 +67,8 @@ public class ObjectCreationTest extends EvaluableExpressionTest<ObjectCreation> 
 			new InputSelection(0));
 		final ObjectNode result = createObjectNode("fieldname", "test");
 
-		mapping.evaluate(createArrayNode("1", "2"), result, this.context);
-		mapping.evaluate(createArrayNode("3", "4"), result, this.context);
+		mapping.evaluate(createArrayNode("1", "2"), result);
+		mapping.evaluate(createArrayNode("3", "4"), result);
 
 		Assert.assertEquals(createObjectNode("fieldname", "test", "testname", "3"), result);
 	}
@@ -82,7 +82,7 @@ public class ObjectCreationTest extends EvaluableExpressionTest<ObjectCreation> 
 				TextNode.valueOf("testperson"))), new ObjectCreation.FieldAssignment("age", new ConstantExpression(
 			IntNode.valueOf(30))));
 
-		final IJsonNode result = object.evaluate(IntNode.valueOf(0), target, this.context);
+		final IJsonNode result = object.evaluate(IntNode.valueOf(0), target);
 
 		Assert.assertSame(target, result);
 	}
@@ -96,7 +96,7 @@ public class ObjectCreationTest extends EvaluableExpressionTest<ObjectCreation> 
 				TextNode.valueOf("testperson"))), new ObjectCreation.FieldAssignment("age", new ConstantExpression(
 			IntNode.valueOf(30))));
 
-		final IJsonNode result = object.evaluate(IntNode.valueOf(0), target, this.context);
+		final IJsonNode result = object.evaluate(IntNode.valueOf(0), target);
 
 		Assert.assertNotSame(target, result);
 	}

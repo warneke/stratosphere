@@ -182,7 +182,7 @@ public class JsonToCsv {
 			if (this.extractionExpressions.isEmpty())
 				this.discoverEntries(this.node, new LinkedList<EvaluationExpression>());
 			for (final EvaluationExpression expr : this.extractionExpressions)
-				string.append(expr.evaluate(this.node, null, this.context)).append(this.separator);
+				string.append(expr.evaluate(this.node, null)).append(this.separator);
 
 			string.setLength(string.length() - 1);
 			this.resultString.setValue(string.toString());

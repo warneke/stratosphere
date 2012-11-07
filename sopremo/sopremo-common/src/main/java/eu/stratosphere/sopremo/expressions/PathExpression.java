@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.ListChildIterator;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -91,12 +90,12 @@ public class PathExpression extends EvaluationExpression implements ExpressionPa
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		IJsonNode fragmentNode = node;
 		for (int index = 0; index < this.fragments.size(); index++)
 			this.fragmentTargets.set(index,
 				fragmentNode =
-					this.fragments.get(index).evaluate(fragmentNode, this.fragmentTargets.get(index), context));
+					this.fragments.get(index).evaluate(fragmentNode, this.fragmentTargets.get(index)));
 		return fragmentNode;
 	}
 
@@ -254,12 +253,12 @@ public class PathExpression extends EvaluationExpression implements ExpressionPa
 	}
 
 	@Override
-	public IJsonNode set(final IJsonNode node, final IJsonNode value, final EvaluationContext context) {
+	public IJsonNode set(final IJsonNode node, final IJsonNode value) {
 		IJsonNode fragmentNode = node;
 		final List<EvaluationExpression> fragments = this.getFragments();
 		for (int index = 0; index < fragments.size() - 1; index++)
-			fragmentNode = fragments.get(index).evaluate(fragmentNode, null, context);
-		fragments.get(fragments.size() - 1).set(node, value, context);
+			fragmentNode = fragments.get(index).evaluate(fragmentNode, null);
+		fragments.get(fragments.size() - 1).set(node, value);
 		return node;
 	}
 

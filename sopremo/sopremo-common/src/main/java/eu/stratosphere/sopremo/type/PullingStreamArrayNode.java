@@ -17,7 +17,6 @@ package eu.stratosphere.sopremo.type;
 import java.util.Collections;
 import java.util.Iterator;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.util.ConversionIterator;
@@ -35,8 +34,6 @@ public class PullingStreamArrayNode extends StreamArrayNode {
 	private Iterator<IJsonNode> source;
 
 	private CachingExpression<IJsonNode> expression = CachingExpression.ofAny(null);
-
-	private EvaluationContext context;
 
 	@SuppressWarnings("unchecked")
 	private Iterator<IJsonNode> iterator = Collections.EMPTY_SET.iterator();
@@ -66,7 +63,7 @@ public class PullingStreamArrayNode extends StreamArrayNode {
 		this.iterator = new ConversionIterator<IJsonNode, IJsonNode>(this.source) {
 			@Override
 			protected IJsonNode convert(IJsonNode inputObject) {
-				return PullingStreamArrayNode.this.expression.evaluate(inputObject, inputObject, PullingStreamArrayNode.this.context);
+				return PullingStreamArrayNode.this.expression.evaluate(inputObject, inputObject);
 			}
 		};
 	}
@@ -76,8 +73,7 @@ public class PullingStreamArrayNode extends StreamArrayNode {
 		return this.iterator;
 	}
 
-	public void setExpressionAndContext(EvaluationExpression expression, EvaluationContext context) {
+	public void setExpressionAndContext(EvaluationExpression expression) {
 		this.expression.setInnerExpression(expression);
-		this.context = context;
 	}
 }

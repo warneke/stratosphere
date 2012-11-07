@@ -40,7 +40,7 @@ public class ArrayCreationTest extends EvaluableExpressionTest<ArrayCreation> {
 		list.add(new ConstantExpression(IntNode.valueOf(0)));
 		list.add(EvaluationExpression.VALUE);
 
-		final IJsonNode result = new ArrayCreation(list).evaluate(IntNode.valueOf(42), null, this.context);
+		final IJsonNode result = new ArrayCreation(list).evaluate(IntNode.valueOf(42), null);
 
 		Assert.assertEquals(createArrayNode(IntNode.valueOf(0), IntNode.valueOf(42)), result);
 	}
@@ -50,7 +50,7 @@ public class ArrayCreationTest extends EvaluableExpressionTest<ArrayCreation> {
 		final IJsonNode target = new ArrayNode();
 		final IJsonNode result = new ArrayCreation(new ConstantExpression(IntNode.valueOf(42))).evaluate(
 			IntNode.valueOf(42),
-			target, this.context);
+			target);
 
 		Assert.assertEquals(new ArrayNode(IntNode.valueOf(42)), result);
 		Assert.assertSame(target, result);
@@ -61,7 +61,7 @@ public class ArrayCreationTest extends EvaluableExpressionTest<ArrayCreation> {
 		final IJsonNode target = new ObjectNode();
 		final IJsonNode result = new ArrayCreation(new ConstantExpression(IntNode.valueOf(42))).evaluate(
 			IntNode.valueOf(42),
-			target, this.context);
+			target);
 
 		Assert.assertEquals(new ArrayNode(IntNode.valueOf(42)), result);
 		Assert.assertNotSame(target, result);

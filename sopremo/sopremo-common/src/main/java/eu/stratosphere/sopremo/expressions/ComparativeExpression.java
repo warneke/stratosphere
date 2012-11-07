@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.AbstractNumericNode;
@@ -66,10 +65,10 @@ public class ComparativeExpression extends BinaryBooleanExpression implements Ex
 	// return binaryOperator.evaluate(expr1.evaluate(input), expr2.evaluate(input));
 	// }
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		// // we can ignore 'target' because no new Object is created
-		return BooleanNode.valueOf(this.binaryOperator.evaluate(this.expr1.evaluate(node, null, context),
-			this.expr2.evaluate(node, null, context)));
+		return BooleanNode.valueOf(this.binaryOperator.evaluate(this.expr1.evaluate(node, null),
+			this.expr2.evaluate(node, null)));
 	}
 
 

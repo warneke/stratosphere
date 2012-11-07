@@ -46,7 +46,7 @@ public class ThetaJoin extends TwoSourceJoinBase<ThetaJoin> {
 		protected void cross(IJsonNode value1, IJsonNode value2, JsonCollector out) {
 			this.inputs.set(0, value1);
 			this.inputs.set(1, value2);
-			if (this.comparison.evaluate(this.inputs, this.getContext()) == BooleanNode.TRUE)
+			if (this.comparison.evaluate(this.inputs) == BooleanNode.TRUE)
 				out.collect(this.inputs);
 		}
 	}

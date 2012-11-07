@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
@@ -20,7 +19,7 @@ public class ArrayMerger extends EvaluationExpression {
 	private static final long serialVersionUID = -6884623565349727369L;
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		final ArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
 
 		for (final IJsonNode nextNode : (IArrayNode) node)

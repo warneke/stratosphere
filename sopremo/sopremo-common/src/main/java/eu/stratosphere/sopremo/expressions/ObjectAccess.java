@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
@@ -71,7 +70,7 @@ public class ObjectAccess extends EvaluationExpression {
 	 * {@link NullNode} if no such value exists.
 	 */
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		if (!node.isObject()) {
 			if (node.isNull() && this.safeDereference)
 				return node;
@@ -90,7 +89,7 @@ public class ObjectAccess extends EvaluationExpression {
 	}
 
 	@Override
-	public IJsonNode set(final IJsonNode node, final IJsonNode value, final EvaluationContext context) {
+	public IJsonNode set(final IJsonNode node, final IJsonNode value) {
 		if (!node.isObject())
 			throw new EvaluationException("Cannot access field of non-object " + node.getClass().getSimpleName());
 		((IObjectNode) node).put(this.field, value);

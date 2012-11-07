@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 import eu.stratosphere.sopremo.AbstractSopremoType;
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
@@ -37,7 +36,7 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		private static final long serialVersionUID = 5274811723343043990L;
 
 		@Override
-		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 			final ObjectNode targetObject = SopremoUtil.reinitializeTarget(target, ObjectNode.class);
 			for (final IJsonNode jsonNode : (IArrayNode) node)
 				if (!jsonNode.isNull())
@@ -127,10 +126,10 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		final ObjectNode targetObject = SopremoUtil.reinitializeTarget(target, ObjectNode.class);
 		for (final Mapping<?> mapping : this.mappings)
-			mapping.evaluate(node, targetObject, context);
+			mapping.evaluate(node, targetObject);
 		return targetObject;
 	}
 
@@ -347,8 +346,8 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		}
 
 		@Override
-		protected void evaluate(final IJsonNode node, final IObjectNode target, final EvaluationContext context) {
-			final IJsonNode exprNode = this.getExpression().evaluate(node, null, context);
+		protected void evaluate(final IJsonNode node, final IObjectNode target) {
+			final IJsonNode exprNode = this.getExpression().evaluate(node, null);
 			target.putAll((IObjectNode) exprNode);
 		}
 
@@ -378,8 +377,8 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		private static final long serialVersionUID = -4873817871983692783L;
 
 		@Override
-		protected void evaluate(final IJsonNode node, final IObjectNode target, final EvaluationContext context) {
-			final IJsonNode value = this.expression.evaluate(node, target.get(this.target), context);
+		protected void evaluate(final IJsonNode node, final IObjectNode target) {
+			final IJsonNode value = this.expression.evaluate(node, target.get(this.target));
 			// if (!value.isNull())
 			target.put(this.target, value);
 		}
@@ -408,7 +407,7 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
 		 */
 		@Override
-		protected void evaluate(final IJsonNode node, final IObjectNode target, final EvaluationContext context) {
+		protected void evaluate(final IJsonNode node, final IObjectNode target) {
 			throw new EvaluationException("Only tag mapping");
 		}
 	}
@@ -438,9 +437,9 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		private IJsonNode lastResult;
 
 		@Override
-		protected void evaluate(final IJsonNode node, final IObjectNode target, final EvaluationContext context) {
-			this.lastResult = this.expression.evaluate(node, this.lastResult, context);
-			this.target.set(target, this.lastResult, context);
+		protected void evaluate(final IJsonNode node, final IObjectNode target) {
+			this.lastResult = this.expression.evaluate(node, this.lastResult);
+			this.target.set(target, this.lastResult);
 		}
 	}
 
@@ -509,8 +508,7 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 			return this.target.equals(other.target) && this.expression.equals(other.expression);
 		}
 
-		protected abstract void evaluate(IJsonNode node, IObjectNode target,
-				final EvaluationContext context);
+		protected abstract void evaluate(IJsonNode node, IObjectNode target);
 
 		/**
 		 * Returns the expression

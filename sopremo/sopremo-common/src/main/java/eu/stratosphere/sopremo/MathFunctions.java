@@ -12,19 +12,22 @@
  * specific language governing permissions and limitations under the License.
  *
  **********************************************************************************************************************/
-package eu.stratosphere.sopremo.function;
+package eu.stratosphere.sopremo;
 
-import eu.stratosphere.sopremo.AbstractSopremoType;
-import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
+import eu.stratosphere.sopremo.packages.BuiltinProvider;
+import eu.stratosphere.sopremo.type.DoubleNode;
+import eu.stratosphere.sopremo.type.INumericNode;
 
 /**
  * @author Arvid Heise
  */
-public abstract class Callable<Result, InputType> extends AbstractSopremoType implements ISerializableSopremoType {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 7623937906556576557L;
-
-	public abstract Result call(InputType params, Result target);
+public class MathFunctions implements BuiltinProvider {
+	public void sqrt(DoubleNode result, INumericNode input) {
+		result.setValue(Math.sqrt(input.getDoubleValue()));
+	}
+	
+	public INumericNode sqr(INumericNode result, INumericNode input) {
+		return ArithmeticExpression.ArithmeticOperator.MULTIPLICATION.evaluate(input, input, result);
+	}
 }

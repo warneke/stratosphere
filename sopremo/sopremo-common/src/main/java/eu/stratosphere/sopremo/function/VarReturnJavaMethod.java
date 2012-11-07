@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.function;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -25,7 +24,7 @@ public class VarReturnJavaMethod extends JavaMethod {
 	 * @see eu.stratosphere.sopremo.function.Callable#call(InputType[], eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public IJsonNode call(final IArrayNode params, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode call(final IArrayNode params, final IJsonNode target) {
 		try {
 			return this.method.invoke(null, addTargetToParameters(params, target));
 		} catch (Exception e) {

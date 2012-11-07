@@ -6,7 +6,6 @@ import java.math.MathContext;
 import java.util.EnumMap;
 import java.util.Map;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -122,9 +121,9 @@ public class ArithmeticExpression extends EvaluationExpression implements Expres
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		this.lastFirstValue = this.firstOperand.evaluate(node, this.lastFirstValue, context);
-		this.lastSecondValue = this.secondOperand.evaluate(node, this.lastSecondValue, context);
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+		this.lastFirstValue = this.firstOperand.evaluate(node, this.lastFirstValue);
+		this.lastSecondValue = this.secondOperand.evaluate(node, this.lastSecondValue);
 		return this.operator.evaluate((INumericNode) this.lastFirstValue, (INumericNode) this.lastSecondValue, target);
 	}
 

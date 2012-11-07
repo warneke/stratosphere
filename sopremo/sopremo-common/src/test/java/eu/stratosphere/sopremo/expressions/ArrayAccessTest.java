@@ -22,7 +22,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);
@@ -33,7 +33,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 		final IJsonNode result = new ArrayAccess(1).evaluate(
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createObjectNode("fieldName", 2), result);
 	}
 
@@ -42,7 +42,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 		final IJsonNode result = new ArrayAccess(-1).evaluate(
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createObjectNode("fieldName", 3), result);
 	}
 
@@ -52,7 +52,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3), createObjectNode("fieldName", 4)), result);
 	}
@@ -63,7 +63,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);
@@ -75,7 +75,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);
 	}
@@ -86,7 +86,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);
 	}
@@ -97,7 +97,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 4), createObjectNode("fieldName", 3),
 			createObjectNode("fieldName", 2)), result);
 	}
@@ -110,7 +110,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			target, this.context);
+			target);
 
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
@@ -123,7 +123,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 		final IJsonNode target = new ObjectNode();
 
 		final IJsonNode result = new ArrayAccess().evaluate(
-			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2)), target, this.context);
+			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2)), target);
 
 		Assert
 			.assertEquals(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2)), result);
@@ -138,7 +138,7 @@ public class ArrayAccessTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)),
-			target, this.context);
+			target);
 
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);

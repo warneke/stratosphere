@@ -12,19 +12,26 @@
  * specific language governing permissions and limitations under the License.
  *
  **********************************************************************************************************************/
-package eu.stratosphere.sopremo.function;
+package eu.stratosphere.sopremo;
 
-import eu.stratosphere.sopremo.AbstractSopremoType;
-import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.function.FunctionPointerNode;
+import eu.stratosphere.sopremo.packages.BuiltinProvider;
+import eu.stratosphere.sopremo.type.CachingArrayNode;
+import eu.stratosphere.sopremo.type.IArrayNode;
+import eu.stratosphere.sopremo.type.IJsonNode;
 
 /**
  * @author Arvid Heise
  */
-public abstract class Callable<Result, InputType> extends AbstractSopremoType implements ISerializableSopremoType {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 7623937906556576557L;
+public class SecondOrderFunctions implements BuiltinProvider {
 
-	public abstract Result call(InputType params, Result target);
+	public static void map(final CachingArrayNode result, final IArrayNode input,
+			final FunctionPointerNode mapExpression) {
+		result.clear();
+		for (IJsonNode node : input) {
+			final IJsonNode reusedNode = result.getUnusedNode();
+			result.add(mapExpression.evaluate(node, reusedNode));
+		}
+	}
+
 }

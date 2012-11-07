@@ -26,7 +26,7 @@ public class ArrayMergerTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5))),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);
@@ -38,7 +38,7 @@ public class ArrayMergerTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)), createArrayNode()),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);
@@ -50,7 +50,7 @@ public class ArrayMergerTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(createArrayNode(null, createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 				createObjectNode("fieldName", 5)), createArrayNode(createObjectNode("fieldName", 1))),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3), createObjectNode("fieldName", 4),
 			createObjectNode("fieldName", 5)), result);
@@ -62,7 +62,7 @@ public class ArrayMergerTest extends EvaluableExpressionTest<ArrayAccess> {
 			createArrayNode(
 				createArrayNode(NullNode.getInstance(), createObjectNode("fieldName", 2),
 					NullNode.getInstance()), createArrayNode(createObjectNode("fieldName", 1)),
-				createArrayNode(null, null, createObjectNode("fieldName", 3))), null, this.context);
+				createArrayNode(null, null, createObjectNode("fieldName", 3))), null);
 		Assert.assertEquals(createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 			createObjectNode("fieldName", 3)), result);
 	}
@@ -74,8 +74,7 @@ public class ArrayMergerTest extends EvaluableExpressionTest<ArrayAccess> {
 		final IArrayNode firstArray = createArrayNode(null, IntNode.valueOf(2), IntNode.valueOf(3));
 		final IArrayNode secondArray = createArrayNode(IntNode.valueOf(1));
 
-		final IJsonNode result = new ArrayMerger().evaluate(createArrayNode(firstArray, secondArray), target,
-			this.context);
+		final IJsonNode result = new ArrayMerger().evaluate(createArrayNode(firstArray, secondArray), target);
 
 		Assert.assertEquals(createArrayNode(IntNode.valueOf(1), IntNode.valueOf(2), IntNode.valueOf(3)), result);
 		Assert.assertSame(target, result);
@@ -88,8 +87,7 @@ public class ArrayMergerTest extends EvaluableExpressionTest<ArrayAccess> {
 		final IArrayNode firstArray = createArrayNode(null, IntNode.valueOf(2), IntNode.valueOf(3));
 		final IArrayNode secondArray = createArrayNode(IntNode.valueOf(1));
 
-		final IJsonNode result = new ArrayMerger().evaluate(createArrayNode(firstArray, secondArray), target,
-			this.context);
+		final IJsonNode result = new ArrayMerger().evaluate(createArrayNode(firstArray, secondArray), target);
 
 		Assert.assertEquals(createArrayNode(IntNode.valueOf(1), IntNode.valueOf(2), IntNode.valueOf(3)), result);
 		Assert.assertNotSame(target, result);

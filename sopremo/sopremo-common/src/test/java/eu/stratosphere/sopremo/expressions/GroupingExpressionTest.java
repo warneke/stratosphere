@@ -32,7 +32,7 @@ public class GroupingExpressionTest extends EvaluableExpressionTest<GroupingExpr
 			new GroupingExpression(new ObjectAccess("key"), new FunctionCall("sum", 
 				this.context, new ArrayProjection(new ObjectAccess("value"))));
 
-		final IJsonNode result = aggExpression.evaluate(input, null, this.context);
+		final IJsonNode result = aggExpression.evaluate(input, null);
 
 		final ArrayNode expected = new ArrayNode();
 		expected.add(createValueNode(23));
@@ -58,7 +58,7 @@ public class GroupingExpressionTest extends EvaluableExpressionTest<GroupingExpr
 			new GroupingExpression(new ObjectAccess("key"), new FunctionCall("sum",
 				this.context, new ArrayProjection(new ObjectAccess("value"))));
 
-		final IJsonNode result = aggExpression.evaluate(input, target, this.context);
+		final IJsonNode result = aggExpression.evaluate(input, target);
 
 		final ArrayNode expected = new ArrayNode();
 		expected.add(createValueNode(23));
@@ -85,7 +85,7 @@ public class GroupingExpressionTest extends EvaluableExpressionTest<GroupingExpr
 			new GroupingExpression(new ObjectAccess("key"), new FunctionCall("sum",
 				this.context, new ArrayProjection(new ObjectAccess("value"))));
 
-		final IJsonNode result = aggExpression.evaluate(input, target, this.context);
+		final IJsonNode result = aggExpression.evaluate(input, target);
 
 		final ArrayNode expected = new ArrayNode();
 		expected.add(createValueNode(23));

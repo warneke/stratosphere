@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.function;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -36,9 +35,9 @@ public class ExpressionFunction extends SopremoFunction implements Inlineable {
 	 * @see eu.stratosphere.sopremo.function.Callable#call(InputType[], eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public IJsonNode call(final IArrayNode params, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode call(final IArrayNode params, final IJsonNode target) {
 		checkParameters(params, this.numParams);
-		return this.definition.evaluate(params, target, context);
+		return this.definition.evaluate(params, target);
 	}
 
 	/*

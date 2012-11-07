@@ -19,7 +19,7 @@ public class InputSelectionTest extends EvaluableExpressionTest<InputSelection> 
 	public void shouldSelectCorrectInput() {
 		final IJsonNode result = new InputSelection(1).evaluate(
 			createArrayNode(IntNode.valueOf(0), IntNode.valueOf(1)),
-			null, this.context);
+			null);
 
 		Assert.assertEquals(IntNode.valueOf(1), result);
 	}

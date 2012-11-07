@@ -8,6 +8,7 @@ import java.util.List;
 
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
+import eu.stratosphere.sopremo.SopremoRuntime;
 import eu.stratosphere.sopremo.aggregation.Aggregation;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.ArrayNode;
@@ -36,6 +37,8 @@ public class BatchAggregationExpression extends EvaluationExpression {
 
 	private transient IArrayNode results;
 
+	private transient EvaluationContext context;
+
 	/**
 	 * Initializes a BatchAggregationExpression with the given {@link AggregationFunction}s.
 	 * 
@@ -58,6 +61,7 @@ public class BatchAggregationExpression extends EvaluationExpression {
 			this.partials.add(new Partial(function, EvaluationExpression.VALUE, this.partials.size()));
 		CollectionUtil.ensureSize(this.lastPreprocessingResults, this.partials.size());
 		CollectionUtil.ensureSize(this.lastAggregators, this.partials.size());
+		this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
 	}
 
 	private void readObject(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
@@ -67,6 +71,7 @@ public class BatchAggregationExpression extends EvaluationExpression {
 		this.lastAggregators = new ArrayList<IJsonNode>();
 		CollectionUtil.ensureSize(this.lastPreprocessingResults, this.partials.size());
 		CollectionUtil.ensureSize(this.lastAggregators, this.partials.size());
+		this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
 	}
 
 	/**
@@ -98,11 +103,11 @@ public class BatchAggregationExpression extends EvaluationExpression {
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		if (this.lastInputCounter == context.getInputCounter())
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+		if (this.lastInputCounter == this.context.getInputCounter())
 			return this.results;
 		this.results = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
-		this.lastInputCounter = context.getInputCounter();
+		this.lastInputCounter = this.context.getInputCounter();
 
 		for (int index = 0; index < this.lastAggregators.size(); index++)
 			this.lastAggregators.set(index,
@@ -111,12 +116,12 @@ public class BatchAggregationExpression extends EvaluationExpression {
 			for (int index = 0; index < this.partials.size(); index++) {
 				final AggregationExpression partial = this.partials.get(index);
 				final IJsonNode preprocessedValue =
-					partial.getPreprocessing().evaluate(input, this.lastPreprocessingResults.get(index), context);
+					partial.getPreprocessing().evaluate(input, this.lastPreprocessingResults.get(index));
 				if (preprocessedValue.isMissing())
 					throw new EvaluationException(String.format("Cannot access %s for aggregation %s",
 						partial.getPreprocessing(), partial));
 				this.lastAggregators.set(index,
-					partial.getFunction().aggregate(preprocessedValue, this.lastAggregators.get(index), context));
+					partial.getFunction().aggregate(preprocessedValue, this.lastAggregators.get(index)));
 			}
 
 		for (int index = 0; index < this.partials.size(); index++) {
@@ -153,8 +158,8 @@ public class BatchAggregationExpression extends EvaluationExpression {
 		}
 
 		@Override
-		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-			return ((IArrayNode) BatchAggregationExpression.this.evaluate(node, null, context)).get(this.index);
+		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+			return ((IArrayNode) BatchAggregationExpression.this.evaluate(node, null)).get(this.index);
 		}
 
 		/*

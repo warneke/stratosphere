@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator;
 import eu.stratosphere.sopremo.type.BooleanNode;
@@ -56,10 +55,10 @@ public class AndExpression extends BooleanExpression implements ExpressionParent
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		// we can ignore 'target' because no new Object is created
 		for (final EvaluationExpression booleanExpression : this.expressions)
-			if (booleanExpression.evaluate(node, null, context) == BooleanNode.FALSE)
+			if (booleanExpression.evaluate(node, null) == BooleanNode.FALSE)
 				return BooleanNode.FALSE;
 
 		return BooleanNode.TRUE;

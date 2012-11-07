@@ -23,7 +23,7 @@ public class ArrayProjectionTest extends EvaluableExpressionTest<ArrayProjection
 		final IJsonNode result = new ArrayProjection(new ObjectAccess("fieldName")).evaluate(
 			createArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3)),
-			null, this.context);
+			null);
 		Assert.assertEquals(createArrayNode(1, 2, 3), result);
 	}
 
@@ -33,7 +33,7 @@ public class ArrayProjectionTest extends EvaluableExpressionTest<ArrayProjection
 		final IJsonNode result = new ArrayProjection(new ObjectAccess("fieldName")).evaluate(
 			createStreamArrayNode(createObjectNode("fieldName", 1), createObjectNode("fieldName", 2),
 				createObjectNode("fieldName", 3)),
-			null, this.context);
+			null);
 		Assert.assertFalse(result instanceof IArrayNode);
 		Assert.assertTrue(result instanceof IStreamArrayNode);
 		AssertUtil.assertIteratorEquals(createArrayNode(1, 2, 3).iterator(), ((Iterable<IJsonNode>) result).iterator());

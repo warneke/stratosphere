@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator;
@@ -189,13 +188,13 @@ public class FunctionCall extends EvaluationExpression implements ExpressionPare
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, IJsonNode target) {
 		final IJsonNode[] params = new IJsonNode[this.paramExprs.size()];
 		for (int index = 0; index < params.length; index++)
-			params[index] = this.paramExprs.get(index).evaluate(node, context);
+			params[index] = this.paramExprs.get(index).evaluate(node);
 
 		try {
-			return this.function.call(JsonUtil.asArray(params), target, context);
+			return this.function.call(JsonUtil.asArray(params), target);
 		} catch (Exception e) {
 			throw new EvaluationException(e);
 		}

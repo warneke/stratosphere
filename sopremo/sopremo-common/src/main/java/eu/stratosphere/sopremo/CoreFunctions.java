@@ -44,8 +44,7 @@ public class CoreFunctions implements BuiltinProvider {
 			private static final long serialVersionUID = -672755307899894156L;
 
 			@Override
-			public TextNode aggregate(IJsonNode node, TextNode aggregationTarget,
-					EvaluationContext context) {
+			public TextNode aggregate(IJsonNode node, TextNode aggregationTarget) {
 				aggregationTarget.append((TextNode) node);
 				return aggregationTarget;
 			}
@@ -71,7 +70,7 @@ public class CoreFunctions implements BuiltinProvider {
 			private static final long serialVersionUID = -8021932798231751696L;
 
 			@Override
-			public INumericNode aggregate(INumericNode node, INumericNode aggregationTarget, EvaluationContext context) {
+			public INumericNode aggregate(INumericNode node, INumericNode aggregationTarget) {
 				return ArithmeticOperator.ADDITION.evaluate(node, aggregationTarget, aggregationTarget);
 			}
 		};
@@ -85,7 +84,7 @@ public class CoreFunctions implements BuiltinProvider {
 		private static final long serialVersionUID = -4700372075569392783L;
 
 		@Override
-		public IntNode aggregate(IJsonNode node, IntNode aggregationTarget, EvaluationContext context) {
+		public IntNode aggregate(IJsonNode node, IntNode aggregationTarget) {
 			return (IntNode) ArithmeticOperator.ADDITION.evaluate(IntNode.ONE, aggregationTarget, aggregationTarget);
 		}
 	};
@@ -100,7 +99,7 @@ public class CoreFunctions implements BuiltinProvider {
 			private static final long serialVersionUID = 273172975676646935L;
 
 			@Override
-			public IJsonNode aggregate(IJsonNode node, IJsonNode aggregationTarget, EvaluationContext context) {
+			public IJsonNode aggregate(IJsonNode node, IJsonNode aggregationTarget) {
 				return aggregationTarget.isNull() ? node : aggregationTarget;
 			}
 		};
@@ -170,7 +169,7 @@ public class CoreFunctions implements BuiltinProvider {
 		private static final long serialVersionUID = 483420587993286076L;
 
 		@Override
-		public AverageState aggregate(INumericNode node, AverageState avgState, EvaluationContext context) {
+		public AverageState aggregate(INumericNode node, AverageState avgState) {
 			INumericNode sum = (INumericNode) avgState.get(0);
 			avgState.setSum(ArithmeticOperator.ADDITION.evaluate(node, sum, sum));
 			avgState.increaseCount();
@@ -207,7 +206,7 @@ public class CoreFunctions implements BuiltinProvider {
 			private static final long serialVersionUID = -8124401653435722884L;
 
 			@Override
-			public IJsonNode aggregate(final IJsonNode node, final IJsonNode aggregator, final EvaluationContext context) {
+			public IJsonNode aggregate(final IJsonNode node, final IJsonNode aggregator) {
 				if (aggregator.isNull() || ComparativeExpression.BinaryOperator.LESS.evaluate(node, aggregator))
 					return node;
 				return aggregator;
@@ -223,7 +222,7 @@ public class CoreFunctions implements BuiltinProvider {
 			private static final long serialVersionUID = -1735264603829085865L;
 
 			@Override
-			public IJsonNode aggregate(final IJsonNode node, final IJsonNode aggregator, final EvaluationContext context) {
+			public IJsonNode aggregate(final IJsonNode node, final IJsonNode aggregator) {
 				if (aggregator.isNull() || ComparativeExpression.BinaryOperator.LESS.evaluate(aggregator, node))
 					return node;
 				return aggregator;
@@ -245,7 +244,7 @@ public class CoreFunctions implements BuiltinProvider {
 				private static final long serialVersionUID = -8021932798231751696L;
 
 				@Override
-				public ArrayNode aggregate(IArrayNode node, ArrayNode aggregationTarget, EvaluationContext context) {
+				public ArrayNode aggregate(IArrayNode node, ArrayNode aggregationTarget) {
 					aggregationTarget.add(((INumericNode) node.get(0)).getIntValue(), node.get(1));
 					return aggregationTarget;
 				}

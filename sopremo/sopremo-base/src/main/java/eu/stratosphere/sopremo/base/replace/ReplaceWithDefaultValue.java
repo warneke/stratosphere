@@ -65,7 +65,7 @@ public class ReplaceWithDefaultValue extends ReplaceBase<ReplaceWithDefaultValue
 		protected void coGroup(IStreamArrayNode values1, IStreamArrayNode values2, JsonCollector out) {
 			final Iterator<IJsonNode> replaceValueIterator = values2.iterator();
 			IJsonNode replaceValue = replaceValueIterator.hasNext() ?
-				this.dictionaryValueExtraction.evaluate(replaceValueIterator.next(), this.getContext()) : null;
+				this.dictionaryValueExtraction.evaluate(replaceValueIterator.next()) : null;
 
 			final Iterator<IJsonNode> valueIterator = values1.iterator();
 			final EvaluationContext context = this.getContext();
@@ -75,8 +75,8 @@ public class ReplaceWithDefaultValue extends ReplaceBase<ReplaceWithDefaultValue
 				if (replaceValue != null)
 					replacement = replaceValue;
 				else
-					replacement = this.defaultExpression.evaluate(value, context);
-				out.collect(this.replaceExpression.set(value, replacement, context));
+					replacement = this.defaultExpression.evaluate(value);
+				out.collect(this.replaceExpression.set(value, replacement));
 			}
 		}
 	}

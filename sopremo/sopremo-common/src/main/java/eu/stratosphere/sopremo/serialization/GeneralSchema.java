@@ -83,7 +83,7 @@ public class GeneralSchema extends AbstractSchema {
 		target.setField(this.mappings.size(), SopremoUtil.wrap(value));
 
 		for (int i = 0; i < this.mappings.size(); i++)
-			target.setField(i, SopremoUtil.wrap(this.mappings.get(i).evaluate(value, null, context)));
+			target.setField(i, SopremoUtil.wrap(this.mappings.get(i).evaluate(value, null)));
 
 		return target;
 	}

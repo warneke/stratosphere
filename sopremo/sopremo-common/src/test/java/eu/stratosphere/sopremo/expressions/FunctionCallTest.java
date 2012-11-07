@@ -49,7 +49,7 @@ public class FunctionCallTest extends EvaluableExpressionTest<FunctionCall> {
 	public void shouldCallFunction() {
 		final IJsonNode result =
 			new FunctionCall("sum", this.context,
-				new ArrayAccess(0), new ArrayAccess(1)).evaluate(createArrayNode(1, 2), null, this.context);
+				new ArrayAccess(0), new ArrayAccess(1)).evaluate(createArrayNode(1, 2), null);
 		Assert.assertEquals(new DoubleNode(3), result);
 	}
 

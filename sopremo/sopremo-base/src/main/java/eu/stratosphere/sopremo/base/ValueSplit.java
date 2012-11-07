@@ -36,7 +36,7 @@ public class ValueSplit extends ElementaryOperator<ValueSplit> {
 		@Override
 		protected void map(IJsonNode value, JsonCollector out) {
 			for (CachingExpression<IJsonNode> projection : this.projections)
-				out.collect(projection.evaluate(value, this.getContext()));
+				out.collect(projection.evaluate(value));
 		}
 	}
 }

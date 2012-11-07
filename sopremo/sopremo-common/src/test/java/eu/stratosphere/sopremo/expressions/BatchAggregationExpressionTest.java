@@ -47,7 +47,7 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 		batch.add(CoreFunctions.MEAN);
 		batch.add(CoreFunctions.MEAN, new ArithmeticExpression(EvaluationExpression.VALUE,
 			ArithmeticOperator.MULTIPLICATION, EvaluationExpression.VALUE));
-		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), null, this.context);
+		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), null);
 
 		Assert.assertTrue(result instanceof IArrayNode);
 		final IArrayNode resultArray = (IArrayNode) result;
@@ -70,7 +70,7 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 		batch.add(CoreFunctions.MEAN);
 		batch.add(CoreFunctions.MEAN, new ArithmeticExpression(EvaluationExpression.VALUE,
 			ArithmeticOperator.MULTIPLICATION, EvaluationExpression.VALUE));
-		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), target, this.context);
+		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), target);
 
 		Assert.assertSame(target, result);
 	}
@@ -82,7 +82,7 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 		batch.add(CoreFunctions.MEAN);
 		batch.add(CoreFunctions.MEAN, new ArithmeticExpression(EvaluationExpression.VALUE,
 			ArithmeticOperator.MULTIPLICATION, EvaluationExpression.VALUE));
-		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), target, this.context);
+		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), target);
 
 		Assert.assertNotSame(target, result);
 	}

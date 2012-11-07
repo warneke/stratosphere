@@ -102,7 +102,7 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 	 * Returns either this BooleanNode represents the value <code>true</code> or not.
 	 */
 	public boolean getBooleanValue() {
-		return value;
+		return this.value;
 	}
 
 	@Override

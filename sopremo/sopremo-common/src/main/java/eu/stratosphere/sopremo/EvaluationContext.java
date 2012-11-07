@@ -1,5 +1,7 @@
 package eu.stratosphere.sopremo;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -161,6 +163,11 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 
 	public void setTaskId(final int taskId) {
 		this.taskId = taskId;
+	}
+	
+	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		ois.defaultReadObject();
+		SopremoRuntime.getInstance().setCurrentEvaluationContext(this);
 	}
 
 	/*

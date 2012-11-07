@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.BooleanNode;
@@ -117,11 +116,11 @@ public class TernaryExpression extends EvaluationExpression implements Expressio
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		// no need to reuse the target of the coercion - a boolean node is never created anew
-		if (TypeCoercer.INSTANCE.coerce(this.ifClause.evaluate(node, context), null, BooleanNode.class) == BooleanNode.TRUE)
-			return this.ifExpression.evaluate(node, target, context);
-		return this.thenExpression.evaluate(node, target, context);
+		if (TypeCoercer.INSTANCE.coerce(this.ifClause.evaluate(node), null, BooleanNode.class) == BooleanNode.TRUE)
+			return this.ifExpression.evaluate(node, target);
+		return this.thenExpression.evaluate(node, target);
 	}
 
 	/*

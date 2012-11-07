@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.function;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 
 public abstract class SimpleMacro<In extends EvaluationExpression> extends MacroBase {
@@ -16,12 +15,11 @@ public abstract class SimpleMacro<In extends EvaluationExpression> extends Macro
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public EvaluationExpression call(final EvaluationExpression[] params, final EvaluationExpression target,
-			final EvaluationContext context) {
-		return this.call((In) params[0], context);
+	public EvaluationExpression call(final EvaluationExpression[] params, final EvaluationExpression target) {
+		return this.call((In) params[0]);
 	}
 
-	public abstract EvaluationExpression call(In inputExpr, EvaluationContext context);
+	public abstract EvaluationExpression call(In inputExpr);
 
 	/*
 	 * (non-Javadoc)

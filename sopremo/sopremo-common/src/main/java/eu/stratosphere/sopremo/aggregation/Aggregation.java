@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.aggregation;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.expressions.AggregationExpression;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -17,7 +16,7 @@ public abstract class Aggregation<ElementType extends IJsonNode, AggregatorType 
 		this.name = name;
 	}
 
-	public abstract AggregatorType aggregate(ElementType node, AggregatorType aggregator, EvaluationContext context);
+	public abstract AggregatorType aggregate(ElementType node, AggregatorType aggregator);
 
 	/**
 	 * Creates an {@link AggregationExpression} for this function

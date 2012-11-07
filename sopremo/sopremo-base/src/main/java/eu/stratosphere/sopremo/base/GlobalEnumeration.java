@@ -1,7 +1,6 @@
 package eu.stratosphere.sopremo.base;
 
 import eu.stratosphere.nephele.configuration.Configuration;
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
@@ -37,7 +36,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		private StringBuilder builder = new StringBuilder();
 
 		@Override
-		public IJsonNode evaluate(final IJsonNode node, IJsonNode target, final EvaluationContext context) {
+		public IJsonNode evaluate(final IJsonNode node, IJsonNode target) {
 			final IArrayNode values = (IArrayNode) node;
 			TextNode textTarget = SopremoUtil.ensureType(target, TextNode.class);
 			this.builder.setLength(0);
@@ -72,7 +71,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
 		 */
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target, EvaluationContext context) {
+		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
 			final IArrayNode values = (IArrayNode) node;
 			LongNode longTarget = SopremoUtil.ensureType(target, LongNode.class);
 			longTarget.setValue((((INumericNode) values.get(0)).getLongValue() << 48)
@@ -85,7 +84,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		private static final long serialVersionUID = -5506784974227617703L;
 
 		@Override
-		public IJsonNode set(IJsonNode node, IJsonNode value, EvaluationContext context) {
+		public IJsonNode set(IJsonNode node, IJsonNode value) {
 			if (node.isObject()) {
 				((IObjectNode) node).put(GlobalEnumeration.this.idFieldName, value);
 				return node;
@@ -97,7 +96,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		}
 
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target, EvaluationContext context) {
+		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
 			return node;
 		}
 	};
@@ -196,8 +195,8 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		@Override
 		protected void map(final IJsonNode value, final JsonCollector out) {
 			this.counter.setValue(this.counter.getLongValue() + 1);
-			final IJsonNode id = this.idGeneration.evaluate(this.params, this.getContext());
-			out.collect(this.enumerationExpression.set(value, id, this.getContext()));
+			final IJsonNode id = this.idGeneration.evaluate(this.params);
+			out.collect(this.enumerationExpression.set(value, id));
 		}
 	}
 

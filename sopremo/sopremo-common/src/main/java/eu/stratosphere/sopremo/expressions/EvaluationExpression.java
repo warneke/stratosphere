@@ -3,7 +3,6 @@ package eu.stratosphere.sopremo.expressions;
 import java.util.ArrayList;
 import java.util.List;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -32,12 +31,12 @@ public abstract class EvaluationExpression implements ISerializableSopremoType, 
 		private static final long serialVersionUID = -6430819532311429108L;
 
 		@Override
-		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 			return node;
 		}
 
 		@Override
-		public IJsonNode set(final IJsonNode node, final IJsonNode value, final EvaluationContext context) {
+		public IJsonNode set(final IJsonNode node, final IJsonNode value) {
 			return value;
 		};
 
@@ -262,7 +261,7 @@ public abstract class EvaluationExpression implements ISerializableSopremoType, 
 	 *        the context in which the node should be evaluated
 	 * @return the node resulting from the evaluation or several nodes wrapped in a special node type
 	 */
-	public abstract IJsonNode evaluate(IJsonNode node, IJsonNode target, EvaluationContext context);
+	public abstract IJsonNode evaluate(IJsonNode node, IJsonNode target);
 
 	@Override
 	public int hashCode() {
@@ -280,8 +279,7 @@ public abstract class EvaluationExpression implements ISerializableSopremoType, 
 	 *        the current <code>EvaluationContext</code>
 	 * @return the node or a new node if the expression directly accesses the node
 	 */
-	@SuppressWarnings("unused")
-	public IJsonNode set(final IJsonNode node, final IJsonNode value, final EvaluationContext context) {
+	public IJsonNode set(final IJsonNode node, final IJsonNode value) {
 		throw new UnsupportedOperationException(String.format(
 			"Cannot change the value with expression %s of node %s to %s", this, node, value));
 	}

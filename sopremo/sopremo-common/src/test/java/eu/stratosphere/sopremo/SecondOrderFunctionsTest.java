@@ -12,30 +12,34 @@
  * specific language governing permissions and limitations under the License.
  *
  **********************************************************************************************************************/
-package eu.stratosphere.sopremo.base.replace;
+package eu.stratosphere.sopremo;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
-import eu.stratosphere.sopremo.pact.JsonCollector;
-import eu.stratosphere.sopremo.pact.SopremoMatch;
+import junit.framework.Assert;
+
+import org.junit.Test;
+
+import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.expressions.FunctionCall;
+import eu.stratosphere.sopremo.function.FunctionPointerNode;
+import eu.stratosphere.sopremo.type.CachingArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
-import eu.stratosphere.sopremo.type.IJsonNode;
+import eu.stratosphere.sopremo.type.JsonUtil;
 
 /**
  * @author Arvid Heise
  */
-public class ArrayElementStrictReplace extends ArrayElementReplaceBase<ArrayElementStrictReplace> {
-	private static final long serialVersionUID = -3657489526504410342L;
+public class SecondOrderFunctionsTest {
 
-	public static class Implementation extends SopremoMatch {
+	@Test
+	public void shouldMapElements() {
+		CachingArrayNode result = new CachingArrayNode();
+		final IArrayNode input = JsonUtil.createArrayNode(1, 2, 3);
+		final FunctionPointerNode pointer = new FunctionPointerNode();
+		EvaluationContext context = new EvaluationContext();
+		context.getFunctionRegistry().put(MathFunctions.class);
+		pointer.setFunctionCall(new FunctionCall("sqr", context, EvaluationExpression.VALUE));
+		SecondOrderFunctions.map(result, input, pointer);
 
-		private CachingExpression<IJsonNode> dictionaryValueExtraction;
-
-		private int index = 0;
-
-		@Override
-		protected void match(final IJsonNode value1, final IJsonNode value2, final JsonCollector out) {
-			((IArrayNode) value1).set(this.index, this.dictionaryValueExtraction.evaluate(value2));
-			out.collect(value1);
-		}
+		Assert.assertEquals(JsonUtil.createArrayNode(1, 4, 9), result);
 	}
 }

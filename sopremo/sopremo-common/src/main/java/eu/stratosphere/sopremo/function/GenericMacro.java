@@ -14,7 +14,6 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
@@ -44,8 +43,7 @@ public class GenericMacro extends MacroBase {
 	 * @see eu.stratosphere.sopremo.function.Callable#call(InputType[], eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public EvaluationExpression call(final EvaluationExpression[] params, final EvaluationExpression target,
-			final EvaluationContext context) {
+	public EvaluationExpression call(final EvaluationExpression[] params, final EvaluationExpression target) {
 		return ReflectUtil.newInstance(this.expressionClass, (Object[]) params);
 	}
 

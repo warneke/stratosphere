@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.aggregation;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
@@ -37,7 +36,7 @@ public class MaterializingAggregation extends Aggregation<IJsonNode, ArrayNode> 
 	 *      eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public ArrayNode aggregate(IJsonNode node, ArrayNode aggregationValue, EvaluationContext context) {
+	public ArrayNode aggregate(IJsonNode node, ArrayNode aggregationValue) {
 		aggregationValue.add(node);
 		return aggregationValue;
 	}

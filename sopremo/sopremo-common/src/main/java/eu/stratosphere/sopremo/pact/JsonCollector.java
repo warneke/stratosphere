@@ -58,6 +58,6 @@ public class JsonCollector {
 		if (SopremoUtil.LOG.isTraceEnabled())
 			SopremoUtil.LOG.trace(String.format(" to %s", value));
 		this.collector.collect(this.record =
-			this.schema.jsonToRecord(this.resultProjection.evaluate(value, this.context), this.record, this.context));
+			this.schema.jsonToRecord(this.resultProjection.evaluate(value), this.record, this.context));
 	}
 }

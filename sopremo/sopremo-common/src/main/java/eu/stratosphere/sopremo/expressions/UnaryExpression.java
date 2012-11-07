@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.BooleanNode;
@@ -55,10 +54,10 @@ public class UnaryExpression extends BooleanExpression implements ExpressionPare
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		// no need to reuse target of coercion - no new boolean node is created anew
 		final BooleanNode result =
-			TypeCoercer.INSTANCE.coerce(this.expr.evaluate(node, target, context), null, BooleanNode.class);
+			TypeCoercer.INSTANCE.coerce(this.expr.evaluate(node, target), null, BooleanNode.class);
 
 		// we can ignore 'target' because no new Object is created
 		if (this.negate)

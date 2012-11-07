@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -35,8 +34,8 @@ public class TraceExpression extends EvaluationExpression implements ExpressionP
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		SopremoUtil.LOG.info(this.traceExpression.evaluate(node, context));
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+		SopremoUtil.LOG.info(this.traceExpression.evaluate(node));
 		return node;
 	}
 

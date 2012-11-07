@@ -14,17 +14,9 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
-import eu.stratosphere.sopremo.AbstractSopremoType;
-import eu.stratosphere.sopremo.ISerializableSopremoType;
-
 /**
  * @author Arvid Heise
  */
-public abstract class Callable<Result, InputType> extends AbstractSopremoType implements ISerializableSopremoType {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 7623937906556576557L;
-
-	public abstract Result call(InputType params, Result target);
+public class FunctionPointerExpression {
+	
 }

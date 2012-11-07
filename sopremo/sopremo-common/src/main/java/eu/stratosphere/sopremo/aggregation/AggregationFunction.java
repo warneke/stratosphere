@@ -14,7 +14,6 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.aggregation;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -58,13 +57,13 @@ public class AggregationFunction extends SopremoFunction {
 	 * eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public IJsonNode call(IArrayNode params, IJsonNode target, EvaluationContext context) {
+	public IJsonNode call(IArrayNode params, IJsonNode target) {
 		checkParameters(params, 1);
 
 		IJsonNode aggregator = this.aggregation.initialize(target);
 
 		for (IJsonNode item : (IStreamArrayNode) params.get(0))
-			aggregator = this.aggregation.aggregate(item, aggregator, context);
+			aggregator = this.aggregation.aggregate(item, aggregator);
 
 		return target = this.aggregation.getFinalAggregate(aggregator, target);
 	}

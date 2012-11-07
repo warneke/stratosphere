@@ -14,7 +14,6 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.base;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.aggregation.TransitiveAggregation;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
@@ -35,7 +34,7 @@ final class ArrayUnion extends TransitiveAggregation<IArrayNode, ArrayNode> {
 	 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public ArrayNode aggregate(IArrayNode node, ArrayNode aggregationTarget, EvaluationContext context) {
+	public ArrayNode aggregate(IArrayNode node, ArrayNode aggregationTarget) {
 		for (int index = 0; index < node.size(); index++)
 			if (aggregationTarget.get(index).isMissing() && !node.get(index).isMissing())
 				aggregationTarget.set(index, node.get(index));

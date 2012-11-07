@@ -149,7 +149,7 @@ public abstract class AbstractQueryParser extends Parser implements ParsingScope
 		if (callable == null)
 			throw new QueryParserException(String.format("Unknown function %s", name));
 		if (callable instanceof MacroBase)
-			return ((MacroBase) callable).call(params, null, this.getContext());
+			return ((MacroBase) callable).call(params, null);
 		if (callable instanceof Inlineable)
 			return ((Inlineable) callable).getDefinition();
 		if (!(callable instanceof SopremoFunction))

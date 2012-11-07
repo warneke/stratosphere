@@ -74,7 +74,7 @@ public class FunctionRegistryTest {
 	private IJsonNode evaluate(String name, IJsonNode... parameters) {
 		final SopremoFunction method = (SopremoFunction) this.registry.get(name);
 		Assert.assertNotNull(method);
-		return method.call(JsonUtil.asArray(parameters), null, this.context);
+		return method.call(JsonUtil.asArray(parameters), null);
 	}
 
 	@Test

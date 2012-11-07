@@ -204,7 +204,7 @@ public class Grouping extends CompositeOperator<Grouping> {
 
 			@Override
 			protected void coGroup(IStreamArrayNode values1, IStreamArrayNode values2, JsonCollector out) {
-				out.collect(this.projection.evaluate(JsonUtil.asArray(values1, values2), this.getContext()));
+				out.collect(this.projection.evaluate(JsonUtil.asArray(values1, values2)));
 			}
 		}
 	}
@@ -251,7 +251,7 @@ public class Grouping extends CompositeOperator<Grouping> {
 
 			@Override
 			protected void reduce(final IStreamArrayNode values, final JsonCollector out) {
-				out.collect(this.projection.evaluate(values, this.getContext()));
+				out.collect(this.projection.evaluate(values));
 			}
 		}
 
@@ -260,7 +260,7 @@ public class Grouping extends CompositeOperator<Grouping> {
 
 			@Override
 			protected void reduce(final IStreamArrayNode values, final JsonCollector out) {
-				out.collect(this.projection.evaluate(values, this.getContext()));
+				out.collect(this.projection.evaluate(values));
 			}
 		}
 	}

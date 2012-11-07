@@ -99,7 +99,7 @@ public class ArraySplit extends ElementaryOperator<ArraySplit> {
 
 		@Override
 		protected void map(final IJsonNode value, JsonCollector out) {
-			final IArrayNode array = this.arrayPath.evaluate(value, null, this.getContext());
+			final IArrayNode array = this.arrayPath.evaluate(value);
 			if (!array.isArray())
 				throw new EvaluationException("Cannot split non-array");
 
@@ -110,7 +110,7 @@ public class ArraySplit extends ElementaryOperator<ArraySplit> {
 			for (IJsonNode element : array) {
 				contextNode.set(0, element);
 				indexNode.setValue(index);
-				out.collect(this.splitProjection.evaluate(contextNode, null, context));
+				out.collect(this.splitProjection.evaluate(contextNode, null));
 				index++;
 			}
 		}

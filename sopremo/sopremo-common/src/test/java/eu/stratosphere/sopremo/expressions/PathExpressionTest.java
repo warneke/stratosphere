@@ -42,7 +42,7 @@ public class PathExpressionTest extends EvaluableExpressionTest<PathExpression> 
 		final IJsonNode result = new PathExpression(
 			new ObjectAccess("glossary"), new ObjectAccess("GlossDiv"), new ObjectAccess("GlossList"),
 			new ObjectAccess("GlossEntry"), new ObjectAccess("GlossDef"), new ObjectAccess("GlossSeeAlso"),
-			new ArrayAccess(1)).evaluate(doc, null, this.context);
+			new ArrayAccess(1)).evaluate(doc, null);
 
 		Assert.assertEquals(TextNode.valueOf("XML"), result);
 	}
@@ -52,7 +52,7 @@ public class PathExpressionTest extends EvaluableExpressionTest<PathExpression> 
 		final PathExpression expr = new PathExpression(new ObjectAccess("glossary"), new ObjectAccess("GlossDiv"),
 			new ObjectAccess("GlossList"), new ObjectAccess("GlossEntry"));
 		expr.add(new ObjectAccess("ID"));
-		final IJsonNode result = expr.evaluate(doc, null, this.context);
+		final IJsonNode result = expr.evaluate(doc, null);
 
 		Assert.assertEquals(TextNode.valueOf("SGML"), result);
 	}
@@ -92,7 +92,7 @@ public class PathExpressionTest extends EvaluableExpressionTest<PathExpression> 
 			new ObjectAccess("GlossList"), new ObjectAccess("GlossEntry"), new ObjectAccess("ID"));
 		expr.replace(new ObjectAccess("ID"), new ObjectAccess("GlossSee"));
 
-		final IJsonNode result = expr.evaluate(doc, null, this.context);
+		final IJsonNode result = expr.evaluate(doc, null);
 
 		Assert.assertEquals(TextNode.valueOf("markup"), result);
 	}
@@ -106,7 +106,7 @@ public class PathExpressionTest extends EvaluableExpressionTest<PathExpression> 
 				new ObjectAccess("GlossList"), new ObjectAccess("GlossEntry"), new ObjectAccess("ID")),
 				new PathExpression(new ObjectAccess("glossary"), new ObjectAccess("title")));
 
-		final IJsonNode result = expr.evaluate(doc, null, this.context);
+		final IJsonNode result = expr.evaluate(doc, null);
 
 		Assert.assertEquals(TextNode.valueOf("example glossary"), result);
 	}

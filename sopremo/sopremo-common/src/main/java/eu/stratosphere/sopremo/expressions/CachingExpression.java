@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.stratosphere.pact.common.util.ReflectionUtil;
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -57,7 +56,7 @@ public abstract class CachingExpression<CacheType extends IJsonNode> extends Eva
 		return this.innerExpression.equals(((CachingExpression<CacheType>) obj).innerExpression);
 	}
 
-	public abstract CacheType evaluate(IJsonNode node, EvaluationContext context);
+	public abstract CacheType evaluate(IJsonNode node);
 
 	/*
 	 * (non-Javadoc)
@@ -65,9 +64,9 @@ public abstract class CachingExpression<CacheType extends IJsonNode> extends Eva
 	 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public final CacheType evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public final CacheType evaluate(final IJsonNode node, final IJsonNode target) {
 		// ignores target, maintains its own target
-		return this.evaluate(node, context);
+		return this.evaluate(node);
 	}
 
 	public EvaluationExpression getInnerExpression() {
@@ -95,8 +94,8 @@ public abstract class CachingExpression<CacheType extends IJsonNode> extends Eva
 	}
 
 	@Override
-	public IJsonNode set(final IJsonNode node, final IJsonNode value, final EvaluationContext context) {
-		return this.innerExpression.set(node, value, context);
+	public IJsonNode set(final IJsonNode node, final IJsonNode value) {
+		return this.innerExpression.set(node, value);
 	}
 
 	public void setInnerExpression(final EvaluationExpression expression) {
@@ -234,8 +233,8 @@ public abstract class CachingExpression<CacheType extends IJsonNode> extends Eva
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public CacheType evaluate(final IJsonNode node, final EvaluationContext context) {
-			return (CacheType) this.innerExpression.evaluate(node, this.cachedVariable, context);
+		public CacheType evaluate(final IJsonNode node) {
+			return (CacheType) this.innerExpression.evaluate(node, this.cachedVariable);
 		}
 	}
 
@@ -253,8 +252,8 @@ public abstract class CachingExpression<CacheType extends IJsonNode> extends Eva
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public CacheType evaluate(final IJsonNode node, final EvaluationContext context) {
-			return this.cachedVariable = (CacheType) this.innerExpression.evaluate(node, this.cachedVariable, context);
+		public CacheType evaluate(final IJsonNode node) {
+			return this.cachedVariable = (CacheType) this.innerExpression.evaluate(node, this.cachedVariable);
 		}
 	}
 

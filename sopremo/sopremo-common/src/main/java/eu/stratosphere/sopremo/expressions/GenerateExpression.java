@@ -1,6 +1,10 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.SopremoRuntime;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.TextNode;
@@ -17,6 +21,8 @@ public class GenerateExpression extends EvaluationExpression {
 	private final String pattern;
 
 	private long id;
+	
+	private transient EvaluationContext context;
 
 	/**
 	 * Initializes a GenerateExpression with the given pattern.
@@ -33,12 +39,18 @@ public class GenerateExpression extends EvaluationExpression {
 		else if (patternString.indexOf("%", patternPos + 1) == -1)
 			patternString = patternString.replaceAll("%", "%s_%");
 		this.pattern = patternString;
+		this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
+	}
+	
+	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		ois.defaultReadObject();
+		this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
 		final TextNode textTarget = SopremoUtil.reinitializeTarget(target, TextNode.class);
-		textTarget.setValue(String.format(this.pattern, context.getTaskId(), this.id++));
+		textTarget.setValue(String.format(this.pattern, this.context.getTaskId(), this.id++));
 		return textTarget;
 	}
 }

@@ -151,7 +151,7 @@ public class CoreFunctionsTest {
 		IJsonNode aggregator = function.initialize(null);
 
 		for (Object item : items)
-			aggregator = function.aggregate(JavaToJsonMapper.INSTANCE.valueToTree(item), aggregator, this.context);
+			aggregator = function.aggregate(JavaToJsonMapper.INSTANCE.valueToTree(item), aggregator);
 
 		final IJsonNode result = function.getFinalAggregate(aggregator, null);
 		Assert.assertEquals(JavaToJsonMapper.INSTANCE.valueToTree(expected), result);
@@ -205,9 +205,9 @@ public class CoreFunctionsTest {
 	@Test
 	public void shouldCalculateAvg() {
 		CoreFunctions.AverageState aggregator = CoreFunctions.MEAN.initialize(null);
-		CoreFunctions.MEAN.aggregate(IntNode.valueOf(50), aggregator, this.context);
-		CoreFunctions.MEAN.aggregate(IntNode.valueOf(25), aggregator, this.context);
-		CoreFunctions.MEAN.aggregate(IntNode.valueOf(75), aggregator, this.context);
+		CoreFunctions.MEAN.aggregate(IntNode.valueOf(50), aggregator);
+		CoreFunctions.MEAN.aggregate(IntNode.valueOf(25), aggregator);
+		CoreFunctions.MEAN.aggregate(IntNode.valueOf(75), aggregator);
 
 		final IJsonNode result = CoreFunctions.MEAN.getFinalAggregate(aggregator, null);
 		Assert.assertTrue(result instanceof INumericNode);
@@ -220,7 +220,7 @@ public class CoreFunctionsTest {
 
 		for (int i = 1; i < 500; i++)
 			aggregator = CoreFunctions.MEAN.aggregate(
-				i % 2 == 0 ? IntNode.valueOf(i) : DoubleNode.valueOf(i), aggregator, this.context);
+				i % 2 == 0 ? IntNode.valueOf(i) : DoubleNode.valueOf(i), aggregator);
 
 		Assert.assertEquals(DoubleNode.valueOf(250), CoreFunctions.MEAN.getFinalAggregate(aggregator, null));
 	}

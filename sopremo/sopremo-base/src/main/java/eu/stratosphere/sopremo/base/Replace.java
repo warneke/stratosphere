@@ -39,7 +39,7 @@ public class Replace extends CompositeOperator<Replace> {
 		private static final long serialVersionUID = -8218311569919645735L;
 
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target, EvaluationContext context) {
+		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
 			throw new EvaluationException("Tag expression");
 		}
 
@@ -57,7 +57,7 @@ public class Replace extends CompositeOperator<Replace> {
 		private static final long serialVersionUID = 1652841463219871730L;
 
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target, EvaluationContext context) {
+		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
 			throw new EvaluationException("Tag expression");
 		}
 
