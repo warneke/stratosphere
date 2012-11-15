@@ -35,8 +35,9 @@ import eu.stratosphere.pact.common.type.base.PactString;
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.expressions.ExpressionUtil;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
-import eu.stratosphere.sopremo.expressions.PathExpression;
+import eu.stratosphere.sopremo.expressions.PathSegmentExpression;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.serialization.Schema;
 import eu.stratosphere.sopremo.type.ArrayNode;
@@ -180,9 +181,9 @@ public class JsonToCsv {
 
 			this.node = this.schema.recordToJson(record, this.node);
 			if (this.extractionExpressions.isEmpty())
-				this.discoverEntries(this.node, new LinkedList<EvaluationExpression>());
+				this.discoverEntries(this.node, new LinkedList<PathSegmentExpression>());
 			for (final EvaluationExpression expr : this.extractionExpressions)
-				string.append(expr.evaluate(this.node, null)).append(this.separator);
+				string.append(expr.evaluate(this.node)).append(this.separator);
 
 			string.setLength(string.length() - 1);
 			this.resultString.setValue(string.toString());
@@ -193,7 +194,7 @@ public class JsonToCsv {
 		/**
 		 * @param value
 		 */
-		private void discoverEntries(final IJsonNode value, final LinkedList<EvaluationExpression> path) {
+		private void discoverEntries(final IJsonNode value, final LinkedList<PathSegmentExpression> path) {
 			if (value instanceof ObjectNode)
 				for (final Entry<String, IJsonNode> entry : (IObjectNode) value) {
 					path.push(new ObjectAccess(entry.getKey()));
@@ -207,7 +208,7 @@ public class JsonToCsv {
 					path.pop();
 				}
 			else
-				this.extractionExpressions.add(PathExpression.wrapIfNecessary(path));
+				this.extractionExpressions.add(ExpressionUtil.makePath(path));
 		}
 	}
 }

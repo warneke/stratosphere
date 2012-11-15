@@ -103,6 +103,8 @@ public class CLClient {
 					case ERROR:
 						System.out.print(detail);
 						break;
+					default:
+						break;
 					}
 				}
 

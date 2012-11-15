@@ -36,7 +36,40 @@ public class CachingArrayNode extends ArrayNode {
 		return ((CachingList<IJsonNode>) getChildren()).reuseUnusedElement();
 	}
 
+	public CachingArrayNode addClone(IJsonNode node) {
+		final IJsonNode unusedNode = reuseUnusedNode();
+		if (unusedNode == null)
+			add(node.clone());
+		else if (unusedNode.getType() == node.getType()) 
+			unusedNode.copyValueFrom(node);
+		else // cannot reuse existing node
+			set(size() - 1, node.clone());
+		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.ArrayNode#clear()
+	 */
+	@Override
+	public void clear() {
+		for (IJsonNode element : this)
+			element.clear();
+		super.clear();
+	}
+
 	public void setSize(int size) {
 		((CachingList<IJsonNode>) getChildren()).setSize(size);
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IArrayNode#setAll(eu.stratosphere.sopremo.type.IJsonNode[])
+	 */
+	@Override
+	public void setAll(final IJsonNode[] nodes) {
+		for (int index = 0; index < nodes.length; index++)
+			set(index, nodes[index]);
+		setSize(nodes.length);
 	}
 }

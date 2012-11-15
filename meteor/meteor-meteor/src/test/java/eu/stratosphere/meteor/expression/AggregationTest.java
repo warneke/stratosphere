@@ -14,10 +14,6 @@
  **********************************************************************************************************************/
 package eu.stratosphere.meteor.expression;
 
-import java.util.ArrayList;
-
-import junit.framework.Assert;
-
 import org.junit.Test;
 
 import eu.stratosphere.meteor.MeteorTest;
@@ -25,23 +21,16 @@ import eu.stratosphere.sopremo.CoreFunctions;
 import eu.stratosphere.sopremo.SopremoTest;
 import eu.stratosphere.sopremo.aggregation.ArrayAccessAsAggregation;
 import eu.stratosphere.sopremo.base.Grouping;
-import eu.stratosphere.sopremo.base.Projection;
 import eu.stratosphere.sopremo.base.Selection;
-import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
 import eu.stratosphere.sopremo.expressions.ArrayCreation;
 import eu.stratosphere.sopremo.expressions.BatchAggregationExpression;
 import eu.stratosphere.sopremo.expressions.ComparativeExpression;
 import eu.stratosphere.sopremo.expressions.ComparativeExpression.BinaryOperator;
-import eu.stratosphere.sopremo.expressions.ElementInSetExpression.Quantor;
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
-import eu.stratosphere.sopremo.expressions.EvaluationExpressionUtil;
-import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.expressions.ObjectCreation;
-import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperator;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
-import eu.stratosphere.sopremo.operator.Operator;
 import eu.stratosphere.sopremo.operator.SopremoPlan;
 
 /**
@@ -57,7 +46,7 @@ public class AggregationTest extends MeteorTest {
 				"     first: $filterLi[0],\n" +
 				"	  count_qty: count($filterLi),\n" +
 				"	  sum_qty: sum($filterLi[*].l_quantity),\n" +
-				"	  mean_qty: mean($filterLi[*].l_quantity)\n" +
+				"	  mean_qty: max($filterLi[*].l_quantity)\n" +
 				"};\n" +
 				"write $groups to 'file:///q1.result';\n");
 
@@ -75,7 +64,7 @@ public class AggregationTest extends MeteorTest {
 					new ObjectCreation.FieldAssignment("first", batch.add(new ArrayAccessAsAggregation(0))),
 					new ObjectCreation.FieldAssignment("count_qty", batch.add(CoreFunctions.COUNT)),
 					new ObjectCreation.FieldAssignment("sum_qty", batch.add(CoreFunctions.SUM, new ObjectAccess("l_quantity"))),
-					new ObjectCreation.FieldAssignment("mean_qty", batch.add(CoreFunctions.MEAN, new ObjectAccess("l_quantity")))
+					new ObjectCreation.FieldAssignment("mean_qty", batch.add(CoreFunctions.MAX, new ObjectAccess("l_quantity")))
 				));
 
 		final Sink sink = new Sink("file:///q1.result").withInputs(grouping);
@@ -90,7 +79,7 @@ public class AggregationTest extends MeteorTest {
 //		final Grouping grouping = (Grouping) ops.get(1);
 //		System.out.println(grouping.getResultProjection().printAsTree());
 //		System.out.println();
-//		System.out.println(EvaluationExpressionUtil.replaceAggregationWithBatchAggregation(
+//		System.out.println(ExpressionUtil.replaceAggregationWithBatchAggregation(
 //			grouping.getResultProjection()).printAsTree());
 	}
 }

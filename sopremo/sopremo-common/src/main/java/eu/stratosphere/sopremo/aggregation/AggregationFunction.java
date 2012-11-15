@@ -14,6 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.aggregation;
 
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -28,18 +30,16 @@ public class AggregationFunction extends SopremoFunction {
 	 */
 	private static final long serialVersionUID = 844772928287791987L;
 
-	private final Aggregation<IJsonNode, IJsonNode> aggregation;
+	private final Aggregation aggregation;
 
 	/**
 	 * Initializes AggregationFunction.
 	 * 
 	 * @param aggregation
 	 */
-	@SuppressWarnings("unchecked")
-	public AggregationFunction(Aggregation<?, ?> aggregation) {
-		if (aggregation == null)
-			throw new NullPointerException();
-		this.aggregation = (Aggregation<IJsonNode, IJsonNode>) aggregation;
+	public AggregationFunction(Aggregation aggregation) {
+		super(aggregation.getName(), 1);
+		this.aggregation = aggregation.clone();
 	}
 
 	/**
@@ -47,8 +47,24 @@ public class AggregationFunction extends SopremoFunction {
 	 * 
 	 * @return the aggregation
 	 */
-	public Aggregation<IJsonNode, IJsonNode> getAggregation() {
+	public Aggregation getAggregation() {
 		return this.aggregation;
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.function.SopremoFunction#clone()
+	 */
+	@Override
+	public AggregationFunction clone() {
+		return new AggregationFunction(this.aggregation.clone());
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.function.SopremoFunction#appendAsString(java.lang.Appendable)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		this.aggregation.appendAsString(appendable);
 	}
 	
 	/*
@@ -57,15 +73,13 @@ public class AggregationFunction extends SopremoFunction {
 	 * eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public IJsonNode call(IArrayNode params, IJsonNode target) {
-		checkParameters(params, 1);
-
-		IJsonNode aggregator = this.aggregation.initialize(target);
+	public IJsonNode call(IArrayNode params) {
+		this.aggregation.initialize();
 
 		for (IJsonNode item : (IStreamArrayNode) params.get(0))
-			aggregator = this.aggregation.aggregate(item, aggregator);
+			this.aggregation.aggregate(item);
 
-		return target = this.aggregation.getFinalAggregate(aggregator, target);
+		return this.aggregation.getFinalAggregate();
 	}
 
 	@Override
@@ -86,14 +100,5 @@ public class AggregationFunction extends SopremoFunction {
 			return false;
 		AggregationFunction other = (AggregationFunction) obj;
 		return this.aggregation.equals(other.aggregation);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
-	 */
-	@Override
-	public void toString(StringBuilder builder) {
-		this.aggregation.toString(builder);
 	}
 }

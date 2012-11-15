@@ -14,17 +14,22 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.packages;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+
+import eu.stratosphere.sopremo.AbstractSopremoType;
+import eu.stratosphere.sopremo.ISerializableSopremoType;
 
 /**
  * Default implementation of {@link IRegistry}.
  * 
  * @author Arvid Heise
  */
-public class DefaultRegistry<T> implements IRegistry<T> {
+public class DefaultRegistry<T extends ISerializableSopremoType> extends AbstractSopremoType implements IRegistry<T> {
 	/**
 	 * 
 	 */
@@ -52,17 +57,16 @@ public class DefaultRegistry<T> implements IRegistry<T> {
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("Registry").append(this.elements);
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		this.toString(builder);
-		return builder.toString();
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("Registry: {");
+		boolean first = true;
+		for (final Entry<String, T> method : this.elements.entrySet()) {
+			appendable.append(method.getKey()).append(": ");
+			method.getValue().appendAsString(appendable);
+			if(first)
+				first = false;
+			else appendable.append(", ");
+		}
+		appendable.append("}");
 	}
 }

@@ -44,7 +44,7 @@ public class Intersection extends SetOperation<Intersection> {
 			protected void coGroup(final IStreamArrayNode values1, final IStreamArrayNode values2,
 					final JsonCollector out) {
 				if (!values1.isEmpty() && !values2.isEmpty())
-					out.collect(values1.getFirst());
+					out.collect(values1.iterator().next());
 			}
 		}
 	}

@@ -30,7 +30,7 @@ public class EvaluationExpressionTest {
 	public void shouldFindValues() {
 		final InputSelection inputSelection = new InputSelection(1);
 		final ObjectAccess objectAccess = new ObjectAccess("test");
-		final PathExpression pathExpression = new PathExpression(inputSelection, objectAccess);
+		final EvaluationExpression pathExpression = ExpressionUtil.makePath(inputSelection, objectAccess);
 		final EvaluationExpression expression =
 			new ArithmeticExpression(pathExpression, ArithmeticOperator.ADDITION, ConstantExpression.MISSING);
 
@@ -40,9 +40,10 @@ public class EvaluationExpressionTest {
 
 	@Test
 	public void shouldReplaceValues() {
-		final EvaluationExpression path = new ComparativeExpression(createPath("0", "id"), BinaryOperator.EQUAL, createPath("1", "userid"));
+		final EvaluationExpression path =
+			new ComparativeExpression(createPath("0", "id"), BinaryOperator.EQUAL, createPath("1", "userid"));
 
-		final EvaluationExpression expected = 
+		final EvaluationExpression expected =
 			new ComparativeExpression(createPath("[0]", "id"), BinaryOperator.EQUAL, createPath("[1]", "userid"));
 
 		Assert.assertEquals(expected, path.
@@ -54,7 +55,7 @@ public class EvaluationExpressionTest {
 	public void shouldRemoveValues() {
 		final InputSelection inputSelection = new InputSelection(1);
 		final ObjectAccess objectAccess = new ObjectAccess("test");
-		final PathExpression pathExpression = new PathExpression(inputSelection, objectAccess);
+		final EvaluationExpression pathExpression = ExpressionUtil.makePath(inputSelection, objectAccess);
 		final EvaluationExpression expression =
 			new ArithmeticExpression(pathExpression, ArithmeticOperator.ADDITION, ConstantExpression.MISSING);
 		final EvaluationExpression referenceExpression = expression.clone();
@@ -64,13 +65,12 @@ public class EvaluationExpressionTest {
 		// removed not the outer expression
 		Assert.assertSame(expression, expression.remove(ObjectAccess.class));
 
-		Assert.assertTrue(expression.equals(referenceExpression));
+		Assert.assertFalse(expression.equals(referenceExpression));
 
 		final EvaluationExpression expected =
-			new ArithmeticExpression(new PathExpression(inputSelection), ArithmeticOperator.ADDITION,
-				ConstantExpression.MISSING);
+			new ArithmeticExpression(EvaluationExpression.VALUE, ArithmeticOperator.ADDITION, ConstantExpression.MISSING);
 
-		Assert.assertEquals(expression, expected);
-		Assert.assertSame(inputSelection, expression.findFirst(InputSelection.class));
+		Assert.assertEquals(expected, expression);
+		Assert.assertNull(expression.findFirst(InputSelection.class));
 	}
 }

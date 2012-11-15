@@ -16,6 +16,8 @@ package eu.stratosphere.sopremo.type;
 
 import java.util.Collection;
 
+import eu.stratosphere.sopremo.cache.ArrayCache;
+
 /**
  * Interface for all array type nodes.
  * 
@@ -52,6 +54,12 @@ public interface IArrayNode extends IStreamArrayNode {
 	 */
 	public abstract IArrayNode add(final int index, final IJsonNode element);
 
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IJsonNode#clone()
+	 */
+	@Override
+	public IArrayNode clone();
+	
 	/**
 	 * Returns the node which is saved in the array at the specified <code>index</code>.
 	 * 
@@ -111,18 +119,11 @@ public interface IArrayNode extends IStreamArrayNode {
 	/**
 	 * Transforms this node into a standard Java-Array containing all saved nodes.
 	 * 
-	 * @return Array of all saved nodes
-	 */
-	public abstract IJsonNode[] toArray();
-
-	/**
-	 * Transforms this node into a standard Java-Array containing all saved nodes.
-	 * 
 	 * @param array
 	 *        preallocated array that should be used, when the size matches
 	 * @return Array of all saved nodes
 	 */
-	public abstract IJsonNode[] toArray(IJsonNode[] array);
+	public abstract IJsonNode[] toArray(ArrayCache<IJsonNode> arrayCache);
 
 	/**
 	 * Adds all {@link IJsonNode}s to the end of this array.

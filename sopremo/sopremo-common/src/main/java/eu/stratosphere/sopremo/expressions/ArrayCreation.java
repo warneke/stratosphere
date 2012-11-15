@@ -1,5 +1,6 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +18,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * @author Arvid Heise
  */
 @OptimizerHints(scope = Scope.ANY)
-public class ArrayCreation extends EvaluationExpression implements ExpressionParent {
+public class ArrayCreation extends EvaluationExpression {
 	/**
 	 * 
 	 */
@@ -44,10 +45,19 @@ public class ArrayCreation extends EvaluationExpression implements ExpressionPar
 	public ArrayCreation(final List<EvaluationExpression> elements) {
 		this.elements = new ArrayList<EvaluationExpression>(elements);
 	}
-	
+
 	public ArrayCreation add(EvaluationExpression expression) {
 		this.elements.add(expression);
 		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new ArrayCreation(SopremoUtil.deepClone(this.elements));
 	}
 
 	public int size() {
@@ -62,14 +72,16 @@ public class ArrayCreation extends EvaluationExpression implements ExpressionPar
 		return this.elements.equals(other.elements);
 	}
 
+	private final IArrayNode result = new ArrayNode();
+
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-		final IArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
+	public IJsonNode evaluate(final IJsonNode node) {
+		this.result.clear();
 
 		for (int index = 0; index < this.elements.size(); index++)
-			targetArray.add(this.elements.get(index).evaluate(node, targetArray.get(index)));
+			this.result.add(this.elements.get(index).evaluate(node));
 
-		return targetArray;
+		return this.result;
 	}
 
 	@Override
@@ -83,11 +95,11 @@ public class ArrayCreation extends EvaluationExpression implements ExpressionPar
 	 */
 	@Override
 	public ChildIterator iterator() {
-		return new ListChildIterator(this.elements.listIterator()) ;
+		return new ListChildIterator(this.elements.listIterator());
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		this.appendChildExpressions(builder, this.elements, ", ");
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.appendChildExpressions(appendable, this.elements, ", ");
 	}
 }

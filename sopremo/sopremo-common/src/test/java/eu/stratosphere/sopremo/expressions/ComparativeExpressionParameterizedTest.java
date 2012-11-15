@@ -13,7 +13,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.ComparativeExpression.BinaryOperator;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -29,8 +28,6 @@ public class ComparativeExpressionParameterizedTest {
 
 	private final BooleanNode ExpectedResult;
 
-	private final EvaluationContext context = new EvaluationContext();
-
 	public ComparativeExpressionParameterizedTest(final IJsonNode expr1, final BinaryOperator op,
 			final IJsonNode expr2,
 			final BooleanNode ExpectedResult) {
@@ -43,7 +40,7 @@ public class ComparativeExpressionParameterizedTest {
 	@Ignore
 	public IJsonNode evaluate(final IJsonNode expr1, final BinaryOperator op, final IJsonNode expr2) {
 		return new ComparativeExpression(new InputSelection(0), op, new InputSelection(1)).evaluate(
-			createArrayNode(expr1, expr2), null);
+			createArrayNode(expr1, expr2));
 
 	}
 

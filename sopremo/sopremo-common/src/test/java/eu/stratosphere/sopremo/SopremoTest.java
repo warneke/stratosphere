@@ -99,7 +99,13 @@ public abstract class SopremoTest<T> {
 		if (this.first == null)
 			Assert.fail("Cannot create default instance; "
 				+ "please override createDefaultInstance or shouldComplyEqualsContract");
-		this.shouldComplyEqualsContract(this.first, this.second, this.more);
+		try {
+			// check if there is a equal method
+			this.first.getClass().getDeclaredMethod("equals", Object.class);
+			this.shouldComplyEqualsContract(this.first, this.second, this.more);
+		} catch(NoSuchMethodException e) {
+			// then we do not have to test it
+		}
 	}
 
 	/**

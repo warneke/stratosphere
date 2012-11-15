@@ -14,7 +14,6 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.base.replace;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.InputCardinality;
 import eu.stratosphere.sopremo.pact.JsonCollector;
@@ -33,7 +32,7 @@ public class StrictReplace extends ReplaceBase<StrictReplace> {
 	public static class Implementation extends SopremoMatch {
 		private EvaluationExpression replaceExpression;
 
-		private CachingExpression<IJsonNode> dictionaryValueExtraction;
+		private EvaluationExpression dictionaryValueExtraction;
 
 		/*
 		 * (non-Javadoc)

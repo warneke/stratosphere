@@ -1,7 +1,9 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
-import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
+import java.io.IOException;
+
+import javolution.text.TextFormat;
+import eu.stratosphere.sopremo.cache.NodeCache;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.TypeCoercer;
 
@@ -9,7 +11,7 @@ import eu.stratosphere.sopremo.type.TypeCoercer;
  * Converts the result of an evaluation to a various number of node types.
  */
 @OptimizerHints(scope = Scope.NUMBER)
-public class CoerceExpression extends EvaluationExpression implements ExpressionParent {
+public class CoerceExpression extends PathSegmentExpression {
 	/**
 	 * 
 	 */
@@ -17,64 +19,55 @@ public class CoerceExpression extends EvaluationExpression implements Expression
 
 	private final Class<IJsonNode> targetType;
 
-	private CachingExpression<IJsonNode> valueExpression;
-
 	/**
 	 * Initializes a CoerceExpression with the given value and the given type.
 	 * 
 	 * @param targetType
 	 *        the class of the node the result should be converted to
-	 * @param value
-	 *        the expression which evaluates to the result
 	 */
 	@SuppressWarnings("unchecked")
-	public CoerceExpression(final Class<? extends IJsonNode> targetType, final EvaluationExpression value) {
-		this.targetType = (Class<IJsonNode>) targetType;
-		this.valueExpression = CachingExpression.ofSubclass(value, IJsonNode.class);
-	}
-
-	/**
-	 * Initializes a CoerceExpression with the given type.
-	 * 
-	 * @param targetType
-	 *        the class of the node the result should be converted to
-	 */
 	public CoerceExpression(final Class<? extends IJsonNode> targetType) {
-		this(targetType, EvaluationExpression.VALUE);
+		if (targetType == null)
+			throw new NullPointerException();
+		this.targetType = (Class<IJsonNode>) targetType;
 	}
 
-	/**
-	 * Returns the valueExpression.
-	 * 
-	 * @return the valueExpression
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#withInputExpression(eu.stratosphere.sopremo.expressions
+	 * .EvaluationExpression)
 	 */
-	public EvaluationExpression getValueExpression() {
-		return this.valueExpression;
+	@Override
+	public CoerceExpression withInputExpression(EvaluationExpression inputExpression) {
+		return (CoerceExpression) super.withInputExpression(inputExpression);
 	}
 
-	/**
-	 * Sets a new valueExpression.
-	 * 
-	 * @param valueExpression
-	 *        the {@link EvaluationExpression} that should be set as the new valueExpression
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
-	public void setValueExpression(final EvaluationExpression valueExpression) {
-		if (valueExpression == null)
-			throw new NullPointerException("valueExpression must not be null");
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new CoerceExpression(this.targetType);
+	}
 
-		this.valueExpression = CachingExpression.ofSubclass(valueExpression, IJsonNode.class);
+	private final transient NodeCache nodeCache = new NodeCache();
+
+	@Override
+	protected IJsonNode evaluateSegment(final IJsonNode node) {
+		return TypeCoercer.INSTANCE.coerce(node, this.nodeCache, this.targetType);
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-		return TypeCoercer.INSTANCE.coerce(this.valueExpression.evaluate(node), target, this.targetType);
-	}
-
-	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append('(').append(this.targetType).append(')');
-		if (this.valueExpression != EvaluationExpression.VALUE)
-			builder.append(' ').append(this.valueExpression);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append('(');
+		TextFormat.getInstance(Class.class).format(this.targetType, appendable);
+		appendable.append(')');
+		if (this.getInputExpression() != EvaluationExpression.VALUE) {
+			appendable.append(' ');
+			this.getInputExpression().appendAsString(appendable);
+		}
 	}
 
 	@Override
@@ -82,7 +75,6 @@ public class CoerceExpression extends EvaluationExpression implements Expression
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + this.targetType.hashCode();
-		result = prime * result + this.valueExpression.hashCode();
 		return result;
 	}
 
@@ -91,25 +83,6 @@ public class CoerceExpression extends EvaluationExpression implements Expression
 		if (!super.equals(obj))
 			return false;
 		final CoerceExpression other = (CoerceExpression) obj;
-		return this.targetType == other.targetType && this.valueExpression.equals(other.valueExpression);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
-	 */
-	@Override
-	public ChildIterator iterator() {
-		return new NamedChildIterator("valueExpression") {
-			@Override
-			protected void set(int index, EvaluationExpression childExpression) {
-				CoerceExpression.this.valueExpression.innerExpression = childExpression;
-			}
-	
-			@Override
-			protected EvaluationExpression get(int index) {
-				return CoerceExpression.this.valueExpression.innerExpression;
-			}
-		};
+		return this.targetType == other.targetType;
 	}
 }

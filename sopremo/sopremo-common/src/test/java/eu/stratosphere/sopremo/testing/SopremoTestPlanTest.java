@@ -287,7 +287,7 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 			@Override
 			protected void map(final IJsonNode value, final JsonCollector out) {
 				final Matcher matcher = WORD_PATTERN.matcher(((TextNode) ((IObjectNode) value).get("line"))
-					.getJavaValue());
+					.getTextValue());
 				while (matcher.find())
 					out.collect(JsonUtil.createObjectNode("word", TextNode.valueOf(matcher.group())));
 			}

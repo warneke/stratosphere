@@ -1,28 +1,30 @@
 package eu.stratosphere.sopremo.expressions;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.SopremoRuntime;
 import eu.stratosphere.sopremo.aggregation.Aggregation;
-import eu.stratosphere.sopremo.pact.SopremoUtil;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.ConcatenatingChildIterator;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IStreamArrayNode;
-import eu.stratosphere.util.CollectionUtil;
 
 /**
  * Batch aggregates one stream of {@link IJsonNode} with several {@link AggregationFunction}s.
  * 
  * @author Arvid Heise
  */
-public class BatchAggregationExpression extends EvaluationExpression {
+public class BatchAggregationExpression extends PathSegmentExpression {
 	/**
 	 * 
 	 */
@@ -30,12 +32,7 @@ public class BatchAggregationExpression extends EvaluationExpression {
 
 	private final List<Partial> partials;
 
-	private transient List<IJsonNode> lastPreprocessingResults = new ArrayList<IJsonNode>(),
-			lastAggregators = new ArrayList<IJsonNode>();
-
-	private transient int lastInputCounter = Integer.MIN_VALUE;
-
-	private transient IArrayNode results;
+	private final transient IArrayNode results = new ArrayNode();
 
 	private transient EvaluationContext context;
 
@@ -45,7 +42,7 @@ public class BatchAggregationExpression extends EvaluationExpression {
 	 * @param functions
 	 *        all functions that should be used
 	 */
-	public BatchAggregationExpression(final Aggregation<?, ?>... functions) {
+	public BatchAggregationExpression(final Aggregation... functions) {
 		this(Arrays.asList(functions));
 	}
 
@@ -55,23 +52,10 @@ public class BatchAggregationExpression extends EvaluationExpression {
 	 * @param functions
 	 *        a set of all functions that should be used
 	 */
-	public BatchAggregationExpression(final List<Aggregation<?, ?>> functions) {
+	public BatchAggregationExpression(final List<Aggregation> functions) {
 		this.partials = new ArrayList<Partial>(functions.size());
-		for (final Aggregation<?, ?> function : functions)
-			this.partials.add(new Partial(function, EvaluationExpression.VALUE, this.partials.size()));
-		CollectionUtil.ensureSize(this.lastPreprocessingResults, this.partials.size());
-		CollectionUtil.ensureSize(this.lastAggregators, this.partials.size());
-		this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
-	}
-
-	private void readObject(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
-		ois.defaultReadObject();
-		this.lastInputCounter = Integer.MIN_VALUE;
-		this.lastPreprocessingResults = new ArrayList<IJsonNode>();
-		this.lastAggregators = new ArrayList<IJsonNode>();
-		CollectionUtil.ensureSize(this.lastPreprocessingResults, this.partials.size());
-		CollectionUtil.ensureSize(this.lastAggregators, this.partials.size());
-		this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
+		for (final Aggregation function : functions)
+			this.partials.add(new Partial(function, this.partials.size()));
 	}
 
 	/**
@@ -81,8 +65,8 @@ public class BatchAggregationExpression extends EvaluationExpression {
 	 *        the function that should be added
 	 * @return the function which has been added as a {@link Partial}
 	 */
-	public EvaluationExpression add(final Aggregation<?, ?> function) {
-		return this.add(function, EvaluationExpression.VALUE);
+	public AggregationExpression add(final Aggregation function) {
+		return this.add(function.clone(), EvaluationExpression.VALUE);
 	}
 
 	/**
@@ -94,47 +78,132 @@ public class BatchAggregationExpression extends EvaluationExpression {
 	 *        the preprocessing that should be used for this function
 	 * @return the function which has been added as a {@link Partial}
 	 */
-	public EvaluationExpression add(final Aggregation<?, ?> function, final EvaluationExpression preprocessing) {
-		final Partial partial = new Partial(function, preprocessing, this.partials.size());
+	public AggregationExpression add(final Aggregation function, final EvaluationExpression preprocessing) {
+		final Partial partial = new Partial(function.clone(), this.partials.size()).withInputExpression(preprocessing);
 		this.partials.add(partial);
-		this.lastPreprocessingResults.add(null);
-		this.lastAggregators.add(null);
 		return partial;
 	}
 
-	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-		if (this.lastInputCounter == this.context.getInputCounter())
-			return this.results;
-		this.results = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
-		this.lastInputCounter = this.context.getInputCounter();
+	/**
+	 * Returns the partial aggregation at the given index.
+	 * 
+	 * @param index
+	 *        the index
+	 * @return the partial aggregation
+	 */
+	public EvaluationExpression get(int index) {
+		return this.partials.get(index);
+	}
 
-		for (int index = 0; index < this.lastAggregators.size(); index++)
-			this.lastAggregators.set(index,
-				this.partials.get(index).getFunction().initialize(this.lastAggregators.get(index)));
-		for (final IJsonNode input : (IStreamArrayNode) node)
-			for (int index = 0; index < this.partials.size(); index++) {
-				final AggregationExpression partial = this.partials.get(index);
-				final IJsonNode preprocessedValue =
-					partial.getPreprocessing().evaluate(input, this.lastPreprocessingResults.get(index));
+	/**
+	 * Returns the partial aggregation at the given index.
+	 * 
+	 * @param index
+	 *        the index
+	 * @return the partial aggregation
+	 */
+	Partial getPartial(int index) {
+		return this.partials.get(index);
+	}
+
+	private transient int lastId = -1;
+
+	private EvaluationContext getContext() {
+		if (this.context == null)
+			this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
+		return this.context;
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#initTransients()
+	 */
+	@Override
+	protected void initTransients() {
+		super.initTransients();
+		this.lastId = -1;
+		this.context = null;
+	}
+
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluateSegment(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	protected IJsonNode evaluateSegment(final IJsonNode node) {
+		final IStreamArrayNode stream = (IStreamArrayNode) node;
+		final int streamId = this.getContext().getInputCount();
+		if (streamId == this.lastId)
+			return this.results;
+
+		this.results.clear();
+
+		for (Partial partial : this.partials)
+			partial.getAggregation().initialize();
+		for (final IJsonNode input : stream)
+			for (Partial partial : this.partials) {
+				final IJsonNode preprocessedValue = partial.getInputExpression().evaluate(input);
 				if (preprocessedValue.isMissing())
 					throw new EvaluationException(String.format("Cannot access %s for aggregation %s",
-						partial.getPreprocessing(), partial));
-				this.lastAggregators.set(index,
-					partial.getFunction().aggregate(preprocessedValue, this.lastAggregators.get(index)));
+						partial.getInputExpression(), partial));
+				partial.getAggregation().aggregate(preprocessedValue);
 			}
 
-		for (int index = 0; index < this.partials.size(); index++) {
-			final IJsonNode partialResult =
-				this.partials.get(index).getFunction().getFinalAggregate(this.lastAggregators.get(index),
-					this.results.get(index));
-			this.results.set(index, partialResult);
-		}
+		for (int index = 0; index < this.partials.size(); index++)
+			this.results.set(index, this.partials.get(index).getAggregation().getFinalAggregate());
 
+		this.lastId = streamId;
 		return this.results;
 	}
 
-	private class Partial extends AggregationExpression {
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new BatchAggregationExpression();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#copyPropertiesFrom(eu.stratosphere.sopremo.expressions
+	 * .EvaluationExpression)
+	 */
+	@Override
+	protected void copyPropertiesFrom(EvaluationExpression original) {
+		super.copyPropertiesFrom(original);
+		for (Partial partial : ((BatchAggregationExpression) original).partials)
+			this.partials.add(partial.partialClone(this));
+	}
+
+	private static class CloneHelper {
+		private BatchAggregationExpression clone;
+
+		public CloneHelper(BatchAggregationExpression clone) {
+			this.clone = clone;
+		}
+
+		private BitSet clonedPartials = new BitSet();
+	}
+
+	private static final ThreadLocal<Map<BatchAggregationExpression, CloneHelper>> CLONE_MAP =
+		new ThreadLocal<Map<BatchAggregationExpression, CloneHelper>>() {
+			@Override
+			protected Map<BatchAggregationExpression, CloneHelper> initialValue() {
+				return new IdentityHashMap<BatchAggregationExpression, CloneHelper>();
+			}
+		};
+
+	private static BatchAggregationExpression getClone(BatchAggregationExpression expression, Partial partial) {
+		final Map<BatchAggregationExpression, CloneHelper> map = CLONE_MAP.get();
+		CloneHelper cloneHelper = map.get(expression);
+		if (cloneHelper == null || cloneHelper.clonedPartials.get(partial.index))
+			map.put(expression, cloneHelper = new CloneHelper((BatchAggregationExpression) expression.clone()));
+		cloneHelper.clonedPartials.set(partial.index);
+		return cloneHelper.clone;
+	}
+
+	final class Partial extends AggregationExpression {
 		/**
 		 * 
 		 */
@@ -152,14 +221,40 @@ public class BatchAggregationExpression extends EvaluationExpression {
 		 * @param index
 		 *        the index of this Partial
 		 */
-		public Partial(final Aggregation<?, ?> function, final EvaluationExpression preprocessing, final int index) {
-			super(function, preprocessing);
+		public Partial(final Aggregation function, final int index) {
+			super(function);
 			this.index = index;
 		}
 
+		BatchAggregationExpression getBatch() {
+			return BatchAggregationExpression.this;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#withInputExpression(eu.stratosphere.sopremo.expressions
+		 * .EvaluationExpression)
+		 */
 		@Override
-		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-			return ((IArrayNode) BatchAggregationExpression.this.evaluate(node, null)).get(this.index);
+		public Partial withInputExpression(EvaluationExpression inputExpression) {
+			return (Partial) super.withInputExpression(inputExpression);
+		}
+
+		private Partial partialClone(BatchAggregationExpression outer) {
+			final Partial partial = outer.new Partial(this.getAggregation().clone(), this.index);
+			partial.copyPropertiesFrom(this);
+			return partial;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluate(eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		public IJsonNode evaluate(IJsonNode node) {
+			return ((IArrayNode) BatchAggregationExpression.this.evaluate(node)).get(this.index);
 		}
 
 		/*
@@ -167,13 +262,30 @@ public class BatchAggregationExpression extends EvaluationExpression {
 		 * @see eu.stratosphere.sopremo.expressions.AggregationExpression#toString(java.lang.StringBuilder)
 		 */
 		@Override
-		public void toString(StringBuilder builder) {
-			this.getFunction().toString(builder);
-			builder.append('(');
-			BatchAggregationExpression.this.toString(builder);
-			if (this.getPreprocessing() != EvaluationExpression.VALUE)
-				this.getPreprocessing().toString(builder);
-			builder.append(')');
+		public void appendAsString(Appendable appendable) throws IOException {
+			this.getAggregation().appendAsString(appendable);
+			appendable.append('(');
+			 BatchAggregationExpression.this.appendAsString(appendable);
+//			if (this.getInputExpression() != EvaluationExpression.VALUE)
+//				this.getInputExpression().appendAsString(appendable);
+			appendable.append(')');
+		}
+		
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#iterator()
+		 */
+		@Override
+		public ChildIterator iterator() {
+			return new ConcatenatingChildIterator(super.iterator(), BatchAggregationExpression.this.iterator());
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.AggregationExpression#createCopy()
+		 */
+		@Override
+		protected EvaluationExpression createCopy() {
+			return getClone(BatchAggregationExpression.this, this).partials.get(this.index);
 		}
 	}
 
@@ -194,7 +306,8 @@ public class BatchAggregationExpression extends EvaluationExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("<batch>");
+	public void appendAsString(final Appendable appendable) throws IOException {
+		getInputExpression().appendAsString(appendable);
+		appendable.append('^');
 	}
 }

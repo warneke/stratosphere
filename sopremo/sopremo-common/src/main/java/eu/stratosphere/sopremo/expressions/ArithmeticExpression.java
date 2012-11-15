@@ -1,14 +1,15 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.EnumMap;
 import java.util.Map;
 
+import eu.stratosphere.sopremo.cache.NodeCache;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
-import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.AbstractJsonNode;
 import eu.stratosphere.sopremo.type.BigIntegerNode;
 import eu.stratosphere.sopremo.type.DecimalNode;
@@ -27,7 +28,7 @@ import eu.stratosphere.sopremo.type.NumberCoercer;
  * @author Arvid Heise
  */
 @OptimizerHints(scope = Scope.NUMBER, minNodes = 2, maxNodes = 2, transitive = true)
-public class ArithmeticExpression extends EvaluationExpression implements ExpressionParent {
+public class ArithmeticExpression extends EvaluationExpression {
 	/**
 	 * 
 	 */
@@ -36,8 +37,6 @@ public class ArithmeticExpression extends EvaluationExpression implements Expres
 	private final ArithmeticExpression.ArithmeticOperator operator;
 
 	private EvaluationExpression firstOperand, secondOperand;
-
-	private IJsonNode lastFirstValue, lastSecondValue;
 
 	/**
 	 * Returns the first operand.
@@ -48,31 +47,32 @@ public class ArithmeticExpression extends EvaluationExpression implements Expres
 		return this.firstOperand;
 	}
 
-	/**
-	 * Sets the first operand to the specified value.
-	 * 
-	 * @param firstOperand
-	 *        the operand to set
-	 */
-	public void setFirstOperand(final EvaluationExpression firstOperand) {
-		if (firstOperand == null)
-			throw new NullPointerException("firstOperand must not be null");
-
-		this.firstOperand = firstOperand;
-	}
-
-	/**
-	 * Sets the second operand to the specified value.
-	 * 
-	 * @param secondOperand
-	 *        the operand to set
-	 */
-	public void setSecondOperand(final EvaluationExpression secondOperand) {
-		if (secondOperand == null)
-			throw new NullPointerException("second operand must not be null");
-
-		this.secondOperand = secondOperand;
-	}
+	//
+	// /**
+	// * Sets the first operand to the specified value.
+	// *
+	// * @param firstOperand
+	// * the operand to set
+	// */
+	// public void setFirstOperand(final EvaluationExpression firstOperand) {
+	// if (firstOperand == null)
+	// throw new NullPointerException("firstOperand must not be null");
+	//
+	// this.firstOperand = firstOperand;
+	// }
+	//
+	// /**
+	// * Sets the second operand to the specified value.
+	// *
+	// * @param secondOperand
+	// * the operand to set
+	// */
+	// public void setSecondOperand(final EvaluationExpression secondOperand) {
+	// if (secondOperand == null)
+	// throw new NullPointerException("second operand must not be null");
+	//
+	// this.secondOperand = secondOperand;
+	// }
 
 	/**
 	 * Returns the second operand.
@@ -120,11 +120,12 @@ public class ArithmeticExpression extends EvaluationExpression implements Expres
 			&& this.secondOperand.equals(other.secondOperand);
 	}
 
+	private final transient NodeCache cache = new NodeCache();
+
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-		this.lastFirstValue = this.firstOperand.evaluate(node, this.lastFirstValue);
-		this.lastSecondValue = this.secondOperand.evaluate(node, this.lastSecondValue);
-		return this.operator.evaluate((INumericNode) this.lastFirstValue, (INumericNode) this.lastSecondValue, target);
+	public IJsonNode evaluate(final IJsonNode node) {
+		return this.operator.evaluate((INumericNode) this.firstOperand.evaluate(node),
+			(INumericNode) this.secondOperand.evaluate(node), this.cache);
 	}
 
 	/*
@@ -137,20 +138,21 @@ public class ArithmeticExpression extends EvaluationExpression implements Expres
 
 			@Override
 			protected void set(int index, EvaluationExpression childExpression) {
-				if(index == 0)
+				if (index == 0)
 					ArithmeticExpression.this.firstOperand = childExpression;
-				else ArithmeticExpression.this.secondOperand = childExpression;
+				else
+					ArithmeticExpression.this.secondOperand = childExpression;
 			}
 
 			@Override
 			protected EvaluationExpression get(int index) {
-				if(index == 0)
+				if (index == 0)
 					return ArithmeticExpression.this.firstOperand;
 				return ArithmeticExpression.this.secondOperand;
 			}
 		};
 	}
-	
+
 	@Override
 	public int hashCode() {
 		int result = super.hashCode();
@@ -160,13 +162,22 @@ public class ArithmeticExpression extends EvaluationExpression implements Expres
 		return result;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.firstOperand);
-		builder.append(' ');
-		builder.append(this.operator);
-		builder.append(' ');
-		builder.append(this.secondOperand);
+	protected EvaluationExpression createCopy() {
+		return new ArithmeticExpression(this.firstOperand.clone(), this.operator, this.secondOperand.clone());
+	}
+
+	@Override
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.firstOperand.appendAsString(appendable);
+		appendable.append(' ');
+		appendable.append(this.operator.name());
+		appendable.append(' ');
+		this.secondOperand.appendAsString(appendable);
 	}
 
 	/**
@@ -300,11 +311,11 @@ public class ArithmeticExpression extends EvaluationExpression implements Expres
 		 *        the right operand
 		 * @return the result of the operation
 		 */
-		public INumericNode evaluate(final INumericNode left, final INumericNode right, final IJsonNode target) {
+		public INumericNode evaluate(final INumericNode left, final INumericNode right, final NodeCache cache) {
 			final Type widerType = NumberCoercer.INSTANCE.getWiderType(left, right);
 			final NumberEvaluator<INumericNode> evaluator = this.typeEvaluators.get(widerType);
 			final Class<? extends INumericNode> implementationType = evaluator.getReturnType();
-			final INumericNode numericTarget = SopremoUtil.ensureType(target, implementationType);
+			final INumericNode numericTarget = cache.getNode(implementationType);
 			evaluator.evaluate(left, right, numericTarget);
 			return numericTarget;
 		}

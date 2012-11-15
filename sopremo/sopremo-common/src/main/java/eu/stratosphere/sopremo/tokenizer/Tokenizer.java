@@ -16,7 +16,6 @@ package eu.stratosphere.sopremo.tokenizer;
 
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.type.CachingArrayNode;
-import eu.stratosphere.sopremo.type.TextNode;
 
 /**
  * @author Arvid Heise

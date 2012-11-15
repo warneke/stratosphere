@@ -1,5 +1,7 @@
 package eu.stratosphere.sopremo.base;
 
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.base.replace.AssembleArray;
@@ -9,7 +11,6 @@ import eu.stratosphere.sopremo.base.replace.StrictReplace;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.JsonStreamExpression;
-import eu.stratosphere.sopremo.expressions.PathExpression;
 import eu.stratosphere.sopremo.expressions.SingletonExpression;
 import eu.stratosphere.sopremo.expressions.UnaryExpression;
 import eu.stratosphere.sopremo.operator.CompositeOperator;
@@ -39,7 +40,7 @@ public class Replace extends CompositeOperator<Replace> {
 		private static final long serialVersionUID = -8218311569919645735L;
 
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
+		public IJsonNode evaluate(IJsonNode node) {
 			throw new EvaluationException("Tag expression");
 		}
 
@@ -57,7 +58,7 @@ public class Replace extends CompositeOperator<Replace> {
 		private static final long serialVersionUID = 1652841463219871730L;
 
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
+		public IJsonNode evaluate(IJsonNode node) {
 			throw new EvaluationException("Tag expression");
 		}
 
@@ -111,7 +112,8 @@ public class Replace extends CompositeOperator<Replace> {
 			else if (this.defaultExpression == FILTER_RECORDS)
 				defaultExpression = this.defaultExpression;
 			else
-				defaultExpression = new PathExpression(new ArrayAccess(0), this.defaultExpression);
+				defaultExpression =
+					this.defaultExpression.clone().replace(EvaluationExpression.VALUE, new ArrayAccess(0));
 			Replace replacedElements = new Replace().
 				withName(String.format("%s element", this.getName())).
 				withInputs(arraySplit, module.getInput(1)).
@@ -121,7 +123,7 @@ public class Replace extends CompositeOperator<Replace> {
 				withReplaceExpression(new ArrayAccess(0));
 
 			// final ReplaceBase<?> replacedElements = this.defaultExpression == FILTER_RECORDS ?
-			// new ElementStrictReplace().withInputs(arraySplit, right) :
+			// new ElementStrictReplace().withInputs(arraySplit, right) :Os
 			// new ElementReplaceWithDefault().withDefaultExpression(this.defaultExpression).withInputs(arraySplit,
 			// right);
 
@@ -206,17 +208,17 @@ public class Replace extends CompositeOperator<Replace> {
 	 * @see eu.stratosphere.sopremo.Operator#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append(this.getName());
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append(this.getName());
 		if (this.isArrayElementsReplacement())
-			builder.append(" all ");
-		this.getReplaceExpression().toString(builder);
+			appendable.append(" all ");
+		this.getReplaceExpression().appendAsString(appendable);
 		if (this.getInput(1) != null) {
-			builder.append(" with ");
-			this.getDictionary().toString(builder);
+			appendable.append(" with ");
+			this.getDictionary().appendAsString(appendable);
 		}
-		builder.append(" default ");
-		this.getDefaultExpression().toString(builder);
+		appendable.append(" default ");
+		this.getDefaultExpression().appendAsString(appendable);
 	}
 
 	public boolean isArrayElementsReplacement() {

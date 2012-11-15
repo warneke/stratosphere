@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 import eu.stratosphere.pact.common.type.Key;
 import eu.stratosphere.pact.common.util.ReflectionUtil;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 
 /**
  * Abstract class to provide basic implementations for all node types.
@@ -16,7 +17,7 @@ import eu.stratosphere.pact.common.util.ReflectionUtil;
  * @author Michael Hopstock
  * @author Tommy Neubert
  */
-public abstract class AbstractJsonNode implements IJsonNode {
+public abstract class AbstractJsonNode extends AbstractSopremoType implements IJsonNode {
 
 	/**
 	 * 
@@ -40,8 +41,8 @@ public abstract class AbstractJsonNode implements IJsonNode {
 	}
 
 	@Override
-	public IJsonNode copy() {
-		IJsonNode copy = ReflectionUtil.newInstance(getClass());
+	public AbstractJsonNode clone() {
+		AbstractJsonNode copy = ReflectionUtil.newInstance(getClass());
 		copy.copyValueFrom(this);
 		return copy;
 	}
@@ -81,6 +82,15 @@ public abstract class AbstractJsonNode implements IJsonNode {
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IJsonNode#isCopyable(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public boolean isCopyable(IJsonNode otherNode) {
+		return otherNode.getType() == this.getType();
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#isObject()
 	 */
 	@Override
@@ -108,13 +118,6 @@ public abstract class AbstractJsonNode implements IJsonNode {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IJsonNode#getJavaValue()
-	 */
-	@Override
-	public abstract Object getJavaValue();
-
-	/*
-	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#compareTo(eu.stratosphere.pact.common.type.Key)
 	 */
 
@@ -138,18 +141,6 @@ public abstract class AbstractJsonNode implements IJsonNode {
 	 */
 	@Override
 	public abstract int compareToSameType(IJsonNode other);
-
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		this.toString(sb);
-		return sb.toString();
-	}
-
-	@Override
-	public void toString(final StringBuilder sb) {
-		sb.append(this.getJavaValue());
-	}
 
 	@Override
 	public int getMaxNormalizedKeyLen() {

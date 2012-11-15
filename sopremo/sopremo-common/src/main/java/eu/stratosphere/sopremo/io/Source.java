@@ -238,10 +238,10 @@ public class Source extends ElementaryOperator<Source> {
 	 * 
 	 * @return the adhoc values
 	 */
-	public IJsonNode getAdhocValues(EvaluationContext context) {
+	public IJsonNode getAdhocValues() {
 		if (!this.isAdhoc())
 			throw new IllegalStateException();
-		return this.getAdhocExpression().evaluate(NullNode.getInstance(), null);
+		return this.getAdhocExpression().evaluate(NullNode.getInstance());
 	}
 
 	@Override

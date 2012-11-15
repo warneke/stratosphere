@@ -14,6 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
@@ -40,19 +42,28 @@ public class GenericMacro extends MacroBase {
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("Macro generating ").append(this.expressionClass.getSimpleName());
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.function.Callable#call(InputType[], eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public EvaluationExpression call(final EvaluationExpression[] params, final EvaluationExpression target) {
+	public EvaluationExpression call(final EvaluationExpression[] params) {
 		return ReflectUtil.newInstance(this.expressionClass, (Object[]) params);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 * @see eu.stratosphere.sopremo.function.Callable#clone()
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("Macro generating ").append(this.expressionClass.getSimpleName());
+	public Callable<EvaluationExpression, EvaluationExpression[]> clone() {
+		return new GenericMacro(this.expressionClass);
 	}
 }

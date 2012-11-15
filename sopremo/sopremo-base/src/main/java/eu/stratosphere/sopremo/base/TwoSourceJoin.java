@@ -150,7 +150,7 @@ public class TwoSourceJoin extends TwoSourceJoinBase<TwoSourceJoin> {
 		if (outerJoinSources instanceof InputSelection)
 			expressions = Collections.singleton(outerJoinSources);
 		else if (outerJoinSources instanceof ArrayCreation)
-			expressions = (ArrayCreation) outerJoinSources;
+			expressions = outerJoinSources;
 		else
 			throw new IllegalArgumentException(String.format("Cannot interpret %s", outerJoinSources));
 

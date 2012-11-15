@@ -16,11 +16,8 @@ package eu.stratosphere.sopremo.type;
 
 /**
  * @author Arvid Heise
- *
  */
 public interface IStreamArrayNode extends Iterable<IJsonNode>, IJsonNode {
-	public IJsonNode getFirst();
-	
 	/**
 	 * @return true if there are no (more) entries
 	 */

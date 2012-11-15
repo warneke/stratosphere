@@ -47,13 +47,22 @@ public class LazyTailArrayNode extends AbstractArrayNode {
 	 */
 	private static final long serialVersionUID = -363746608697276853L;
 
-	protected PactRecord record;
+	private final PactRecord record;
 
-	protected TailArraySchema schema;
+	private final TailArraySchema schema;
 
 	public LazyTailArrayNode(final PactRecord record, final TailArraySchema schema) {
 		this.record = record;
 		this.schema = schema;
+	}
+	
+	/**
+	 * Returns the record.
+	 * 
+	 * @return the record
+	 */
+	PactRecord getRecord() {
+		return this.record;
 	}
 
 	@Override
@@ -146,11 +155,6 @@ public class LazyTailArrayNode extends AbstractArrayNode {
 			return SopremoUtil.unwrap(this.record.getField(recordPosition + 1,
 				JsonNodeWrapper.class));
 		return this.getOtherField().get(index);
-	}
-
-	@Override
-	public PactRecord getJavaValue() {
-		return this.record;
 	}
 
 	/**
@@ -255,7 +259,7 @@ public class LazyTailArrayNode extends AbstractArrayNode {
 	}
 
 	@Override
-	public void toString(final StringBuilder sb) {
+	public void appendAsString(final Appendable sb) throws IOException {
 		sb.append('[');
 
 		int count = 0;
@@ -264,7 +268,7 @@ public class LazyTailArrayNode extends AbstractArrayNode {
 				sb.append(',');
 			++count;
 
-			node.toString(sb);
+			node.appendAsString(sb);
 		}
 
 		sb.append(']');
@@ -289,16 +293,6 @@ public class LazyTailArrayNode extends AbstractArrayNode {
 			this.add(node);
 
 		return this;
-	}
-
-	@Override
-	public IJsonNode[] toArray() {
-		final IJsonNode[] result = new IJsonNode[this.size()];
-		int i = 0;
-		for (final IJsonNode node : this)
-			result[i++] = node;
-
-		return result;
 	}
 
 	@Override

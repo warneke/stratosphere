@@ -1,5 +1,7 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.operator.Operator;
 
 /**
@@ -46,8 +48,10 @@ public class NestedOperatorExpression extends UnevaluableExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("<").append(this.operator).append(">");
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("<");
+		this.appendAsString(appendable);
+		appendable.append(">");
 	}
 
 	/**

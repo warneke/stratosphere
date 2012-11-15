@@ -400,11 +400,6 @@ public class JsonParser {
 		}
 
 		@Override
-		public Object getJavaValue() {
-			return null;
-		}
-
-		@Override
 		public Type getType() {
 			return null;
 		}
@@ -418,7 +413,7 @@ public class JsonParser {
 		}
 
 		@Override
-		public void toString(final StringBuilder sb) {
+		public void appendAsString(final Appendable sb) throws IOException {
 		}
 
 		@Override

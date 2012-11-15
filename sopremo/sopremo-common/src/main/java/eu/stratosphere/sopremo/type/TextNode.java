@@ -23,7 +23,7 @@ public class TextNode extends AbstractJsonNode implements IPrimitiveNode, CharSe
 	 */
 	private static final long serialVersionUID = -4663376747000392562L;
 
-	public final static TextNode EMPTY_STRING_NODE = new TextNode("");
+	public final static TextNode EMPTY_STRING = new TextNode("");
 
 	private transient PactString value;
 
@@ -47,11 +47,6 @@ public class TextNode extends AbstractJsonNode implements IPrimitiveNode, CharSe
 		this.value = new PactString(v);
 	}
 
-	@Override
-	public CharSequence getJavaValue() {
-		return this.value.getValue();
-	}
-
 	public Formatter asFormatter() {
 		if (this.formatter == null)
 			this.formatter = new Formatter(this, Locale.US);
@@ -69,7 +64,7 @@ public class TextNode extends AbstractJsonNode implements IPrimitiveNode, CharSe
 		if (v == null)
 			throw new NullPointerException();
 		if (v.length() == 0)
-			return EMPTY_STRING_NODE;
+			return EMPTY_STRING;
 		return new TextNode(v);
 	}
 
@@ -79,7 +74,7 @@ public class TextNode extends AbstractJsonNode implements IPrimitiveNode, CharSe
 	 * @return the represented String
 	 */
 	public CharSequence getTextValue() {
-		return this.getJavaValue();
+		return this.value;
 	}
 
 	public void setValue(final CharSequence value) {
@@ -87,8 +82,8 @@ public class TextNode extends AbstractJsonNode implements IPrimitiveNode, CharSe
 	}
 
 	@Override
-	public void toString(final StringBuilder sb) {
-		appendQuoted(sb, this.value.toString());
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append(this.value);
 	}
 
 	/**
@@ -108,10 +103,10 @@ public class TextNode extends AbstractJsonNode implements IPrimitiveNode, CharSe
 	 * @param content
 	 *        the String that should be appended
 	 */
-	public static void appendQuoted(final StringBuilder sb, final String content) {
-		sb.append('"');
-		sb.append(content);
-		sb.append('"');
+	public static void appendQuoted(final StringBuilder appendable, final CharSequence content) {
+		appendable.append('"');
+		appendable.append(content);
+		appendable.append('"');
 	}
 
 	@Override

@@ -7,10 +7,9 @@ import eu.stratosphere.pact.common.contract.Contract;
 import eu.stratosphere.pact.common.contract.ReduceContract;
 import eu.stratosphere.pact.common.contract.ReduceContract.Combinable;
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
-import eu.stratosphere.sopremo.expressions.EvaluationExpressionUtil;
+import eu.stratosphere.sopremo.expressions.ExpressionUtil;
 import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.operator.CompositeOperator;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
@@ -26,9 +25,9 @@ import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoCoGroup;
 import eu.stratosphere.sopremo.pact.SopremoReduce;
 import eu.stratosphere.sopremo.serialization.Schema;
-import eu.stratosphere.sopremo.type.IJsonNode;
+import eu.stratosphere.sopremo.type.ArrayNode;
+import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IStreamArrayNode;
-import eu.stratosphere.sopremo.type.JsonUtil;
 import eu.stratosphere.sopremo.type.NullNode;
 
 @InputCardinality(min = 1, max = 2)
@@ -56,12 +55,12 @@ public class Grouping extends CompositeOperator<Grouping> {
 		case 0:
 			throw new IllegalStateException("No input given for grouping");
 		case 1:
-			output = new GroupProjection(this.resultProjection.remove(InputSelection.class)).
+			output = new GroupProjection().withResultProjection(this.resultProjection).
 				withKeyExpression(0, this.getGroupingKey(0).remove(new InputSelection(0))).
 				withInputs(module.getInputs());
 			break;
 		case 2:
-			output = new CoGroupProjection(this.resultProjection).
+			output = new CoGroupProjection().withResultProjection(this.resultProjection).
 				withKeyExpression(0, this.getGroupingKey(0).remove(new InputSelection(0))).
 				withKeyExpression(1, this.getGroupingKey(1).remove(new InputSelection(1))).
 				withInputs(module.getInputs());
@@ -115,8 +114,8 @@ public class Grouping extends CompositeOperator<Grouping> {
 			throw new NullPointerException("resultProjection must not be null");
 
 		this.resultProjection =
-			EvaluationExpressionUtil.replaceAggregationWithBatchAggregation(
-				EvaluationExpressionUtil.replaceIndexAccessWithAggregation(resultProjection));
+			ExpressionUtil.replaceAggregationWithBatchAggregation(
+				ExpressionUtil.replaceIndexAccessWithAggregation(resultProjection));
 	}
 
 	public Grouping withResultProjection(EvaluationExpression resultProjection) {
@@ -182,29 +181,14 @@ public class Grouping extends CompositeOperator<Grouping> {
 		 */
 		private static final long serialVersionUID = 561729616462154707L;
 
-		private EvaluationExpression projection = EvaluationExpression.VALUE;
-
-		public CoGroupProjection(EvaluationExpression projection) {
-			this.projection = projection;
-		}
-
-		public EvaluationExpression getProjection() {
-			return this.projection;
-		}
-
-		public void setProjection(EvaluationExpression projection) {
-			if (projection == null)
-				throw new NullPointerException("projection must not be null");
-
-			this.projection = projection;
-		}
-
 		public static class Implementation extends SopremoCoGroup {
-			private CachingExpression<IJsonNode> projection;
-
+			private final IArrayNode streams = new ArrayNode(2); 
+			
 			@Override
 			protected void coGroup(IStreamArrayNode values1, IStreamArrayNode values2, JsonCollector out) {
-				out.collect(this.projection.evaluate(JsonUtil.asArray(values1, values2)));
+				this.streams.set(0, values1);
+				this.streams.set(1, values2);
+				out.collect(this.streams);
 			}
 		}
 	}
@@ -215,13 +199,6 @@ public class Grouping extends CompositeOperator<Grouping> {
 		 * 
 		 */
 		private static final long serialVersionUID = 561729616462154707L;
-
-		@SuppressWarnings("unused")
-		private final EvaluationExpression projection;
-
-		public GroupProjection(final EvaluationExpression projection) {
-			this.projection = projection;
-		}
 
 		/*
 		 * (non-Javadoc)
@@ -247,20 +224,16 @@ public class Grouping extends CompositeOperator<Grouping> {
 
 		@Combinable
 		public static class CombinableImplementation extends SopremoReduce {
-			private CachingExpression<IJsonNode> projection;
-
 			@Override
 			protected void reduce(final IStreamArrayNode values, final JsonCollector out) {
-				out.collect(this.projection.evaluate(values));
+				out.collect(values);
 			}
 		}
 
 		public static class Implementation extends SopremoReduce {
-			private CachingExpression<IJsonNode> projection;
-
 			@Override
 			protected void reduce(final IStreamArrayNode values, final JsonCollector out) {
-				out.collect(this.projection.evaluate(values));
+				out.collect(values);
 			}
 		}
 	}

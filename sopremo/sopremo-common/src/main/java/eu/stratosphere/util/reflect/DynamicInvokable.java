@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.util.ArrayList;
@@ -74,6 +75,8 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 		final Class<?>[] parameterTypes = this.getSignatureTypes(member);
 		Signature signature;
 
+		if (member instanceof AccessibleObject)
+			((AccessibleObject) member).setAccessible(true);
 		if (this.isVarargs(member))
 			signature = new VarArgSignature(parameterTypes);
 		else
@@ -144,8 +147,8 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 		final Class<?>[] paramTypes = this.getActualParameterTypes(params);
 		final Signature signature = this.findBestSignature(new Signature(paramTypes));
 		if (signature == null)
-			throw new EvaluationException(String.format("No method %s found for parameter types %s", this.getName(),
-				Arrays.toString(paramTypes)));
+			throw new EvaluationException(String.format("No method %s found for parameter types %s",
+				this.getName(), Arrays.toString(paramTypes)));
 		return this.invokeSignature(signature, context, params);
 	}
 
@@ -160,14 +163,15 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 		return this.findBestSignature(new Signature(paramTypes)) != null;
 	}
 
-	public ReturnType invokeSignature(final Signature signature, final Object context, final Object... params) throws Exception {
+	public ReturnType invokeSignature(final Signature signature, final Object context, final Object... params)
+			throws Exception {
 		try {
 			return this.invokeDirectly(this.getMember(signature), context, signature.adjustParameters(params));
 		} catch (final Error e) {
 			throw e;
 		} catch (final InvocationTargetException e) {
 			throw (Exception) e.getCause();
-		} 
+		}
 	}
 
 	protected MemberType getMember(final Signature signature) {

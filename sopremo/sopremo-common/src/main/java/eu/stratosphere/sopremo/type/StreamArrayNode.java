@@ -17,6 +17,7 @@ package eu.stratosphere.sopremo.type;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -37,7 +38,7 @@ public class StreamArrayNode extends AbstractJsonNode implements IStreamArrayNod
 	 */
 	private static final Iterator<IJsonNode> EMPTY_ITERATOR = EMPTY_SET.iterator();
 
-	private Iterator<IJsonNode> nodeIterator;
+	private transient Iterator<IJsonNode> nodeIterator;
 
 	public StreamArrayNode(Iterator<IJsonNode> nodeIterator) {
 		this.nodeIterator = nodeIterator;
@@ -49,8 +50,14 @@ public class StreamArrayNode extends AbstractJsonNode implements IStreamArrayNod
 	public StreamArrayNode() {
 		this(EMPTY_ITERATOR);
 	}
-	
-	/* (non-Javadoc)
+
+	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		ois.defaultReadObject();
+		this.nodeIterator = EMPTY_ITERATOR;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#getType()
 	 */
 	@Override
@@ -69,14 +76,6 @@ public class StreamArrayNode extends AbstractJsonNode implements IStreamArrayNod
 		this.nodeIterator = nodeIterator;
 	}
 
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IStreamArrayNode#getFirst()
-	 */
-	@Override
-	public IJsonNode getFirst() {
-		return this.nodeIterator.next();
-	}
-	
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IArrayNode#clear()
@@ -106,36 +105,28 @@ public class StreamArrayNode extends AbstractJsonNode implements IStreamArrayNod
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#getJavaValue()
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public Iterator<IJsonNode> getJavaValue() {
-		return this.nodeIterator;
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append('[');
+		final Iterator<IJsonNode> iterator = this.iterator();
+		if (iterator.hasNext()) {
+			iterator.next().appendAsString(appendable);
+			for (int index = 0; iterator.hasNext() && index < 100; index++) {
+				appendable.append(", ");
+				iterator.next().appendAsString(appendable);
+			}
+
+			if (iterator.hasNext())
+				appendable.append(", ...");
+		}
+
+		appendable.append(']');
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#toString(java.lang.StringBuilder)
-	 */
-	@Override
-	public void toString(StringBuilder sb) {
-		sb.append('[');
-
-		final Iterator<IJsonNode> iterator = this.iterator();
-		if (iterator.hasNext()) {
-			sb.append(iterator.next());
-
-			for (int index = 0; iterator.hasNext() && index < 100; index++)
-				sb.append(", ").append(iterator.next());
-			
-			if(iterator.hasNext())
-				sb.append(", ...");
-		}
-
-		sb.append(']');
-	}
-
-	/* (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#copyValueFrom(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
@@ -143,7 +134,8 @@ public class StreamArrayNode extends AbstractJsonNode implements IStreamArrayNod
 		throw new UnsupportedOperationException();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#read(java.io.DataInput)
 	 */
 	@Override
@@ -151,15 +143,18 @@ public class StreamArrayNode extends AbstractJsonNode implements IStreamArrayNod
 		throw new UnsupportedOperationException();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#write(java.io.DataOutput)
 	 */
 	@Override
 	public void write(DataOutput out) throws IOException {
-		throw new UnsupportedOperationException("Use CoreFunctions#ALL to transform this stream array into a materialized array");
+		throw new UnsupportedOperationException(
+			"Use CoreFunctions#ALL to transform this stream array into a materialized array");
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#compareToSameType(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
@@ -167,7 +162,8 @@ public class StreamArrayNode extends AbstractJsonNode implements IStreamArrayNod
 		return System.identityHashCode(this) - System.identityHashCode(other);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#hashCode()
 	 */
 	@Override

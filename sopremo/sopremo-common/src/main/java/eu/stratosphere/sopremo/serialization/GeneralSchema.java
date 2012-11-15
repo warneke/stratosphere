@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.IntSets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import eu.stratosphere.pact.common.type.PactRecord;
@@ -52,7 +53,7 @@ public class GeneralSchema extends AbstractSchema {
 	 * @param mappings
 	 *        an Iterable over all {@link EvaluationExpression}s that should be set as mappings.
 	 */
-	public GeneralSchema(final List<EvaluationExpression> mappings) {
+	public GeneralSchema(final Collection<EvaluationExpression> mappings) {
 		super(mappings.size() + 1, CollectionUtil.setRangeFrom(0, mappings.size()));
 		for (final EvaluationExpression exp : mappings)
 			this.mappings.add(exp);
@@ -83,7 +84,7 @@ public class GeneralSchema extends AbstractSchema {
 		target.setField(this.mappings.size(), SopremoUtil.wrap(value));
 
 		for (int i = 0; i < this.mappings.size(); i++)
-			target.setField(i, SopremoUtil.wrap(this.mappings.get(i).evaluate(value, null)));
+			target.setField(i, SopremoUtil.wrap(this.mappings.get(i).evaluate(value)));
 
 		return target;
 	}

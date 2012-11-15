@@ -18,47 +18,38 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import eu.stratosphere.sopremo.expressions.FunctionCall;
 import eu.stratosphere.sopremo.type.AbstractJsonNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
 /**
  * @author Arvid Heise
  */
-public class FunctionPointerNode extends AbstractJsonNode {
+public class FunctionNode extends AbstractJsonNode {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -1790138677031870181L;
 
-	private FunctionCall functionCall;
+	private SopremoFunction function;
 
 	/**
-	 * Initializes FunctionPointerNode.
+	 * Initializes FunctionNode.
 	 */
-	public FunctionPointerNode() {
+	public FunctionNode() {
 	}
 
-	/**
-	 * Sets the functionCall to the specified value.
-	 * 
-	 * @param functionCall
-	 *        the functionCall to set
-	 */
-	public void setFunctionCall(FunctionCall functionCall) {
-		if (functionCall == null)
-			throw new NullPointerException("functionCall must not be null");
-
-		this.functionCall = functionCall;
+	public FunctionNode(SopremoFunction function) {
+		this.function = function;
 	}
 
-	/**
-	 * Returns the functionCall.
-	 * 
-	 * @return the functionCall
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#appendAsString(java.lang.Appendable)
 	 */
-	public FunctionCall getFunctionCall() {
-		return this.functionCall;
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append('&');
+		this.function.appendAsString(appendable);
 	}
 
 	/*
@@ -71,11 +62,29 @@ public class FunctionPointerNode extends AbstractJsonNode {
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#compareToSameType(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public int compareToSameType(IJsonNode other) {
+		return this.function.getName().compareTo(((FunctionNode) other).function.getName());
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#copyValueFrom(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
 	public void copyValueFrom(IJsonNode otherNode) {
-		throw new UnsupportedOperationException();
+		this.function = ((FunctionNode) otherNode).function.clone();
+	}
+
+	/**
+	 * Returns the function.
+	 * 
+	 * @return the function
+	 */
+	public SopremoFunction getFunction() {
+		return this.function;
 	}
 
 	/*
@@ -87,6 +96,26 @@ public class FunctionPointerNode extends AbstractJsonNode {
 		return Type.CustomNode;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + this.function.hashCode();
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FunctionNode other = (FunctionNode) obj;
+		return this.function.equals(other.function);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#read(java.io.DataInput)
@@ -94,6 +123,19 @@ public class FunctionPointerNode extends AbstractJsonNode {
 	@Override
 	public void read(DataInput in) throws IOException {
 		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * Sets the function to the specified value.
+	 * 
+	 * @param function
+	 *        the function to set
+	 */
+	public void setFunction(SopremoFunction function) {
+		if (function == null)
+			throw new NullPointerException("function must not be null");
+
+		this.function = function;
 	}
 
 	/*
@@ -104,36 +146,4 @@ public class FunctionPointerNode extends AbstractJsonNode {
 	public void write(DataOutput out) throws IOException {
 		throw new UnsupportedOperationException();
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#getJavaValue()
-	 */
-	@Override
-	public SopremoFunction getJavaValue() {
-		throw new UnsupportedOperationException();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#compareToSameType(eu.stratosphere.sopremo.type.IJsonNode)
-	 */
-	@Override
-	public int compareToSameType(IJsonNode other) {
-		throw new UnsupportedOperationException();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		throw new UnsupportedOperationException();
-	}
-
-	public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
-		return this.functionCall.evaluate(node, target);
-	}
-
 }

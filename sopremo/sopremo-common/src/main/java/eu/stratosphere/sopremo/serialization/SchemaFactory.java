@@ -14,6 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.serialization;
 
+import java.util.Collection;
+
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 
@@ -30,6 +32,6 @@ public interface SchemaFactory extends ISerializableSopremoType {
 	 *        the Expressions, from which a Schema shall be created
 	 * @return {@link Schema}, corresponding to the <code>keyExpressions</code>
 	 */
-	Schema create(Iterable<EvaluationExpression> keyExpressions);
+	Schema create(Collection<EvaluationExpression> keyExpressions);
 
 }

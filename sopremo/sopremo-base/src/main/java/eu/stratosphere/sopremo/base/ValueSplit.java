@@ -3,7 +3,6 @@ package eu.stratosphere.sopremo.base;
 import java.util.ArrayList;
 import java.util.List;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.pact.JsonCollector;
@@ -22,20 +21,20 @@ public class ValueSplit extends ElementaryOperator<ValueSplit> {
 	 */
 	private static final long serialVersionUID = -2967507260239105002L;
 
-	private List<CachingExpression<IJsonNode>> projections = new ArrayList<CachingExpression<IJsonNode>>();
+	private List<EvaluationExpression> projections = new ArrayList<EvaluationExpression>();
 
 	public ValueSplit addProjection(EvaluationExpression... projections) {
 		for (EvaluationExpression evaluationExpression : projections)
-			this.projections.add(CachingExpression.of(evaluationExpression, IJsonNode.class));
+			this.projections.add(evaluationExpression);
 		return this;
 	}
 
 	public static class Implementation extends SopremoMap {
-		private List<CachingExpression<IJsonNode>> projections = new ArrayList<CachingExpression<IJsonNode>>();
+		private List<EvaluationExpression> projections = new ArrayList<EvaluationExpression>();
 
 		@Override
 		protected void map(IJsonNode value, JsonCollector out) {
-			for (CachingExpression<IJsonNode> projection : this.projections)
+			for (EvaluationExpression projection : this.projections)
 				out.collect(projection.evaluate(value));
 		}
 	}

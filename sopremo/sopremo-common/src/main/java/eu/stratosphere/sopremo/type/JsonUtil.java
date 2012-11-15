@@ -8,9 +8,10 @@ import java.util.List;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.ArrayProjection;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.expressions.ExpressionUtil;
 import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
-import eu.stratosphere.sopremo.expressions.PathExpression;
+import eu.stratosphere.sopremo.expressions.PathSegmentExpression;
 
 /**
  * Provides a set of utility functions and objects to handle json data.
@@ -112,9 +113,9 @@ public class JsonUtil {
 	 * @return the expression
 	 */
 	public static EvaluationExpression createPath(final List<String> parts) {
-		final List<EvaluationExpression> fragments = new ArrayList<EvaluationExpression>();
+		final List<PathSegmentExpression> fragments = new ArrayList<PathSegmentExpression>();
 		for (int index = 0; index < parts.size(); index++) {
-			EvaluationExpression segment;
+			PathSegmentExpression segment;
 			final String part = parts.get(index);
 			if (part.matches("[0-9]+"))
 				segment = new InputSelection(Integer.parseInt(part));
@@ -132,7 +133,7 @@ public class JsonUtil {
 				segment = new ObjectAccess(part);
 			fragments.add(segment);
 		}
-		return PathExpression.wrapIfNecessary(fragments);
+		return ExpressionUtil.makePath(fragments);
 	}
 
 	/**

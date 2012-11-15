@@ -46,6 +46,10 @@ public abstract class NamedChildIterator implements ChildIterator {
 		return get(++this.index);
 	}
 
+	protected int getSize() {
+		return this.childNames.length;
+	}
+	
 	/**
 	 * @param i
 	 * @return

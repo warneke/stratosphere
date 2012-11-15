@@ -14,11 +14,12 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.tokenizer;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javolution.text.TextFormat;
 import eu.stratosphere.sopremo.type.CachingArrayNode;
-import eu.stratosphere.sopremo.type.TextNode;
 
 /**
  * @author Arvid Heise
@@ -101,8 +102,10 @@ public class RegexTokenizer extends AbstractTokenizer {
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("RegexTokenizer [pattern=").append(this.pattern).append("]");
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("RegexTokenizer [pattern=");
+		TextFormat.getInstance(Pattern.class).format(this.pattern, appendable);
+		appendable.append("]");
 	}
 
 }

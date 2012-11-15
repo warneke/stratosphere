@@ -14,7 +14,7 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.base.replace;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
+import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoMatch;
 import eu.stratosphere.sopremo.type.IArrayNode;
@@ -28,7 +28,7 @@ public class ArrayElementStrictReplace extends ArrayElementReplaceBase<ArrayElem
 
 	public static class Implementation extends SopremoMatch {
 
-		private CachingExpression<IJsonNode> dictionaryValueExtraction;
+		private EvaluationExpression dictionaryValueExtraction;
 
 		private int index = 0;
 

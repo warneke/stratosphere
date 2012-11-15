@@ -124,14 +124,14 @@ public class PackageInfo implements ISerializableSopremoType, ParsingScope {
 	}
 
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("Package ").append(this.packageName);
-		builder.append("\n  ");
-		this.operatorRegistry.toString(builder);
-		builder.append("\n  ");
-		this.functionRegistry.toString(builder);
-		builder.append("\n  ");
-		this.constantRegistry.toString(builder);
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("Package ").append(this.packageName);
+		appendable.append("\n  ");
+		this.operatorRegistry.appendAsString(appendable);
+		appendable.append("\n  ");
+		this.functionRegistry.appendAsString(appendable);
+		appendable.append("\n  ");
+		this.constantRegistry.appendAsString(appendable);
 	}
 
 	@Override

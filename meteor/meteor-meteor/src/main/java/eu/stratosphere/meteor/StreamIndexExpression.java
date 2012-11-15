@@ -14,6 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.meteor;
 
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.UnevaluableExpression;
 import eu.stratosphere.sopremo.operator.JsonStream;
@@ -71,10 +73,11 @@ public class StreamIndexExpression extends UnevaluableExpression {
 	}
 
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append(this.stream).append("[");
-		this.indexExpression.toString(builder);
-		builder.append("]");
+	public void appendAsString(Appendable appendable) throws IOException {
+		this.stream.appendAsString(appendable);
+		appendable.append("[");
+		this.indexExpression.appendAsString(appendable);
+		appendable.append("]");
 	}
 
 	/**

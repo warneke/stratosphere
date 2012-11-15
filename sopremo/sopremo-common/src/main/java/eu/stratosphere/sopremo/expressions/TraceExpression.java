@@ -8,13 +8,13 @@ import eu.stratosphere.sopremo.type.IJsonNode;
 /**
  * This traceExpression logs the evaluation of an {@link EvaluationExpression} with the help of {@link SopremoUtil.LOG}.
  */
-public class TraceExpression extends EvaluationExpression implements ExpressionParent {
+public class TraceExpression extends EvaluationExpression {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3935412444889830869L;
 
-	private CachingExpression<IJsonNode> traceExpression;
+	private EvaluationExpression traceExpression;
 
 	/**
 	 * Initializes a TraceExpression with the given {@link EvaluationExpression}.
@@ -23,7 +23,7 @@ public class TraceExpression extends EvaluationExpression implements ExpressionP
 	 *        the traceExpression where the evauation should be logged
 	 */
 	public TraceExpression(final EvaluationExpression expression) {
-		this.traceExpression = CachingExpression.ofAny(expression);
+		this.traceExpression = expression;
 	}
 
 	/**
@@ -34,9 +34,18 @@ public class TraceExpression extends EvaluationExpression implements ExpressionP
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-		SopremoUtil.LOG.info(this.traceExpression.evaluate(node));
+	public IJsonNode evaluate(final IJsonNode node) {
+		SopremoUtil.LOG.trace(this.traceExpression.evaluate(node));
 		return node;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new TraceExpression(this.traceExpression.clone());
 	}
 
 	/*
@@ -45,16 +54,16 @@ public class TraceExpression extends EvaluationExpression implements ExpressionP
 	 */
 	@Override
 	public ChildIterator iterator() {
-		return new NamedChildIterator("preprocessing") {
+		return new NamedChildIterator("traceExpression") {
 
 			@Override
 			protected void set(int index, EvaluationExpression e) {
-				TraceExpression.this.traceExpression.innerExpression = e;
+				TraceExpression.this.traceExpression = e;
 			}
 
 			@Override
 			protected EvaluationExpression get(int index) {
-				return TraceExpression.this.traceExpression.innerExpression;
+				return TraceExpression.this.traceExpression;
 			}
 		};
 	}

@@ -17,11 +17,12 @@ package eu.stratosphere.sopremo.tokenizer;
 import it.unimi.dsi.fastutil.chars.CharOpenHashSet;
 import it.unimi.dsi.fastutil.chars.CharSet;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import javolution.text.TextFormat;
 import eu.stratosphere.sopremo.type.CachingArrayNode;
-import eu.stratosphere.sopremo.type.TextNode;
 
 /**
  * @author Arvid Heise
@@ -84,10 +85,11 @@ public class DelimiterTokenizer extends AbstractTokenizer implements Tokenizer {
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("DelimiterTokenizer [");
-		builder.append("delimiters=").append(this.delimiters);
-		builder.append("]");
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("DelimiterTokenizer [");
+		appendable.append("delimiters=");
+		TextFormat.getInstance(CharSet.class).format(this.delimiters, appendable);
+		appendable.append("]");
 	}
 
 	/* (non-Javadoc)

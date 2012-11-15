@@ -14,13 +14,15 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo;
 
+import java.io.IOException;
+
 /**
  * Interface for all types.
  * 
  * @author Arvid Heise
  */
 public interface ISopremoType {
-	public void toString(StringBuilder builder);
+	public void appendAsString(Appendable appendable) throws IOException;
 
 	@Override
 	public abstract String toString();

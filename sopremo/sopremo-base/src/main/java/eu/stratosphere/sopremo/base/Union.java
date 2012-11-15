@@ -44,9 +44,9 @@ public class Union extends SetOperation<Union> {
 			protected void coGroup(final IStreamArrayNode values1, final IStreamArrayNode values2,
 					final JsonCollector out) {
 				if (!values1.isEmpty())
-					out.collect(values1.getFirst());
+					out.collect(values1.iterator().next());
 				else
-					out.collect(values2.getFirst());
+					out.collect(values2.iterator().next());
 			}
 		}
 

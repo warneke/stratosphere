@@ -37,7 +37,7 @@ public class OrExpressionTest extends BooleanExpressionTest<OrExpression> {
 	public void shouldBeTrueIfOneExprIsTrue() {
 		final IJsonNode result =
 			new OrExpression(FALSE, BooleanExpression.ensureBooleanExpression(EvaluationExpression.VALUE), FALSE).
-				evaluate(BooleanNode.TRUE, null);
+				evaluate(BooleanNode.TRUE);
 
 		Assert.assertEquals(BooleanNode.TRUE, result);
 	}
@@ -46,7 +46,7 @@ public class OrExpressionTest extends BooleanExpressionTest<OrExpression> {
 	public void shouldBeFalseIfNoExprIsTrue() {
 		final IJsonNode result =
 			new OrExpression(FALSE, BooleanExpression.ensureBooleanExpression(EvaluationExpression.VALUE), FALSE).
-				evaluate(BooleanNode.FALSE, null);
+				evaluate(BooleanNode.FALSE);
 
 		Assert.assertEquals(BooleanNode.FALSE, result);
 	}

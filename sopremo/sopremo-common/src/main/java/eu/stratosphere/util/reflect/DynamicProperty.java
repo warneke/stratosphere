@@ -25,5 +25,7 @@ public abstract class DynamicProperty<Type> {
 
 	public abstract int getModifiers();
 
+	public abstract String getName();
+
 	public abstract Class<Type> getType();
 }

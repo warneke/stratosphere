@@ -14,6 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo;
 
+import java.io.IOException;
+
 /**
  * Provides basic implementations of the required methods of {@link SopremoType}
  * 
@@ -38,7 +40,11 @@ public abstract class AbstractSopremoType implements ISopremoType {
 	 */
 	public static String toString(final ISopremoType type) {
 		final StringBuilder builder = new StringBuilder();
-		type.toString(builder);
+		try {
+			type.appendAsString(builder);
+		} catch (IOException e) {
+			// cannot happen
+		}
 		return builder.toString();
 	}
 }

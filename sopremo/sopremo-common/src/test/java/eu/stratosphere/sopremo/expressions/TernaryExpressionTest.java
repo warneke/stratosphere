@@ -24,7 +24,7 @@ public class TernaryExpressionTest extends EvaluableExpressionTest<TernaryExpres
 		TernaryExpression ternaryExpression = new TernaryExpression(new InputSelection(0),
 			new ConstantExpression(TextNode.valueOf("if")), new ConstantExpression(TextNode.valueOf("else")));
 		final IJsonNode result = ternaryExpression.evaluate(
-			createArrayNode(BooleanNode.TRUE, BooleanNode.FALSE), null);
+			createArrayNode(BooleanNode.TRUE, BooleanNode.FALSE));
 
 		Assert.assertEquals(TextNode.valueOf("if"), result);
 	}
@@ -33,7 +33,7 @@ public class TernaryExpressionTest extends EvaluableExpressionTest<TernaryExpres
 	public void shouldEvaluateThenExpIfClauseIsTrue() {
 		final IJsonNode result = new TernaryExpression(new InputSelection(1),
 			new ConstantExpression(IntNode.valueOf(0)), new ConstantExpression(IntNode.valueOf(1))).evaluate(
-			createArrayNode(BooleanNode.TRUE, BooleanNode.FALSE), null);
+			createArrayNode(BooleanNode.TRUE, BooleanNode.FALSE));
 
 		Assert.assertEquals(IntNode.valueOf(1), result);
 	}
@@ -42,7 +42,7 @@ public class TernaryExpressionTest extends EvaluableExpressionTest<TernaryExpres
 	public void shouldBeMissingIfThenExprIsEmpty() {
 		final IJsonNode result = new TernaryExpression(new InputSelection(1),
 			new ConstantExpression(IntNode.valueOf(0))).evaluate(
-			createArrayNode(BooleanNode.TRUE, BooleanNode.FALSE), null);
+			createArrayNode(BooleanNode.TRUE, BooleanNode.FALSE));
 
 		Assert.assertEquals(MissingNode.getInstance(), result);
 	}
@@ -51,7 +51,7 @@ public class TernaryExpressionTest extends EvaluableExpressionTest<TernaryExpres
 	public void shouldEvaluateIntNodes() {
 		final TernaryExpression ternaryExpression = new TernaryExpression(new ConstantExpression(IntNode.valueOf(0)),
 			new ConstantExpression(IntNode.valueOf(0)));
-		final IJsonNode result = ternaryExpression.evaluate(IntNode.valueOf(42), null);
+		final IJsonNode result = ternaryExpression.evaluate(IntNode.valueOf(42));
 
 		Assert.assertEquals(MissingNode.getInstance(), result);
 	}
@@ -59,7 +59,7 @@ public class TernaryExpressionTest extends EvaluableExpressionTest<TernaryExpres
 	@Test
 	public void shouldEvaluateTextNodes() {
 		final IJsonNode result = new TernaryExpression(new ConstantExpression(TextNode.valueOf("a")),
-			new ConstantExpression(IntNode.valueOf(0))).evaluate(IntNode.valueOf(42), null);
+			new ConstantExpression(IntNode.valueOf(0))).evaluate(IntNode.valueOf(42));
 
 		Assert.assertEquals(IntNode.valueOf(0), result);
 	}

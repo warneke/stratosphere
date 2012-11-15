@@ -15,16 +15,35 @@
 package eu.stratosphere.sopremo.function;
 
 import eu.stratosphere.sopremo.AbstractSopremoType;
+import eu.stratosphere.sopremo.ICloneable;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 
 /**
  * @author Arvid Heise
  */
-public abstract class Callable<Result, InputType> extends AbstractSopremoType implements ISerializableSopremoType {
+public abstract class Callable<Result, InputType> extends AbstractSopremoType implements ISerializableSopremoType,
+		ICloneable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 7623937906556576557L;
 
-	public abstract Result call(InputType params, Result target);
+	public abstract Result call(InputType params);
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	public abstract Callable<Result, InputType> clone();
+
+	protected Object readResolve() {
+		initTransients();
+		return this;
+	}
+
+	protected void initTransients() {
+		SopremoUtil.initTransientFields(this);
+	}
 }

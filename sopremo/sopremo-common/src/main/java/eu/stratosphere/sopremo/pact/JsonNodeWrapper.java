@@ -100,11 +100,6 @@ public class JsonNodeWrapper extends AbstractJsonNode implements IJsonNode {
 		return this.value.compareTo(((JsonNodeWrapper) other).getValue());
 	}
 
-	@Override
-	public Object getJavaValue() {
-		return this.value.getJavaValue();
-	}
-
 	// @Override
 	// public int hashCode() {
 	// return this.value.hashCode();
@@ -147,8 +142,8 @@ public class JsonNodeWrapper extends AbstractJsonNode implements IJsonNode {
 	}
 
 	@Override
-	public void toString(final StringBuilder sb) {
-		this.value.toString(sb);
+	public void appendAsString(final Appendable sb) throws IOException {
+		this.value.appendAsString(sb);
 	}
 
 	@Override

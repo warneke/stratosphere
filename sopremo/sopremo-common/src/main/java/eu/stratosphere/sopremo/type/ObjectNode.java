@@ -26,11 +26,6 @@ public class ObjectNode extends AbstractObjectNode implements IObjectNode {
 		return this.children.size();
 	}
 
-	@Override
-	public Map<String, IJsonNode> getJavaValue() {
-		return this.children;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.JsonObject#put(java.lang.String, eu.stratosphere.sopremo.type.IJsonNode)
@@ -70,25 +65,7 @@ public class ObjectNode extends AbstractObjectNode implements IObjectNode {
 			return node;
 		return MissingNode.getInstance();
 	}
-
-	@Override
-	public void toString(final StringBuilder sb) {
-		sb.append('{');
-
-		int count = 0;
-		for (final Map.Entry<String, IJsonNode> en : this.children.entrySet()) {
-			if (count > 0)
-				sb.append(',');
-			++count;
-
-			TextNode.appendQuoted(sb, en.getKey());
-			sb.append(':');
-			en.getValue().toString(sb);
-		}
-
-		sb.append('}');
-	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

@@ -2,10 +2,8 @@ package eu.stratosphere.sopremo.base;
 
 import java.util.Iterator;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.pact.JsonCollector;
@@ -71,18 +69,18 @@ public class ObjectSplit extends ElementaryOperator<ObjectSplit> {
 	}
 
 	public static class Implementation extends SopremoMap {
-		private CachingExpression<IObjectNode> objectPath;
+		private EvaluationExpression objectPath;
 
-		private CachingExpression<?> valueProjection;
+		private EvaluationExpression valueProjection;
 
 		@Override
 		protected void map(IJsonNode value, JsonCollector out) {
-			final IObjectNode object = this.objectPath.evaluate(value);
-			if (!object.isObject())
+			final IJsonNode targetValue = this.objectPath.evaluate(value);
+			if (!targetValue.isObject())
 				throw new EvaluationException("Cannot split non-object");
+			final IObjectNode object = (IObjectNode) targetValue;
 
 			final Iterator<String> fieldNames = object.getFieldNames();
-			final EvaluationContext context = this.getContext();
 			final TextNode fieldNode = TextNode.valueOf("");
 			IArrayNode contextNode = JsonUtil.asArray(NullNode.getInstance(), fieldNode, object, value);
 			while (fieldNames.hasNext()) {

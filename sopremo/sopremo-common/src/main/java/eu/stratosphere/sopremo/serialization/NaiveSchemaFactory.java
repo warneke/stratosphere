@@ -14,7 +14,9 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.serialization;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
@@ -44,27 +46,27 @@ public class NaiveSchemaFactory implements SchemaFactory {
 	 * @see eu.stratosphere.sopremo.serialization.SchemaFactory#create(java.lang.Iterable)
 	 */
 	@Override
-	public Schema create(final Iterable<EvaluationExpression> keyExpressions) {
+	public Schema create(final Collection<EvaluationExpression> keyExpressions) {
 
 		final List<ObjectAccess> objectAccesses = new ArrayList<ObjectAccess>();
 		final List<ArrayAccess> arrayAccesses = new ArrayList<ArrayAccess>();
-		final List<EvaluationExpression> mappings = new ArrayList<EvaluationExpression>();
 
 		for (final EvaluationExpression evaluationExpression : keyExpressions) {
-			mappings.add(evaluationExpression);
-			if (evaluationExpression instanceof ObjectAccess)
+			if (evaluationExpression instanceof ObjectAccess &&
+				((ObjectAccess) evaluationExpression).getInputExpression() == EvaluationExpression.VALUE)
 				objectAccesses.add((ObjectAccess) evaluationExpression);
-			if (evaluationExpression instanceof ArrayAccess)
+			if (evaluationExpression instanceof ArrayAccess &&
+				((ArrayAccess) evaluationExpression).getInputExpression() == EvaluationExpression.VALUE)
 				arrayAccesses.add((ArrayAccess) evaluationExpression);
 		}
 
-		if (mappings.isEmpty())
+		if (keyExpressions.isEmpty())
 			return new DirectSchema();
 
-		if (objectAccesses.size() == mappings.size())
+		if (objectAccesses.size() == keyExpressions.size())
 			// all keyExpressions are ObjectAccesses
 			return new ObjectSchema(objectAccesses);
-		else if (arrayAccesses.size() == mappings.size()) {
+		else if (arrayAccesses.size() == keyExpressions.size()) {
 			// all keyExpressions are ArrayAccesses
 
 			final int startIndex = arrayAccesses.get(0).getStartIndex();
@@ -75,7 +77,7 @@ public class NaiveSchemaFactory implements SchemaFactory {
 				return new HeadArraySchema(endIndex + 1);
 			return new TailArraySchema(endIndex - startIndex + 1);
 		}
-		return new GeneralSchema(mappings);
+		return new GeneralSchema(keyExpressions);
 	}
 
 	/*
@@ -83,7 +85,7 @@ public class NaiveSchemaFactory implements SchemaFactory {
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("naive schema");
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("naive schema");
 	}
 }

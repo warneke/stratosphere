@@ -1,12 +1,14 @@
 package eu.stratosphere.sopremo.query;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
+import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.packages.IRegistry;
 
-public class StackedRegistry<T, R extends IRegistry<T>> implements IRegistry<T> {
+public class StackedRegistry<T extends ISerializableSopremoType, R extends IRegistry<T>> implements IRegistry<T> {
 	/**
 	 * 
 	 */
@@ -63,22 +65,11 @@ public class StackedRegistry<T, R extends IRegistry<T>> implements IRegistry<T> 
 	}
 
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("Registry with ");
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("Registry with ");
 		for (R registry : this.registryStack) {
-			builder.append("\n ");
-			registry.toString(builder);
+			appendable.append("\n ");
+			registry.appendAsString(appendable);
 		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		this.toString(builder);
-		return builder.toString();
 	}
 }

@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import javolution.text.TypeFormat;
+
 import eu.stratosphere.pact.common.plan.PactModule;
 import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.EvaluationContext;
@@ -407,8 +409,8 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 	 * @see eu.stratosphere.sopremo.SopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.getName());
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append(this.getName());
 	}
 
 	public void validate() throws IllegalStateException {
@@ -724,8 +726,9 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 		}
 
 		@Override
-		public void toString(final StringBuilder builder) {
-			builder.append(this.getOperator().toString()).append('@').append(this.index);
+		public void appendAsString(final Appendable appendable) throws IOException {
+			appendable.append(this.getOperator().toString()).append('@');
+			TypeFormat.format(this.index, appendable);
 		}
 	}
 

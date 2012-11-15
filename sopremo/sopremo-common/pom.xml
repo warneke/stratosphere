@@ -33,11 +33,17 @@
 			<scope>compile</scope>
 		</dependency>
 
-<!-- 		<dependency> -->
-<!-- 			<groupId>dk.brics.automaton</groupId> -->
-<!-- 			<artifactId>automaton</artifactId> -->
-<!-- 			<version>1.11-8</version> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>javolution</groupId>
+			<artifactId>javolution</artifactId>
+			<version>5.5.1</version>
+		</dependency>
+
+		<!-- <dependency> -->
+		<!-- <groupId>dk.brics.automaton</groupId> -->
+		<!-- <artifactId>automaton</artifactId> -->
+		<!-- <version>1.11-8</version> -->
+		<!-- </dependency> -->
 	</dependencies>
 
 	<reporting>

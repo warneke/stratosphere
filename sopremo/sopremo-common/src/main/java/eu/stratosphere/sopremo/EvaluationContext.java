@@ -1,13 +1,11 @@
 package eu.stratosphere.sopremo;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
-import eu.stratosphere.sopremo.operator.JsonStream;
 import eu.stratosphere.sopremo.operator.Operator;
 import eu.stratosphere.sopremo.packages.DefaultConstantRegistry;
 import eu.stratosphere.sopremo.packages.DefaultFunctionRegistry;
@@ -29,19 +27,19 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 
 	private final IConstantRegistry constantRegistry;
 
-	private int inputCounter = 0;
-
-	private final LinkedList<Operator<?>> operatorStack = new LinkedList<Operator<?>>();
+	private final LinkedList<String> operatorStack = new LinkedList<String>();
 
 	private Schema[] inputSchemas, outputSchemas;
 
 	private Schema schema;
+	
+	private transient int inputCount = 0;
 
 	private EvaluationExpression resultProjection = EvaluationExpression.VALUE;
 
-	public LinkedList<Operator<?>> getOperatorStack() {
-		return this.operatorStack;
-	}
+//	public LinkedList<Operator<?>> getOperatorStack() {
+//		return this.operatorStack;
+//	}
 
 	public EvaluationExpression getResultProjection() {
 		return this.resultProjection;
@@ -55,23 +53,23 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 	}
 
 	public String operatorTrace() {
-		final Iterator<Operator<?>> descendingIterator = this.operatorStack.descendingIterator();
-		final StringBuilder builder = new StringBuilder(descendingIterator.next().getName());
+		final Iterator<String> descendingIterator = this.operatorStack.descendingIterator();
+		final StringBuilder builder = new StringBuilder(descendingIterator.next());
 		while (descendingIterator.hasNext())
-			builder.append("->").append(descendingIterator.next().getName());
+			builder.append("->").append(descendingIterator.next());
 		return builder.toString();
 	}
 
-	public Operator<?> getCurrentOperator() {
+	public String getCurrentOperator() {
 		return this.operatorStack.peek();
 	}
 
 	public void pushOperator(final Operator<?> e) {
 		// reset inputs to avoid serialization
-		this.operatorStack.push(e.clone().withInputs(new JsonStream[e.getMinInputs()]));
+		this.operatorStack.push(e.getName());
 	}
 
-	public Operator<?> popOperator() {
+	public String popOperator() {
 		return this.operatorStack.pop();
 	}
 
@@ -95,7 +93,6 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 	public EvaluationContext(final EvaluationContext context) {
 		this(context.inputSchemas.length, context.outputSchemas.length, context.methodRegistry,
 			context.constantRegistry);
-		this.inputCounter = context.inputCounter;
 		this.inputSchemas = context.inputSchemas.clone();
 		this.outputSchemas = context.outputSchemas.clone();
 		this.schema = context.schema;
@@ -125,14 +122,6 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 	@Override
 	public IConstantRegistry getConstantRegistry() {
 		return this.constantRegistry;
-	}
-
-	public int getInputCounter() {
-		return this.inputCounter;
-	}
-
-	public void increaseInputCounter() {
-		this.inputCounter++;
 	}
 
 	/**
@@ -165,9 +154,17 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 		this.taskId = taskId;
 	}
 	
-	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-		ois.defaultReadObject();
-		SopremoRuntime.getInstance().setCurrentEvaluationContext(this);
+	/**
+	 * Returns the inputCount.
+	 * 
+	 * @return the inputCount
+	 */
+	public int getInputCount() {
+		return this.inputCount;
+	}
+	
+	public void incrementInputCount() {
+		this.inputCount++;
 	}
 
 	/*
@@ -175,12 +172,12 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 	 * @see eu.stratosphere.sopremo.SopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("Context @ ").append(this.operatorStack).append("\n").
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("Context @ ").append(this.operatorStack.toString()).append("\n").
 			append("Methods: ");
-		this.methodRegistry.toString(builder);
-		builder.append("\nConstants: ");
-		this.constantRegistry.toString(builder);
+		this.methodRegistry.appendAsString(appendable);
+		appendable.append("\nConstants: ");
+		this.constantRegistry.appendAsString(appendable);
 	}
 
 	/**

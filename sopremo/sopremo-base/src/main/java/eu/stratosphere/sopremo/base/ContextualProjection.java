@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.base;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
@@ -42,7 +41,7 @@ public class ContextualProjection extends ElementaryOperator<ContextualProjectio
 	}
 
 	public static class Implementation extends SopremoCross {
-		private CachingExpression<IJsonNode> contextPath;
+		private EvaluationExpression contextPath;
 
 		@Override
 		protected void cross(final IJsonNode value, final IJsonNode context, final JsonCollector out) {

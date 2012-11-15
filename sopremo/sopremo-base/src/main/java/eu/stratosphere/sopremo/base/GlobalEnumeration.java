@@ -1,15 +1,12 @@
 package eu.stratosphere.sopremo.base;
 
 import eu.stratosphere.nephele.configuration.Configuration;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
-import eu.stratosphere.sopremo.expressions.SingletonExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoMap;
-import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.INumericNode;
@@ -27,58 +24,9 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 	 */
 	private static final long serialVersionUID = 8552367347318407324L;
 
-	public static final EvaluationExpression CONCATENATION = new SingletonExpression("String") {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -3340948936846733311L;
+	public static final EvaluationExpression CONCATENATION = new ConcatenatingExpression();
 
-		private StringBuilder builder = new StringBuilder();
-
-		@Override
-		public IJsonNode evaluate(final IJsonNode node, IJsonNode target) {
-			final IArrayNode values = (IArrayNode) node;
-			TextNode textTarget = SopremoUtil.ensureType(target, TextNode.class);
-			this.builder.setLength(0);
-			this.builder.append(((INumericNode) values.get(0)).getIntValue());
-			this.builder.append('_');
-			this.builder.append(((INumericNode) values.get(1)).getIntValue());
-			textTarget.setValue(this.builder.toString());
-			return textTarget;
-		}
-
-		@Override
-		protected Object readResolve() {
-			return CONCATENATION;
-		}
-	};
-
-	public static final EvaluationExpression LONG_COMBINATION = new SingletonExpression("Long") {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -9084196126957908547L;
-
-		@Override
-		protected Object readResolve() {
-			return LONG_COMBINATION;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see
-		 * eu.stratosphere.sopremo.expressions.EvaluationExpression#evaluate(eu.stratosphere.sopremo.type.IJsonNode,
-		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
-		 */
-		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
-			final IArrayNode values = (IArrayNode) node;
-			LongNode longTarget = SopremoUtil.ensureType(target, LongNode.class);
-			longTarget.setValue((((INumericNode) values.get(0)).getLongValue() << 48)
-				+ ((INumericNode) values.get(1)).getLongValue());
-			return longTarget;
-		}
-	};
+	public static final EvaluationExpression LONG_COMBINATION = new LongExpression();
 
 	public final EvaluationExpression AUTO_ENUMERATION = new EvaluationExpression() {
 		private static final long serialVersionUID = -5506784974227617703L;
@@ -95,8 +43,17 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 			return objectNode;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+		 */
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target) {
+		protected EvaluationExpression createCopy() {
+			return GlobalEnumeration.this.AUTO_ENUMERATION;
+		}
+
+		@Override
+		public IJsonNode evaluate(IJsonNode node) {
 			return node;
 		}
 	};
@@ -175,10 +132,77 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		this.valueFieldName = valueFieldName;
 	}
 
+	/**
+	 * @author Arvid Heise
+	 */
+	private static final class LongExpression extends EvaluationExpression {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -9084196126957908547L;
+
+		private final transient LongNode result = new LongNode();
+
+		/*
+		 * (non-Javadoc)
+		 * @see
+		 * eu.stratosphere.sopremo.expressions.EvaluationExpression#evaluate(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
+		 */
+		@Override
+		public IJsonNode evaluate(IJsonNode node) {
+			final IArrayNode values = (IArrayNode) node;
+			this.result.setValue((((INumericNode) values.get(0)).getLongValue() << 48)
+				+ ((INumericNode) values.get(1)).getLongValue());
+			return this.result;
+		}
+
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+		 */
+		@Override
+		protected EvaluationExpression createCopy() {
+			return new LongExpression();
+		}
+	}
+
+	/**
+	 * @author Arvid Heise
+	 */
+	private static final class ConcatenatingExpression extends EvaluationExpression {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3340948936846733311L;
+
+		private final transient StringBuilder builder = new StringBuilder();
+
+		private final transient TextNode result = new TextNode();
+
+		@Override
+		public IJsonNode evaluate(final IJsonNode node) {
+			final IArrayNode values = (IArrayNode) node;
+			this.builder.setLength(0);
+			this.builder.append(((INumericNode) values.get(0)).getIntValue());
+			this.builder.append('_');
+			this.builder.append(((INumericNode) values.get(1)).getIntValue());
+			this.result.setValue(this.builder);
+			return this.result;
+		}
+
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+		 */
+		@Override
+		protected EvaluationExpression createCopy() {
+			return new ConcatenatingExpression();
+		}
+	}
+
 	public static class Implementation extends SopremoMap {
 		private EvaluationExpression enumerationExpression;
 
-		private CachingExpression<IJsonNode> idGeneration;
+		private EvaluationExpression idGeneration;
 
 		private LongNode counter;
 

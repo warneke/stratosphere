@@ -1,11 +1,13 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
@@ -13,7 +15,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * Represents a logical OR.
  */
 @OptimizerHints(scope = Scope.ANY)
-public class OrExpression extends BooleanExpression implements ExpressionParent {
+public class OrExpression extends BooleanExpression {
 	/**
 	 * 
 	 */
@@ -50,10 +52,10 @@ public class OrExpression extends BooleanExpression implements ExpressionParent 
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+	public BooleanNode evaluate(final IJsonNode node) {
 		// we can ignore 'target' because no new Object is created
 		for (final EvaluationExpression booleanExpression : this.expressions)
-			if (booleanExpression.evaluate(node, null) == BooleanNode.TRUE)
+			if (booleanExpression.evaluate(node) == BooleanNode.TRUE)
 				return BooleanNode.TRUE;
 		return BooleanNode.FALSE;
 	}
@@ -65,8 +67,11 @@ public class OrExpression extends BooleanExpression implements ExpressionParent 
 	@Override
 	public ChildIterator iterator() {
 		return new GenericListChildIterator<BooleanExpression>(this.expressions.listIterator()) {
-			/* (non-Javadoc)
-			 * @see eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions.EvaluationExpression)
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions
+			 * .EvaluationExpression)
 			 */
 			@Override
 			protected BooleanExpression convert(EvaluationExpression childExpression) {
@@ -92,9 +97,18 @@ public class OrExpression extends BooleanExpression implements ExpressionParent 
 		return result;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
 	@Override
-	public void toString(final StringBuilder builder) {
-		this.appendChildExpressions(builder, this.expressions, " OR ");
+	protected EvaluationExpression createCopy() {
+		return new OrExpression(SopremoUtil.deepClone(this.expressions));
+	}
+
+	@Override
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.appendChildExpressions(appendable, this.expressions, " OR ");
 	}
 
 	/**

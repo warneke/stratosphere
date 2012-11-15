@@ -1,5 +1,7 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.AbstractNumericNode;
@@ -10,7 +12,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * Represents basic binary comparative expressions covering all operators specified in {@link BinaryOperator}.
  */
 @OptimizerHints(scope = Scope.ANY, minNodes = 2, maxNodes = 2)
-public class ComparativeExpression extends BinaryBooleanExpression implements ExpressionParent {
+public class ComparativeExpression extends BinaryBooleanExpression {
 	/**
 	 * 
 	 */
@@ -50,14 +52,11 @@ public class ComparativeExpression extends BinaryBooleanExpression implements Ex
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#clone()
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
 	@Override
-	public ComparativeExpression clone() {
-		final ComparativeExpression klone = (ComparativeExpression) super.clone();
-		klone.expr1 = klone.expr1.clone();
-		klone.expr2 = klone.expr2.clone();
-		return klone;
+	protected EvaluationExpression createCopy() {
+		return new ComparativeExpression(this.expr1.clone(), this.binaryOperator, this.expr2.clone());
 	}
 
 	// @Override
@@ -65,12 +64,11 @@ public class ComparativeExpression extends BinaryBooleanExpression implements Ex
 	// return binaryOperator.evaluate(expr1.evaluate(input), expr2.evaluate(input));
 	// }
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+	public BooleanNode evaluate(final IJsonNode node) {
 		// // we can ignore 'target' because no new Object is created
-		return BooleanNode.valueOf(this.binaryOperator.evaluate(this.expr1.evaluate(node, null),
-			this.expr2.evaluate(node, null)));
+		return BooleanNode.valueOf(this.binaryOperator.evaluate(this.expr1.evaluate(node),
+			this.expr2.evaluate(node)));
 	}
-
 
 	/*
 	 * (non-Javadoc)
@@ -82,14 +80,15 @@ public class ComparativeExpression extends BinaryBooleanExpression implements Ex
 
 			@Override
 			protected void set(int index, EvaluationExpression childExpression) {
-				if(index == 0)
+				if (index == 0)
 					ComparativeExpression.this.expr1 = childExpression;
-				else ComparativeExpression.this.expr2 = childExpression;
+				else
+					ComparativeExpression.this.expr2 = childExpression;
 			}
 
 			@Override
 			protected EvaluationExpression get(int index) {
-				if(index == 0)
+				if (index == 0)
 					return ComparativeExpression.this.expr1;
 				return ComparativeExpression.this.expr2;
 			}
@@ -134,8 +133,10 @@ public class ComparativeExpression extends BinaryBooleanExpression implements Ex
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.expr1).append(this.binaryOperator).append(this.expr2);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.expr1.appendAsString(appendable);
+		appendable.append(' ').append(this.binaryOperator.sign).append(' ');
+		this.expr2.appendAsString(appendable);
 	}
 
 	/**

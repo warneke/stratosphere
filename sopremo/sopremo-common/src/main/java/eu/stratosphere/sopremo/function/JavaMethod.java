@@ -14,13 +14,11 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
+import eu.stratosphere.sopremo.EvaluationException;
+import eu.stratosphere.sopremo.cache.ArrayCache;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.util.reflect.DynamicMethod;
@@ -29,7 +27,7 @@ import eu.stratosphere.util.reflect.Signature;
 /**
  * @author Arvid Heise
  */
-public abstract class JavaMethod extends SopremoFunction {
+public class JavaMethod extends SopremoFunction {
 
 	/**
 	 * 
@@ -37,34 +35,56 @@ public abstract class JavaMethod extends SopremoFunction {
 	private static final long serialVersionUID = 2195013413330805401L;
 
 	protected final DynamicMethod<IJsonNode> method;
-
-	private transient List<Object[]> paramCache = new ArrayList<Object[]>();
+	
+	private final transient ArrayCache<IJsonNode> arrayCache = new ArrayCache<IJsonNode>(IJsonNode.class);
 
 	/**
 	 * Initializes JavaMethod.
 	 */
 	public JavaMethod(final String name) {
+		super(name, 0, Integer.MAX_VALUE);
 		this.method = new DynamicMethod<IJsonNode>(name);
-	}
-
-	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-		ois.defaultReadObject();
-		this.paramCache = new ArrayList<Object[]>();
-	}
-
-	protected Object[] addTargetToParameters(final IArrayNode params, final IJsonNode target) {
-		final int numParams = params.size();
-		for (int cacheSize = this.paramCache.size(); cacheSize <= numParams; cacheSize++)
-			this.paramCache.add(new Object[cacheSize + 1]);
-		final Object[] expandedParams = this.paramCache.get(numParams);
-		expandedParams[0] = target;
-		for (int index = 0; index < numParams; index++)
-			expandedParams[index + 1] = params.get(index);
-		return expandedParams;
 	}
 
 	public void addSignature(final Method method) {
 		this.method.addSignature(method);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.function.Callable#call(java.lang.Object)
+	 */
+	@Override
+	public IJsonNode call(IArrayNode params) {
+		try {
+			return this.method.invoke(null, (Object[]) params.toArray(this.arrayCache));
+		} catch (Exception e) {
+			throw new EvaluationException(e);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.function.Callable#clone()
+	 */
+	@Override
+	public JavaMethod clone() {
+		final JavaMethod javaMethod = new JavaMethod(this.getName());
+		for (Signature signature : this.method.getSignatures())
+			javaMethod.addSignature(this.method.getMethod(signature));
+		return javaMethod;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (this.getClass() != obj.getClass())
+			return false;
+		JavaMethod other = (JavaMethod) obj;
+		return this.method.equals(other.method);
 	}
 
 	public Collection<Signature> getSignatures() {
@@ -78,22 +98,4 @@ public abstract class JavaMethod extends SopremoFunction {
 		result = prime * result + this.method.hashCode();
 		return result;
 	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		JavaMethod other = (JavaMethod) obj;
-		return this.method.equals(other.method);
-	}
-
-	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("Java method ").append(this.method);
-	}
-
 }

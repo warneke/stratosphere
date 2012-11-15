@@ -3,7 +3,6 @@ package eu.stratosphere.sopremo.pact;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.serialization.Schema;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -22,9 +21,7 @@ public class JsonCollector {
 
 	private PactRecord record;
 
-	private final CachingExpression<IJsonNode> resultProjection = CachingExpression.ofSubclass(
-		EvaluationExpression.VALUE,
-		IJsonNode.class);
+	private EvaluationExpression resultProjection = EvaluationExpression.VALUE;
 
 	/**
 	 * Initializes a JsonCollector with the given {@link Schema}.
@@ -45,7 +42,16 @@ public class JsonCollector {
 	public void configure(final Collector<PactRecord> collector, final EvaluationContext context) {
 		this.collector = collector;
 		this.context = context;
-		this.resultProjection.setInnerExpression(context.getResultProjection());
+		this.resultProjection = context.getResultProjection();
+	}
+
+	/**
+	 * Returns the context.
+	 * 
+	 * @return the context
+	 */
+	public EvaluationContext getContext() {
+		return this.context;
 	}
 
 	/**

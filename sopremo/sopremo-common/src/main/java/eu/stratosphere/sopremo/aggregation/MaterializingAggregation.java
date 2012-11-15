@@ -1,23 +1,15 @@
 package eu.stratosphere.sopremo.aggregation;
 
-import eu.stratosphere.sopremo.pact.SopremoUtil;
-import eu.stratosphere.sopremo.type.ArrayNode;
-import eu.stratosphere.sopremo.type.IArrayNode;
+import eu.stratosphere.sopremo.type.CachingArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
+import eu.stratosphere.util.reflect.ReflectUtil;
 
-public class MaterializingAggregation extends Aggregation<IJsonNode, ArrayNode> {
+public class MaterializingAggregation extends Aggregation {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 3685213903416162250L;
-
-	/**
-	 * Initializes a new MaterializingAggregation with the name <code>"&#60values&#62"</code>.
-	 */
-	public MaterializingAggregation() {
-		super("<values>");
-	}
 
 	/**
 	 * Initializes a new MaterializingAggregation with the given name.
@@ -29,39 +21,43 @@ public class MaterializingAggregation extends Aggregation<IJsonNode, ArrayNode> 
 		super(name);
 	}
 
-	/**
-	 * (non-Javadoc)
-	 * 
-	 * @see eu.stratosphere.sopremo.aggregation.AggregationFunction#aggregate(eu.stratosphere.sopremo.type.IJsonNode,
-	 *      eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
-	 */
-	@Override
-	public ArrayNode aggregate(IJsonNode node, ArrayNode aggregationValue) {
-		aggregationValue.add(node);
-		return aggregationValue;
-	}
+	protected transient final CachingArrayNode aggregator = new CachingArrayNode();
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.aggregation.AggregationFunction#initialize(eu.stratosphere.sopremo.type.IJsonNode)
+	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#initialize()
 	 */
 	@Override
-	public ArrayNode initialize(ArrayNode aggregationValue) {
-		return SopremoUtil.reinitializeTarget(aggregationValue, ArrayNode.class);
+	public void initialize() {
+		this.aggregator.clear();
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.aggregation.AggregationFunction#getFinalAggregate(eu.stratosphere.sopremo.type.IJsonNode,
-	 * eu.stratosphere.sopremo.type.IJsonNode)
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#aggregate(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
-	public IJsonNode getFinalAggregate(ArrayNode aggregator, IJsonNode target) {
-		return this.processNodes(aggregator, target);
+	public void aggregate(IJsonNode element) {
+		this.aggregator.addClone(element);
 	}
 
-	protected IJsonNode processNodes(final IArrayNode nodeArray, @SuppressWarnings("unused") final IJsonNode target) {
+	@Override
+	public Aggregation clone() {
+		try {
+			return ReflectUtil.newInstance(getClass(), this.getName());
+		} catch (Exception e) {
+			throw new IllegalStateException("Aggregation must implement clone or conform to the ctor", e);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#getFinalAggregate()
+	 */
+	@Override
+	public IJsonNode getFinalAggregate() {
+		return this.processNodes(this.aggregator);
+	}
+
+	protected IJsonNode processNodes(final CachingArrayNode nodeArray) {
 		return nodeArray;
 	}
 }

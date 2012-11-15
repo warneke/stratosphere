@@ -20,9 +20,9 @@ import eu.stratosphere.sopremo.expressions.ArrayCreation;
 import eu.stratosphere.sopremo.expressions.BinaryBooleanExpression;
 import eu.stratosphere.sopremo.expressions.BooleanExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.expressions.ExpressionUtil;
 import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.expressions.ObjectCreation;
-import eu.stratosphere.sopremo.expressions.PathExpression;
 import eu.stratosphere.sopremo.io.Source;
 import eu.stratosphere.sopremo.operator.CompositeOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
@@ -167,7 +167,7 @@ public class Join extends CompositeOperator<Join> {
 		this.joinCondition = joinCondition;
 		this.binaryConditions = expressions;
 	}
-	
+
 	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
 		ois.defaultReadObject();
 		final ArrayList<BinaryBooleanExpression> expressions = new ArrayList<BinaryBooleanExpression>();
@@ -193,7 +193,7 @@ public class Join extends CompositeOperator<Join> {
 		if (outerJoinSources instanceof InputSelection)
 			expressions = Collections.singleton(outerJoinSources);
 		else if (outerJoinSources instanceof ArrayCreation)
-			expressions = (ArrayCreation) outerJoinSources;
+			expressions = outerJoinSources;
 		else
 			throw new IllegalArgumentException(String.format("Cannot interpret %s", outerJoinSources));
 
@@ -269,10 +269,10 @@ public class Join extends CompositeOperator<Join> {
 		BinaryBooleanExpression adjustedExpression = (BinaryBooleanExpression) binaryCondition.clone();
 		final int firstIndex = ((InputSelection) inputSelections.get(0)).getIndex();
 		final int secondIndex = ((InputSelection) inputSelections.get(1)).getIndex();
-		adjustedExpression.replace(inputSelections.get(0), new PathExpression(new InputSelection(0), new ArrayAccess(
-			firstIndex)));
-		adjustedExpression.replace(inputSelections.get(1), new PathExpression(new InputSelection(1), new ArrayAccess(
-			secondIndex)));
+		adjustedExpression.replace(inputSelections.get(0),
+			ExpressionUtil.makePath(new InputSelection(0), new ArrayAccess(firstIndex)));
+		adjustedExpression.replace(inputSelections.get(1),
+			ExpressionUtil.makePath(new InputSelection(1), new ArrayAccess(secondIndex)));
 
 		IntList outerJoinIndices = new IntArrayList();
 		if (this.outerJoinSources.contains(firstIndex))

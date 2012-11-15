@@ -36,7 +36,7 @@ public class FunctionCallTest extends EvaluableExpressionTest<FunctionCall> {
 		equalVerifier.withPrefabValues(List.class, new ArrayList<Object>(), new ArrayList<EvaluationExpression>(
 			Collections.singleton(EvaluationExpression.VALUE)));
 		equalVerifier.withPrefabValues(SopremoFunction.class, new ExpressionFunction(0, new ConstantExpression("red")),
-			new ExpressionFunction(0, new ConstantExpression("black")));
+			new ExpressionFunction(1, new ConstantExpression("black")));
 	}
 
 	@Before
@@ -49,14 +49,14 @@ public class FunctionCallTest extends EvaluableExpressionTest<FunctionCall> {
 	public void shouldCallFunction() {
 		final IJsonNode result =
 			new FunctionCall("sum", this.context,
-				new ArrayAccess(0), new ArrayAccess(1)).evaluate(createArrayNode(1, 2), null);
+				new ArrayAccess(0), new ArrayAccess(1)).evaluate(createArrayNode(1, 2));
 		Assert.assertEquals(new DoubleNode(3), result);
 	}
 
-	public static void sum(final DoubleNode result, final INumericNode... nodes) {
+	public static DoubleNode sum(final INumericNode... nodes) {
 		double sum = 0.0;
 		for (final INumericNode node : nodes)
 			sum += node.getDoubleValue();
-				result.setValue(sum);
+		return new DoubleNode(sum);
 	}
 }

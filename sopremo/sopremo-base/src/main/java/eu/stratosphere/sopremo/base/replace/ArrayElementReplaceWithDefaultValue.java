@@ -16,9 +16,7 @@ package eu.stratosphere.sopremo.base.replace;
 
 import java.util.Iterator;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.base.Replace;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoCoGroup;
@@ -56,7 +54,7 @@ public class ArrayElementReplaceWithDefaultValue extends ArrayElementReplaceBase
 
 	public static class Implementation extends SopremoCoGroup {
 
-		private CachingExpression<IJsonNode> dictionaryValueExtraction, defaultExpression;
+		private EvaluationExpression dictionaryValueExtraction, defaultExpression;
 
 		private int index = 0;
 
@@ -72,7 +70,6 @@ public class ArrayElementReplaceWithDefaultValue extends ArrayElementReplaceBase
 				this.dictionaryValueExtraction.evaluate(replaceValueIterator.next()) : null;
 
 			final Iterator<IJsonNode> valueIterator = values1.iterator();
-			final EvaluationContext context = this.getContext();
 			while (valueIterator.hasNext()) {
 				final IJsonNode value = valueIterator.next();
 				final IJsonNode replacement;

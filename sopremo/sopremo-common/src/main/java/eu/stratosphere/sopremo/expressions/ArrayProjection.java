@@ -1,8 +1,10 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.ConcatenatingChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
-import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -13,97 +15,126 @@ import eu.stratosphere.sopremo.type.PullingStreamArrayNode;
  * Projects an array onto another one.
  */
 @OptimizerHints(scope = Scope.ARRAY, iterating = true)
-public class ArrayProjection extends EvaluationExpression implements ExpressionParent {
+public class ArrayProjection extends PathSegmentExpression {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 8420269355727456913L;
 
-	private EvaluationExpression expression;
+	private EvaluationExpression projection;
 
 	/**
-	 * Initializes an ArrayProjection with the given {@link EvaluationExpression}.
-	 * 
-	 * @param expression
-	 *        the expression which evaluates the elements of the input array to the elements of the output array
+	 * Initializes ArrayProjection.
 	 */
-	public ArrayProjection(final EvaluationExpression expression) {
-		this.expression = expression;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (!super.equals(obj))
-			return false;
-		final ArrayProjection other = (ArrayProjection) obj;
-		return this.expression.equals(other.expression);
+	public ArrayProjection(EvaluationExpression projection) {
+		this.projection = projection;
 	}
 
 	/**
-	 * Returns the expression.
-	 * 
-	 * @return the expression
+	 * Initializes ArrayProjection.
 	 */
-	public EvaluationExpression getExpression() {
-		return this.expression;
+	protected ArrayProjection() {
+		this(EvaluationExpression.VALUE);
 	}
 
-	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-		if (!(node instanceof IArrayNode)) {
-			// virtual projection
-			final PullingStreamArrayNode targetArray = SopremoUtil.ensureType(target, PullingStreamArrayNode.class);
-			targetArray.setSource((IStreamArrayNode) node);
-			targetArray.setExpressionAndContext(this.expression);
-			return targetArray;
-		}
-		// materialized projection
-		final IArrayNode array = (IArrayNode) node;
-		final IArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
-		for (int index = 0, size = array.size(); index < size; index++)
-			targetArray.add(this.expression.evaluate(array.get(index), targetArray.get(index)));
-
-		return targetArray;
+	/**
+	 * Returns the projection.
+	 * 
+	 * @return the projection
+	 */
+	public EvaluationExpression getProjection() {
+		return this.projection;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#withInputExpression(eu.stratosphere.sopremo.expressions
+	 * .EvaluationExpression)
+	 */
+	@Override
+	public ArrayProjection withInputExpression(EvaluationExpression inputExpression) {
+		return (ArrayProjection) super.withInputExpression(inputExpression);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new ArrayProjection();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#copyPropertiesFrom(eu.stratosphere.sopremo.expressions
+	 * .EvaluationExpression)
+	 */
+	@Override
+	protected void copyPropertiesFrom(EvaluationExpression original) {
+		super.copyPropertiesFrom(original);
+		this.projection = ((ArrayProjection) original).projection.clone();
+	}
+
+	private final transient IArrayNode materializedResult = new ArrayNode();
+
+	private final transient PullingStreamArrayNode virtualResult = new PullingStreamArrayNode();
+
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#iterator()
 	 */
 	@Override
 	public ChildIterator iterator() {
-		return new NamedChildIterator("expression") {
+		return new ConcatenatingChildIterator(super.iterator(), new NamedChildIterator("projection") {			
 			@Override
 			protected void set(int index, EvaluationExpression childExpression) {
-				ArrayProjection.this.expression = childExpression;
+				ArrayProjection.this.projection = childExpression;
 			}
-
+			
 			@Override
 			protected EvaluationExpression get(int index) {
-				return ArrayProjection.this.expression;
+				return ArrayProjection.this.projection;
 			}
-		};
+		});
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluateSegment(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	protected IJsonNode evaluateSegment(IJsonNode node) {
+		if (!(node instanceof IArrayNode)) {
+			// virtual projection
+			this.virtualResult.setSource((IStreamArrayNode) node);
+			this.virtualResult.setExpression(this.projection);
+			return this.virtualResult;
+		}
+		// materialized projection
+		final IArrayNode array = (IArrayNode) node;
+		this.materializedResult.clear();
+		for (int index = 0, size = array.size(); index < size; index++)
+			this.materializedResult.add(this.projection.evaluate(array.get(index)));
+		return this.materializedResult;
 	}
 
 	@Override
 	public IJsonNode set(final IJsonNode node, final IJsonNode value) {
+		final EvaluationExpression inputExpression = this.getInputExpression();
 		final IArrayNode arrayNode = (ArrayNode) node;
 		for (int index = 0, size = arrayNode.size(); index < size; index++)
-			arrayNode.set(index, this.expression.set(arrayNode.get(index), value));
+			arrayNode.set(index, inputExpression.set(arrayNode.get(index), value));
 		return arrayNode;
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + this.expression.hashCode();
-		return result;
-	}
-
-	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("[*]");
-		builder.append(this.expression);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.getInputExpression().appendAsString(appendable);
+		appendable.append("[*]");
+		if(this.projection != EvaluationExpression.VALUE)
+			this.projection.appendAsString(appendable);
 	}
 }

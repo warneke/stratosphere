@@ -46,7 +46,7 @@ public class Difference extends SetOperation<Difference> {
 			protected void coGroup(final IStreamArrayNode values1, final IStreamArrayNode values2,
 					final JsonCollector out) {
 				if (values2.isEmpty())
-					out.collect(values1.getFirst());
+					out.collect(values1.iterator().next());
 			}
 		}
 	}

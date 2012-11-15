@@ -26,7 +26,6 @@ import eu.stratosphere.sopremo.type.AbstractObjectNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
 import eu.stratosphere.sopremo.type.MissingNode;
-import eu.stratosphere.sopremo.type.TextNode;
 import eu.stratosphere.util.AbstractIterator;
 import eu.stratosphere.util.ConcatenatingIterator;
 
@@ -45,9 +44,9 @@ public class LazyObjectNode extends AbstractObjectNode {
 	 */
 	private static final long serialVersionUID = 5777496928208571589L;
 
-	protected PactRecord record;
+	private final PactRecord record;
 
-	protected ObjectSchema schema;
+	private final ObjectSchema schema;
 
 	/**
 	 * Initializes a LazyObjectNode with the given {@link PactRecord} and the given {@link ObjectSchema}.
@@ -67,6 +66,15 @@ public class LazyObjectNode extends AbstractObjectNode {
 		for (int i = 0; i < this.schema.getMappingSize(); i++)
 			this.record.setNull(i);
 		this.getOtherField().clear();
+	}
+	
+	/**
+	 * Returns the record.
+	 * 
+	 * @return the record
+	 */
+	PactRecord getRecord() {
+		return this.record;
 	}
 
 	/*
@@ -129,15 +137,6 @@ public class LazyObjectNode extends AbstractObjectNode {
 	public Iterator<String> getFieldNames() {
 		return new ConcatenatingIterator<String>(this.schema.getMappings().iterator(),
 			this.getOtherField().getFieldNames());
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IJsonNode#getJavaValue()
-	 */
-	@Override
-	public PactRecord getJavaValue() {
-		return this.record;
 	}
 
 	private IObjectNode getOtherField() {
@@ -242,28 +241,6 @@ public class LazyObjectNode extends AbstractObjectNode {
 			if (!this.record.isNull(i))
 				count++;
 		return count + others.size();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IJsonNode#toString(java.lang.StringBuilder)
-	 */
-	@Override
-	public void toString(final StringBuilder sb) {
-		sb.append('{');
-
-		int count = 0;
-		for (final Map.Entry<String, IJsonNode> en : this) {
-			if (count > 0)
-				sb.append(',');
-			++count;
-
-			TextNode.appendQuoted(sb, en.getKey());
-			sb.append(':');
-			en.getValue().toString(sb);
-		}
-
-		sb.append('}');
 	}
 
 	@Override

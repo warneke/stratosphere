@@ -1,5 +1,6 @@
 package eu.stratosphere.sopremo.operator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -68,8 +69,8 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append(toString());
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append(toString());
 	}
 
 	/**

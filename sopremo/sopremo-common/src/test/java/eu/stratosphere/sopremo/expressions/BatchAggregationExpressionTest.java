@@ -7,23 +7,24 @@ import java.util.Arrays;
 import junit.framework.Assert;
 import nl.jqno.equalsverifier.EqualsVerifier;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import eu.stratosphere.sopremo.CoreFunctions;
+import eu.stratosphere.sopremo.SopremoRuntime;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperator;
-import eu.stratosphere.sopremo.type.ArrayNode;
+import eu.stratosphere.sopremo.expressions.BatchAggregationExpression.Partial;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.INumericNode;
 import eu.stratosphere.sopremo.type.IntNode;
-import eu.stratosphere.sopremo.type.ObjectNode;
 
 public class BatchAggregationExpressionTest extends EvaluableExpressionTest<BatchAggregationExpression> {
 	@Override
 	protected BatchAggregationExpression createDefaultInstance(final int index) {
 		switch (index) {
 		case 0:
-			return new BatchAggregationExpression(CoreFunctions.MEAN);
+			return new BatchAggregationExpression(CoreFunctions.MAX);
 		case 1:
 			return new BatchAggregationExpression(CoreFunctions.COUNT);
 		case 2:
@@ -31,7 +32,11 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 		default:
 			return new BatchAggregationExpression(CoreFunctions.ALL);
 		}
-
+	}
+	
+	@Before
+	public void setup() {
+		SopremoRuntime.getInstance().mockRuntime();
 	}
 
 	@Override
@@ -43,11 +48,8 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 
 	@Test
 	public void shouldPerformBatch() {
-		final BatchAggregationExpression batch = new BatchAggregationExpression(CoreFunctions.SUM);
-		batch.add(CoreFunctions.MEAN);
-		batch.add(CoreFunctions.MEAN, new ArithmeticExpression(EvaluationExpression.VALUE,
-			ArithmeticOperator.MULTIPLICATION, EvaluationExpression.VALUE));
-		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), null);
+		final BatchAggregationExpression batch = createBatchExpression();
+		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1));
 
 		Assert.assertTrue(result instanceof IArrayNode);
 		final IArrayNode resultArray = (IArrayNode) result;
@@ -57,33 +59,64 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 			doubleResult[index] = ((INumericNode) resultArray.get(index)).getDoubleValue();
 		}
 
-		final double[] expected = { 1 + 2 + 3 + 4 + 5,
-			(double) (1 + 2 + 3 + 4 + 5) / 5,
-			(double) (1 * 1 + 2 * 2 + 3 * 3 + 4 * 4 + 5 * 5) / 5 };
+		final double[] expected = { 1 + 2 + 3 + 4 + 5, 5, 5 * 5 };
 		Assert.assertTrue(Arrays.equals(expected, doubleResult));
+	}
+
+	private BatchAggregationExpression createBatchExpression() {
+		final BatchAggregationExpression batch = new BatchAggregationExpression(CoreFunctions.SUM);
+		batch.add(CoreFunctions.MAX);
+		batch.add(CoreFunctions.MAX, new ArithmeticExpression(EvaluationExpression.VALUE,
+			ArithmeticOperator.MULTIPLICATION, EvaluationExpression.VALUE));
+		return batch;
 	}
 
 	@Test
 	public void shouldReuseTarget() {
-		ArrayNode target = new ArrayNode();
-		final BatchAggregationExpression batch = new BatchAggregationExpression(CoreFunctions.SUM);
-		batch.add(CoreFunctions.MEAN);
-		batch.add(CoreFunctions.MEAN, new ArithmeticExpression(EvaluationExpression.VALUE,
-			ArithmeticOperator.MULTIPLICATION, EvaluationExpression.VALUE));
-		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), target);
+		final BatchAggregationExpression batch = createBatchExpression();
+		final IJsonNode result1 = batch.evaluate(createArrayNode(2, 3, 4, 5, 1));
+		final IJsonNode result2 = batch.evaluate(createArrayNode(2, 3));
 
-		Assert.assertSame(target, result);
+		Assert.assertSame(result1, result2);
 	}
 
 	@Test
-	public void shouldNotReuseTargetWithWrongType() {
-		ObjectNode target = new ObjectNode();
-		final BatchAggregationExpression batch = new BatchAggregationExpression(CoreFunctions.SUM);
-		batch.add(CoreFunctions.MEAN);
-		batch.add(CoreFunctions.MEAN, new ArithmeticExpression(EvaluationExpression.VALUE,
-			ArithmeticOperator.MULTIPLICATION, EvaluationExpression.VALUE));
-		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1), target);
+	public void testPartialClone() throws IllegalAccessException {
+		final BatchAggregationExpression original = createBatchExpression();
+		final Partial partial1Clone = (Partial) original.getPartial(0).clone();
+		final Partial partial2Clone = (Partial) original.getPartial(1).clone();
 
-		Assert.assertNotSame(target, result);
+		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
+		Assert.assertSame(partial1Clone.getBatch(), partial2Clone.getBatch());
+	}
+
+	@Test
+	public void testMultipleClones() throws IllegalAccessException {
+		final BatchAggregationExpression original = createBatchExpression();
+		final Partial partial1Clone = (Partial) original.getPartial(0).clone();
+		final Partial partial2Clone = (Partial) original.getPartial(1).clone();
+		final Partial partial1Clone2 = (Partial) original.getPartial(0).clone();
+		final Partial partial2Clone2 = (Partial) original.getPartial(1).clone();
+
+		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
+		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone2.getBatch());
+		testPropertyClone(BatchAggregationExpression.class, partial1Clone.getBatch(), partial1Clone2.getBatch());
+		Assert.assertSame(partial1Clone.getBatch(), partial2Clone.getBatch());
+		Assert.assertSame(partial1Clone2.getBatch(), partial2Clone2.getBatch());
+	}
+
+	@Test
+	public void testSuccessiveClones() throws IllegalAccessException {
+		final BatchAggregationExpression original = createBatchExpression();
+		final Partial partial1Clone = (Partial) original.getPartial(0).clone();
+		final Partial partial2Clone = (Partial) original.getPartial(1).clone();
+		final Partial partial1Clone2 = (Partial) partial1Clone.clone();
+		final Partial partial2Clone2 = (Partial) partial2Clone.clone();
+
+		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
+		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone2.getBatch());
+		testPropertyClone(BatchAggregationExpression.class, partial1Clone.getBatch(), partial1Clone2.getBatch());
+		Assert.assertSame(partial1Clone.getBatch(), partial2Clone.getBatch());
+		Assert.assertSame(partial1Clone2.getBatch(), partial2Clone2.getBatch());
 	}
 }

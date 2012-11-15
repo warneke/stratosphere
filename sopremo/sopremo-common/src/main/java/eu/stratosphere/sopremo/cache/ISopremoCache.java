@@ -12,17 +12,16 @@
  * specific language governing permissions and limitations under the License.
  *
  **********************************************************************************************************************/
-package eu.stratosphere.sopremo.query;
+package eu.stratosphere.sopremo.cache;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import eu.stratosphere.sopremo.ICloneable;
+
 
 /**
+ * Tag interface for all Sopremo cache classes.
+ * 
  * @author Arvid Heise
  */
-public class InfoBase<T> {
-	private AtomicBoolean needsInitialization = new AtomicBoolean(true);
+public interface ISopremoCache extends ICloneable {
 
-	protected boolean needsInitialization() {
-		return this.needsInitialization.getAndSet(false);
-	}
 }

@@ -1,8 +1,13 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+
+import eu.stratosphere.sopremo.Singleton;
+
 /**
  * This expression represents a Singleton.
  */
+@Singleton
 public abstract class SingletonExpression extends EvaluationExpression {
 
 	/**
@@ -24,11 +29,21 @@ public abstract class SingletonExpression extends EvaluationExpression {
 		return obj == this;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return this;
+	}
+
 	@Override
 	public int hashCode() {
 		return this.getClass().hashCode();
 	}
 
+	@Override
 	protected abstract Object readResolve();
 
 	/*
@@ -36,8 +51,8 @@ public abstract class SingletonExpression extends EvaluationExpression {
 	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(final StringBuilder builder) {
-		super.toString(builder);
-		builder.append(this.textualRepresentation);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		super.appendAsString(appendable);
+		appendable.append(this.textualRepresentation);
 	}
 }

@@ -53,7 +53,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 	public void shouldPutIntoTheRightRecordField() {
 		this.node.put("lastName", TextNode.valueOf("Wurst"));
 		this.node.put("profession", TextNode.valueOf("Butcher"));
-		final PactRecord rec = this.node.getJavaValue();
+		final PactRecord rec = this.node.getRecord();
 		// the lastname is the second element in the mapping
 		final IJsonNode lastName = SopremoUtil.unwrap(rec.getField(1, JsonNodeWrapper.class));
 		Assert.assertEquals(TextNode.valueOf("Wurst"), lastName);

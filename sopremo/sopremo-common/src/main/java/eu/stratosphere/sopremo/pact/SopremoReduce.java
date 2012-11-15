@@ -16,7 +16,7 @@ import eu.stratosphere.sopremo.type.StreamArrayNode;
  * standard input of the ReduceStub to a more manageable representation (the input is converted to an {@link IArrayNode}
  * ).
  */
-public abstract class SopremoReduce extends ReduceStub {
+public abstract class SopremoReduce extends ReduceStub implements SopremoStub {
 	private EvaluationContext context;
 
 	private JsonCollector collector;
@@ -41,7 +41,8 @@ public abstract class SopremoReduce extends ReduceStub {
 		this.array.setNodeIterator(this.cachedIterator);
 	}
 
-	protected final EvaluationContext getContext() {
+	@Override
+	public final EvaluationContext getContext() {
 		return this.context;
 	}
 
@@ -61,19 +62,19 @@ public abstract class SopremoReduce extends ReduceStub {
 	 * eu.stratosphere.pact.common.stubs.Collector)
 	 */
 	@Override
-	public void reduce(final Iterator<PactRecord> records, final Collector<PactRecord> out) throws Exception {
-		this.context.increaseInputCounter();
+	public void reduce(final Iterator<PactRecord> records, final Collector<PactRecord> out) {
+		this.context.incrementInputCount();
 		this.collector.configure(out, this.context);
 		this.cachedIterator.setIterator(records);
 
 		try {
-		if (SopremoUtil.DEBUG && SopremoUtil.LOG.isTraceEnabled()) {
-			ArrayNode array = new ArrayNode(this.array);
-			SopremoUtil.LOG.trace(String.format("%s %s", this.getContext().operatorTrace(), array));
-			this.reduce(array, this.collector);
-		} else {
-			this.reduce(this.array, this.collector);
-		}
+			if (SopremoUtil.DEBUG && SopremoUtil.LOG.isTraceEnabled()) {
+				ArrayNode array = new ArrayNode(this.array);
+				SopremoUtil.LOG.trace(String.format("%s %s", this.getContext().operatorTrace(), array));
+				this.reduce(array, this.collector);
+			} else {
+				this.reduce(this.array, this.collector);
+			}
 		} catch (final RuntimeException e) {
 			SopremoUtil.LOG.error(String.format("Error occurred @ %s with %s: %s", this.getContext().operatorTrace(),
 				this.array, e));

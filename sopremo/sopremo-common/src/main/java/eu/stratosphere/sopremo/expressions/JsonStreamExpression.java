@@ -1,7 +1,9 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.List;
 
+import javolution.text.TypeFormat;
 import eu.stratosphere.sopremo.operator.JsonStream;
 import eu.stratosphere.sopremo.operator.Operator;
 
@@ -74,13 +76,13 @@ public class JsonStreamExpression extends UnevaluableExpression {
 	 * @see eu.stratosphere.sopremo.expressions.UnevaluableExpression#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(final StringBuilder builder) {
+	public void appendAsString(final Appendable appendable) throws IOException {
 		if (this.stream != null)
-			builder.append(this.stream.getSource().getOperator().getName()).append("@");
+			appendable.append(this.stream.getSource().getOperator().getName()).append("@");
 		if (this.inputIndex != -1)
-			builder.append(this.inputIndex);
+			TypeFormat.format(this.inputIndex, appendable);
 		else if (this.stream != null)
-			builder.append(this.stream.getSource().getIndex());
+			TypeFormat.format(this.stream.getSource().getIndex(), appendable);
 	}
 
 	/**

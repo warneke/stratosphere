@@ -1,5 +1,8 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+
+import eu.stratosphere.sopremo.Singleton;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.JsonUtil;
 import eu.stratosphere.sopremo.type.MissingNode;
@@ -11,23 +14,43 @@ import eu.stratosphere.sopremo.type.NullNode;
 @OptimizerHints(scope = Scope.ANY)
 public class ConstantExpression extends EvaluationExpression {
 	/**
+	 * @author Arvid Heise
+	 */
+	@Singleton
+	private static final class MissingConstant extends ConstantExpression {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -2375203649638430872L;
+
+		/**
+		 * Initializes MissingConstant.
+		 * 
+		 * @param constant
+		 */
+		private MissingConstant(IJsonNode constant) {
+			super(constant);
+		}
+
+		@Override
+		protected Object readResolve() {
+			return ConstantExpression.MISSING;
+		}
+
+		@Override
+		protected EvaluationExpression createCopy() {
+			return this;
+		}
+	}
+
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -4270374147359826240L;
 
 	private final IJsonNode constant;
 
-	public static final EvaluationExpression MISSING = new ConstantExpression(MissingNode.getInstance()) {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -2375203649638430872L;
-
-		private Object readResolve() {
-			return ConstantExpression.MISSING;
-		}
-	};
+	public static final EvaluationExpression MISSING = new MissingConstant(MissingNode.getInstance());
 
 	public static final EvaluationExpression NULL = new ConstantExpression(NullNode.getInstance()) {
 
@@ -36,7 +59,8 @@ public class ConstantExpression extends EvaluationExpression {
 		 */
 		private static final long serialVersionUID = -2375203649638430872L;
 
-		private Object readResolve() {
+		@Override
+		protected Object readResolve() {
 			return ConstantExpression.NULL;
 		}
 	};
@@ -80,9 +104,18 @@ public class ConstantExpression extends EvaluationExpression {
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+	public IJsonNode evaluate(final IJsonNode node) {
 		// we can ignore 'target' because no new Object is created
 		return this.constant;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new ConstantExpression(this.constant.clone());
 	}
 
 	@Override
@@ -91,11 +124,14 @@ public class ConstantExpression extends EvaluationExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		if (this.constant instanceof CharSequence)
-			builder.append("\'").append(this.constant).append("\'");
+	public void appendAsString(final Appendable appendable) throws IOException {
+		if (this.constant instanceof CharSequence) {
+			appendable.append("\'");
+			this.constant.appendAsString(appendable);
+			appendable.append("\'");
+		}
 		else
-			builder.append(this.constant);
+			this.constant.appendAsString(appendable);
 	}
 
 }

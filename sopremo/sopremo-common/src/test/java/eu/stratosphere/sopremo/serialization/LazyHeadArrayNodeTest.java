@@ -26,7 +26,7 @@ public class LazyHeadArrayNodeTest extends ArrayNodeBaseTest<LazyHeadArrayNode> 
 
 	@Test
 	public void shouldIncrementOthersField() {
-		final PactRecord record = this.node.getJavaValue();
+		final PactRecord record = this.node.getRecord();
 		final IArrayNode others = (IArrayNode) SopremoUtil.unwrap(record.getField(5, JsonNodeWrapper.class));
 
 		Assert.assertEquals(0, others.size());

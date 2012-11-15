@@ -1,9 +1,7 @@
 package eu.stratosphere.sopremo.base;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
@@ -93,24 +91,24 @@ public class ArraySplit extends ElementaryOperator<ArraySplit> {
 	}
 
 	public static class Implementation extends SopremoMap {
-		private CachingExpression<IArrayNode> arrayPath;
+		private EvaluationExpression arrayPath;
 
 		private EvaluationExpression splitProjection;
 
 		@Override
 		protected void map(final IJsonNode value, JsonCollector out) {
-			final IArrayNode array = this.arrayPath.evaluate(value);
-			if (!array.isArray())
+			final IJsonNode target = this.arrayPath.evaluate(value);
+			if (!target.isArray())
 				throw new EvaluationException("Cannot split non-array");
+			final IArrayNode array = (IArrayNode) target;
 
 			int index = 0;
-			final EvaluationContext context = this.getContext();
 			IntNode indexNode = IntNode.valueOf(0);
 			IArrayNode contextNode = JsonUtil.asArray(NullNode.getInstance(), indexNode, array, value);
 			for (IJsonNode element : array) {
 				contextNode.set(0, element);
 				indexNode.setValue(index);
-				out.collect(this.splitProjection.evaluate(contextNode, null));
+				out.collect(this.splitProjection.evaluate(contextNode));
 				index++;
 			}
 		}

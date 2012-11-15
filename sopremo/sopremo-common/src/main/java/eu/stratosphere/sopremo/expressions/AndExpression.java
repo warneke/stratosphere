@@ -1,11 +1,13 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
@@ -13,7 +15,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * Represents a logical AND.
  */
 @OptimizerHints(scope = Scope.ANY)
-public class AndExpression extends BooleanExpression implements ExpressionParent {
+public class AndExpression extends BooleanExpression {
 	/**
 	 * 
 	 */
@@ -55,13 +57,22 @@ public class AndExpression extends BooleanExpression implements ExpressionParent
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+	public BooleanNode evaluate(final IJsonNode node) {
 		// we can ignore 'target' because no new Object is created
 		for (final EvaluationExpression booleanExpression : this.expressions)
-			if (booleanExpression.evaluate(node, null) == BooleanNode.FALSE)
+			if (booleanExpression.evaluate(node) == BooleanNode.FALSE)
 				return BooleanNode.FALSE;
 
 		return BooleanNode.TRUE;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new AndExpression(SopremoUtil.deepClone(this.expressions));
 	}
 
 	/**
@@ -82,10 +93,10 @@ public class AndExpression extends BooleanExpression implements ExpressionParent
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("(");
-		this.appendChildExpressions(builder, this.expressions, " AND ");
-		builder.append(")");
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("(");
+		this.appendChildExpressions(appendable, this.expressions, " AND ");
+		appendable.append(")");
 	}
 
 	/*
@@ -95,8 +106,11 @@ public class AndExpression extends BooleanExpression implements ExpressionParent
 	@Override
 	public ChildIterator iterator() {
 		return new GenericListChildIterator<BooleanExpression>(this.expressions.listIterator()) {
-			/* (non-Javadoc)
-			 * @see eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions.EvaluationExpression)
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions
+			 * .EvaluationExpression)
 			 */
 			@Override
 			protected BooleanExpression convert(EvaluationExpression childExpression) {

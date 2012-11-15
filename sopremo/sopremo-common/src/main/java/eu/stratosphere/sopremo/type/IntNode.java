@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import javolution.text.TypeFormat;
 import eu.stratosphere.pact.common.type.base.PactInteger;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 
@@ -155,8 +156,8 @@ public class IntNode extends AbstractNumericNode implements INumericNode {
 
 	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
-		this.checkForSameType(otherNode);
-		this.value.setValue(((IntNode) otherNode).getIntValue());
+		checkNumber(otherNode);
+		this.value.setValue(((INumericNode) otherNode).getIntValue());
 	}
 
 	@Override
@@ -182,5 +183,14 @@ public class IntNode extends AbstractNumericNode implements INumericNode {
 
 	public void increment() {
 		this.value.setValue(this.value.getValue() + 1);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		TypeFormat.format(this.value.getValue(), appendable);
 	}
 }

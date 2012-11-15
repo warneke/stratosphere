@@ -60,6 +60,10 @@ public class DynamicMethod<ReturnType> extends DynamicInvokable<Method, Object, 
 		return (member.getModifiers() & Modifier.STATIC) == 0;
 	}
 
+	public Method getMethod(Signature signature) {
+		return super.getMember(signature);
+	}
+
 	@Override
 	protected Method findMember(final java.lang.Class<Object> clazz, final java.lang.Class<?>[] parameterTypes)
 			throws NoSuchMethodException {

@@ -8,19 +8,27 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import eu.stratosphere.sopremo.aggregation.Aggregation;
+import eu.stratosphere.sopremo.aggregation.FixedTypeTransitiveAggregation;
 import eu.stratosphere.sopremo.aggregation.MaterializingAggregation;
 import eu.stratosphere.sopremo.aggregation.TransitiveAggregation;
+import eu.stratosphere.sopremo.cache.ArrayCache;
+import eu.stratosphere.sopremo.cache.NodeCache;
+import eu.stratosphere.sopremo.cache.PatternCache;
+import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperator;
 import eu.stratosphere.sopremo.expressions.ComparativeExpression;
-import eu.stratosphere.sopremo.expressions.ConstantExpression;
-import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.function.ExpressionFunction;
+import eu.stratosphere.sopremo.function.SopremoFunction;
+import eu.stratosphere.sopremo.function.SopremoFunction1;
+import eu.stratosphere.sopremo.function.SopremoFunction2;
+import eu.stratosphere.sopremo.function.SopremoFunction3;
+import eu.stratosphere.sopremo.function.SopremoVarargFunction;
+import eu.stratosphere.sopremo.function.SopremoVarargFunction1;
 import eu.stratosphere.sopremo.operator.Name;
 import eu.stratosphere.sopremo.packages.BuiltinProvider;
-import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.tokenizer.RegexTokenizer;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.CachingArrayNode;
-import eu.stratosphere.sopremo.type.DoubleNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.INumericNode;
@@ -33,87 +41,53 @@ import eu.stratosphere.sopremo.type.TextNode;
  * 
  * @author Arvid Heise
  */
+@SuppressWarnings("serial")
 public class CoreFunctions implements BuiltinProvider {
 	@Name(verb = "concat", noun = "concatenation")
-	public static final Aggregation<IJsonNode, TextNode> CONCAT =
-		new TransitiveAggregation<IJsonNode, TextNode>("concat", new TextNode()) {
-
-			/**
-		 * 
-		 */
-			private static final long serialVersionUID = -672755307899894156L;
-
-			@Override
-			public TextNode aggregate(IJsonNode node, TextNode aggregationTarget) {
-				aggregationTarget.append((TextNode) node);
-				return aggregationTarget;
-			}
-
-			@Override
-			public IJsonNode getFinalAggregate(TextNode aggregator, IJsonNode target) {
-				TextNode textTarget = SopremoUtil.ensureType(target, TextNode.class);
-				textTarget.copyValueFrom(aggregator);
-				return textTarget;
-			}
-		};
+	public static final Aggregation CONCAT = new FixedTypeTransitiveAggregation<TextNode>("concat", new TextNode()) {
+		@Override
+		protected void aggregateInto(TextNode aggregator, IJsonNode element) {
+			aggregator.append((TextNode) element);
+		}
+	};
 
 	/**
 	 * Repeatedly applies the {@link ArithmeticOperator#ADDITION} to the children of the given node.
 	 */
 	@Name(verb = "sum", noun = "sum")
-	public static final Aggregation<INumericNode, INumericNode> SUM =
-		new TransitiveAggregation<INumericNode, INumericNode>(
-			"sum", IntNode.ZERO) {
-			/**
-		 * 
-		 */
-			private static final long serialVersionUID = -8021932798231751696L;
-
-			@Override
-			public INumericNode aggregate(INumericNode node, INumericNode aggregationTarget) {
-				return ArithmeticOperator.ADDITION.evaluate(node, aggregationTarget, aggregationTarget);
-			}
-		};
-
-	@Name(verb = "count", noun = "count")
-	public static final Aggregation<IJsonNode, IntNode> COUNT = new TransitiveAggregation<IJsonNode, IntNode>(
-		"count", IntNode.ZERO) {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -4700372075569392783L;
+	public static final Aggregation SUM = new TransitiveAggregation<INumericNode>("sum", IntNode.ZERO) {
+		private final transient NodeCache nodeCache = new NodeCache();
 
 		@Override
-		public IntNode aggregate(IJsonNode node, IntNode aggregationTarget) {
-			return (IntNode) ArithmeticOperator.ADDITION.evaluate(IntNode.ONE, aggregationTarget, aggregationTarget);
+		protected INumericNode aggregate(INumericNode aggregator, IJsonNode element) {
+			return ArithmeticExpression.ArithmeticOperator.ADDITION.evaluate(aggregator, (INumericNode) element,
+				this.nodeCache);
+		}
+	};
+
+	@Name(verb = "count", noun = "count")
+	public static final Aggregation COUNT = new FixedTypeTransitiveAggregation<IntNode>("count", IntNode.ZERO) {
+		@Override
+		protected void aggregateInto(IntNode aggregator, IJsonNode element) {
+			aggregator.increment();
 		}
 	};
 
 	@Name(noun = "first")
-	public static final Aggregation<IJsonNode, IJsonNode> FIRST =
-		new TransitiveAggregation<IJsonNode, IJsonNode>(
-			"first", NullNode.getInstance()) {
-			/**
-		 * 
-		 */
-			private static final long serialVersionUID = 273172975676646935L;
-
-			@Override
-			public IJsonNode aggregate(IJsonNode node, IJsonNode aggregationTarget) {
-				return aggregationTarget.isNull() ? node : aggregationTarget;
-			}
-		};
+	public static final Aggregation FIRST = new TransitiveAggregation<IJsonNode>("first", NullNode.getInstance()) {
+		@Override
+		protected IJsonNode aggregate(IJsonNode aggregator, IJsonNode element) {
+			return aggregator.isNull() ? element : aggregator;
+		}
+	};
 
 	@Name(verb = "sort")
-	public static final Aggregation<IJsonNode, ArrayNode> SORT = new MaterializingAggregation("sort") {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 3035270432104235038L;
-
+	public static final Aggregation SORT = new MaterializingAggregation("sort") {
+		private final transient ArrayCache<IJsonNode> arrayCache = new ArrayCache<IJsonNode>(IJsonNode.class);
+		
 		@Override
-		protected IJsonNode processNodes(final IArrayNode nodeArray, final IJsonNode target) {
-			final IJsonNode[] nodes = nodeArray.toArray();
+		protected IJsonNode processNodes(final CachingArrayNode nodeArray) {
+			final IJsonNode[] nodes = nodeArray.toArray(this.arrayCache);
 			Arrays.sort(nodes);
 			nodeArray.setAll(nodes);
 			return nodeArray;
@@ -121,134 +95,51 @@ public class CoreFunctions implements BuiltinProvider {
 	};
 
 	@Name(adjective = "all")
-	public static final Aggregation<IJsonNode, ArrayNode> ALL = new MaterializingAggregation("all") {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 9079394721632933377L;
+	public static final Aggregation ALL = new MaterializingAggregation("all") {
 	};
 
-	static final class AverageState extends ArrayNode {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -6320534939283525418L;
-
-		/**
-		 * Initializes CoreFunctions.AverageState.
-		 *
-		 */
-		public AverageState() {
-			add(new IntNode(0));
-			add(new IntNode(0));
-		}
-		
-		public INumericNode getSum() {
-			return (INumericNode) get(0);
-		}
-		
-		public void setSum(INumericNode sum) {
-			set(0, sum);
-		}		
-		
-		public IntNode getCount() {
-			return (IntNode) get(1);
-		}
-		
-		public void increaseCount() {
-			getCount().increment();
-		}
-	}
-	
 	@Name(noun = "mean")
-	public static final Aggregation<INumericNode, AverageState> MEAN = new Aggregation<INumericNode, AverageState>("mean") {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 483420587993286076L;
-
-		@Override
-		public AverageState aggregate(INumericNode node, AverageState avgState) {
-			INumericNode sum = (INumericNode) avgState.get(0);
-			avgState.setSum(ArithmeticOperator.ADDITION.evaluate(node, sum, sum));
-			avgState.increaseCount();
-			return avgState;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see
-		 * eu.stratosphere.sopremo.aggregation.AggregationFunction#getFinalAggregate(eu.stratosphere.sopremo.type.IJsonNode
-		 * , eu.stratosphere.sopremo.type.IJsonNode)
-		 */
-		@Override
-		public INumericNode getFinalAggregate(AverageState avgState, IJsonNode target) {
-			if (avgState.get(1).equals(IntNode.ZERO))
-				return DoubleNode.NaN;
-			return ArithmeticOperator.DIVISION.evaluate(avgState.getSum(), avgState.getCount(),				target);
-		}
-
-		@Override
-		public AverageState initialize(AverageState aggregationValue) {
-			return aggregationValue == null ? new AverageState() : aggregationValue;
-		}
-	};
-
-	public static final EvaluationExpression PI = new ConstantExpression(Math.PI), E = new ConstantExpression(Math.E);
+	public static final SopremoFunction MEAN = new ExpressionFunction(1,
+		new ArithmeticExpression(SUM.asExpression(), ArithmeticOperator.DIVISION, COUNT.asExpression()));
 
 	@Name(noun = "min")
-	public static final Aggregation<IJsonNode, IJsonNode> MIN =
-		new TransitiveAggregation<IJsonNode, IJsonNode>("min", NullNode.getInstance()) {
-			/**
-		 * 
-		 */
-			private static final long serialVersionUID = -8124401653435722884L;
-
-			@Override
-			public IJsonNode aggregate(final IJsonNode node, final IJsonNode aggregator) {
-				if (aggregator.isNull() || ComparativeExpression.BinaryOperator.LESS.evaluate(node, aggregator))
-					return node;
-				return aggregator;
-			}
-		};
+	public static final Aggregation MIN = new TransitiveAggregation<IJsonNode>("min", NullNode.getInstance()) {
+		@Override
+		public IJsonNode aggregate(final IJsonNode aggregator, final IJsonNode node) {
+			if (aggregator.isNull())
+				return node.clone();
+			else if (ComparativeExpression.BinaryOperator.LESS.evaluate(node, aggregator))
+				return node;
+			return aggregator;
+		}
+	};
 
 	@Name(noun = "max")
-	public static final Aggregation<IJsonNode, IJsonNode> MAX =
-		new TransitiveAggregation<IJsonNode, IJsonNode>("max", NullNode.getInstance()) {
-			/**
-		 * 
-		 */
-			private static final long serialVersionUID = -1735264603829085865L;
+	public static final Aggregation MAX = new TransitiveAggregation<IJsonNode>("max", NullNode.getInstance()) {
+		@Override
+		public IJsonNode aggregate(final IJsonNode aggregator, final IJsonNode node) {
+			if (aggregator.isNull())
+				return node.clone();
+			else if (ComparativeExpression.BinaryOperator.LESS.evaluate(aggregator, node))
+				aggregator.copyValueFrom(node);
+			return aggregator;
+		}
+	};
 
-			@Override
-			public IJsonNode aggregate(final IJsonNode node, final IJsonNode aggregator) {
-				if (aggregator.isNull() || ComparativeExpression.BinaryOperator.LESS.evaluate(aggregator, node))
-					return node;
-				return aggregator;
-			}
-		};
-		
+	/**
+	 * Creates a new array by combining sparse array information.<br />
+	 * For example: [[0, "a"], [3, "d"], [2, "c"]] -&lt; ["a", missing, "c", "d"]
+	 */
+	@Name(verb = "assemble")
+	public static final Aggregation ASSEMBLE_ARRAY = new FixedTypeTransitiveAggregation<ArrayNode>("assemble",
+		new ArrayNode()) {
 
-		/**
-		 * Creates a new array by combining sparse array information.<br />
-		 * For example: [[0, "a"], [3, "d"], [2, "c"]] -&lt; ["a", missing, "c", "d"]
-		 */
-		@Name(verb = "assemble")
-		public static final Aggregation<IArrayNode, ArrayNode> ASSEMBLE_ARRAY =
-			new TransitiveAggregation<IArrayNode, ArrayNode>(
-				"assemble", new ArrayNode()) {
-				/**
-			 * 
-			 */
-				private static final long serialVersionUID = -8021932798231751696L;
-
-				@Override
-				public ArrayNode aggregate(IArrayNode node, ArrayNode aggregationTarget) {
-					aggregationTarget.add(((INumericNode) node.get(0)).getIntValue(), node.get(1));
-					return aggregationTarget;
-				}
-			};
+		@Override
+		protected void aggregateInto(ArrayNode aggregator, IJsonNode element) {
+			IArrayNode part = (IArrayNode) element;
+			aggregator.add(((INumericNode) part.get(0)).getIntValue(), part.get(1));
+		}
+	};
 
 	/**
 	 * Adds the specified node to the array at the given index
@@ -261,163 +152,249 @@ public class CoreFunctions implements BuiltinProvider {
 	 *        the node to add
 	 * @return array with the added node
 	 */
-	public static IArrayNode add(@SuppressWarnings("unused") final IArrayNode result, final IArrayNode array,
-			final IntNode index, final IJsonNode node) {
-		array.add(resolveIndex(index.getIntValue(), array.size()), node);
-		return array;
-	}
-
-	public static void camelCase(final TextNode result, final TextNode input) {
-		result.copyValueFrom(input);
-		final char[] chars = result.asCharArray();
-
-		boolean capitalize = true;
-		for (int index = 0; index < chars.length; index++)
-			if (Character.isWhitespace(chars[index]))
-				capitalize = true;
-			else if (capitalize) {
-				chars[index] = Character.toUpperCase(chars[index]);
-				capitalize = false;
-			} else
-				chars[index] = Character.toLowerCase(chars[index]);
-	}
-
-	/**
-	 * Concatenates the textual representation of the nodes.
-	 * 
-	 * @param params
-	 *        the nodes to concatenate
-	 * @return a string node of the concatenated textual representations
-	 */
-	public static void concat(final TextNode result, final IJsonNode... params) {
-		final StringBuilder builder = new StringBuilder();
-		for (final IJsonNode jsonNode : params)
-			builder.append((TextNode) jsonNode);
-		result.setValue(builder.toString());
-	}
-
-	public static IJsonNode extract(final IJsonNode result, final TextNode input, final TextNode pattern) {
-		return extract(result, input, pattern, NullNode.getInstance());
-	}
-
-	public static IJsonNode extract(final IJsonNode result, final TextNode input, final TextNode pattern,
-			final IJsonNode defaultValue) {
-		final Pattern compiledPattern = SopremoUtil.getPatternOf(pattern);
-		final Matcher matcher = compiledPattern.matcher(input.getTextValue());
-
-		if (!matcher.find())
-			return defaultValue;
-
-		if (matcher.groupCount() == 0) {
-			TextNode stringResult = SopremoUtil.ensureType(result, TextNode.class);
-			stringResult.setValue(matcher.group(0));
-			return stringResult;
+	@Name(verb = "add")
+	public static final SopremoFunction ADD = new SopremoFunction3<IArrayNode, IntNode, IJsonNode>("add") {
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoFunction3#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		protected IJsonNode call(final IArrayNode array, final IntNode index, final IJsonNode node) {
+			array.add(resolveIndex(index.getIntValue(), array.size()), node);
+			return array;
 		}
+	};
 
-		if (matcher.groupCount() == 1) {
-			TextNode stringResult = SopremoUtil.ensureType(result, TextNode.class);
-			stringResult.setValue(matcher.group(1));
-			return stringResult;
+	@Name(noun = "camelCase")
+	public static final SopremoFunction CAMEL_CASE = new SopremoFunction1<TextNode>("camelCase") {
+		private final StringBuilder builder = new StringBuilder();
+
+		private final TextNode result = new TextNode();
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoFunction3#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		protected IJsonNode call(final TextNode input) {
+			this.builder.append(input);
+
+			boolean capitalize = true;
+			for (int index = 0, length = this.builder.length(); index < length; index++) {
+				final char ch = this.builder.charAt(index);
+				if (Character.isWhitespace(ch))
+					capitalize = true;
+				else if (capitalize) {
+					this.builder.setCharAt(index, Character.toUpperCase(ch));
+					capitalize = false;
+				} else {
+					final char lowerCh = Character.toLowerCase(ch);
+					if (lowerCh != ch)
+						this.builder.setCharAt(index, lowerCh);
+				}
+			}
+			this.result.setValue(this.builder);
+			return this.result;
 		}
+	};
 
-		final ArrayNode arrayResult = SopremoUtil.ensureType(result, ArrayNode.class);
-		for (int index = 1; index <= matcher.groupCount(); index++)
-			arrayResult.add(TextNode.valueOf(matcher.group(index)));
-		return arrayResult;
-	}
+	@Name(verb = "extract")
+	public static final SopremoFunction EXTRACT = new SopremoFunction3<TextNode, TextNode, IJsonNode>("extract") {
+		private final transient PatternCache patternCache = new PatternCache();
 
-	public static void filter(final ArrayNode result, final IArrayNode input, final IJsonNode... elementsToFilter) {
-		final HashSet<IJsonNode> filterSet = new HashSet<IJsonNode>(Arrays.asList(elementsToFilter));
-		result.clear();
-		for (int index = 0; index < input.size(); index++)
-			if (!filterSet.contains(input.get(index)))
-				result.add(input.get(index));
-	}
+		private final TextNode stringResult = new TextNode();
 
-	public static void format(final TextNode result, final TextNode format, final IJsonNode... params) {
-		final Object[] paramsAsObjects = new Object[params.length];
-		for (int index = 0; index < paramsAsObjects.length; index++)
-			paramsAsObjects[index] =
-				params[index].isTextual() ? ((TextNode) params[index]).getTextValue() : params[index].toString();
+		private final CachingArrayNode arrayResult = new CachingArrayNode();
 
-		result.clear();
-		result.asFormatter().format(format.getTextValue().toString(), paramsAsObjects);
-	}
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoFunction3#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		protected IJsonNode call(final TextNode input, final TextNode pattern, final IJsonNode defaultValue) {
+			final Pattern compiledPattern = this.patternCache.getPatternOf(pattern);
+			final Matcher matcher = compiledPattern.matcher(input.getTextValue());
 
-	public static void length(final IntNode result, final TextNode node) {
-		result.setValue(node.getTextValue().length());
-	}
+			if (!matcher.find())
+				return defaultValue;
 
-	public static void replace(final TextNode result, final TextNode input, final TextNode search,
-			final TextNode replace) {
-		final Pattern searchPattern = SopremoUtil.getPatternOf(search);
-		final Matcher matcher = searchPattern.matcher(input);
-		result.setValue(matcher.replaceAll(replace.toString()));
-	}
+			if (matcher.groupCount() == 0) {
+				this.stringResult.setValue(matcher.group(0));
+				return this.stringResult;
+			}
 
-	private static final Map<Pattern, RegexTokenizer> REGEX_TOKENIZERS = new IdentityHashMap<Pattern, RegexTokenizer>();
+			if (matcher.groupCount() == 1) {
+				this.stringResult.setValue(matcher.group(1));
+				return this.stringResult;
+			}
 
-	public static void split(final CachingArrayNode result, final TextNode input, final TextNode splitString) {
-		final Pattern searchPattern = SopremoUtil.getPatternOf(splitString);
-		RegexTokenizer regexTokenizer = REGEX_TOKENIZERS.get(searchPattern);
-		if (regexTokenizer == null)
-			REGEX_TOKENIZERS.put(searchPattern, regexTokenizer = new RegexTokenizer(searchPattern));
-		regexTokenizer.tokenizeInto(input, result);
-	}
-	
+			this.arrayResult.clear();
+			for (int index = 1; index <= matcher.groupCount(); index++) {
+				TextNode group = (TextNode) this.arrayResult.reuseUnusedNode();
+				if (group == null)
+					this.arrayResult.add(group = new TextNode());
+				group.setValue(matcher.group(index));
+			}
+			return this.arrayResult;
+		}
+	}.withDefaultParameters(NullNode.getInstance());
+
+	@Name(noun = "format", verb = "format")
+	public static final SopremoFunction FORMAT = new SopremoVarargFunction1<TextNode>("format") {
+		private final TextNode result = new TextNode();
+
+		private final transient ArrayCache<Object> arrayCache = new ArrayCache<Object>(Object.class);
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoVarargFunction1#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IArrayNode)
+		 */
+		@Override
+		protected IJsonNode call(TextNode format, IArrayNode varargs) {
+			final Object[] paramsAsObjects = this.arrayCache.getArray(varargs.size());
+			for (int index = 0; index < paramsAsObjects.length; index++)
+				paramsAsObjects[index] = varargs.get(index).toString();
+
+			this.result.clear();
+			this.result.asFormatter().format(format.getTextValue().toString(), paramsAsObjects);
+			return this.result;
+		}
+	};
+
+	@Name(verb = "subtract")
+	public static final SopremoFunction SUBTRACT = new SopremoVarargFunction1<IArrayNode>("subtract") {
+		private final HashSet<IJsonNode> filterSet = new HashSet<IJsonNode>();
+
+		private final IArrayNode result = new ArrayNode();
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoVarargFunction1#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IArrayNode)
+		 */
+		@Override
+		protected IJsonNode call(IArrayNode input, IArrayNode elementsToRemove) {
+			this.filterSet.clear();
+			for (IJsonNode elementToFilter : elementsToRemove)
+				this.filterSet.add(elementToFilter);
+
+			this.result.clear();
+			for (int index = 0; index < input.size(); index++)
+				if (!this.filterSet.contains(input.get(index)))
+					this.result.add(input.get(index));
+			return this.result;
+		}
+	};
+
+	@Name(noun = "length")
+	public static final SopremoFunction LENGTH = new SopremoFunction1<TextNode>("length") {
+		private final IntNode result = new IntNode();
+
+		@Override
+		protected IJsonNode call(TextNode node) {
+			this.result.setValue(node.getTextValue().length());
+			return this.result;
+		}
+	};
+
+	@Name(verb = "replace")
+	public static final SopremoFunction REPLACE = new SopremoFunction3<TextNode, TextNode, TextNode>("replace") {
+		private final transient PatternCache patternCache = new PatternCache();
+
+		private final TextNode result = new TextNode();
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoFunction3#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		protected IJsonNode call(final TextNode input, final TextNode search, final TextNode replace) {
+			final Pattern compiledPattern = this.patternCache.getPatternOf(search);
+			final Matcher matcher = compiledPattern.matcher(input.getTextValue());
+			this.result.setValue(matcher.replaceAll(replace.toString()));
+			return this.result;
+		}
+	}.withDefaultParameters(TextNode.EMPTY_STRING);
+
 	private static final TextNode WHITESPACES = TextNode.valueOf("\\p{javaWhitespace}+");
-	public static void split(final CachingArrayNode result, final TextNode input) {
-		split(result, input, WHITESPACES);
-	}
 
-	public static void substring(final TextNode result, final TextNode input, final IntNode from, final IntNode to) {
-		final int length = input.length();
-		final int fromPos = resolveIndex(from.getIntValue(), length);
-		final int toPos = resolveIndex(to.getIntValue(), length);
+	@Name(verb = "split")
+	public static final SopremoFunction SPLIT = new SopremoFunction2<TextNode, TextNode>("split") {
+		private final transient PatternCache patternCache = new PatternCache();
 
-		result.setValue(input, fromPos, toPos);
-	}
+		private final CachingArrayNode result = new CachingArrayNode();
 
-	public static void trim(final TextNode result, final TextNode input) {
-		int start = 0, end = input.length() - 1;
-		while(start < end && input.charAt(start) == ' ')
-			start++;
-		while(end > start && input.charAt(end) == ' ')
-			end--;
-			
-		result.setValue(input, start, end + 1);
-	}
+		private final Map<Pattern, RegexTokenizer> tokenizers = new IdentityHashMap<Pattern, RegexTokenizer>();
 
-	/**
-	 * Concatenates the children of the given arrays.
-	 * 
-	 * @param arrays
-	 *        the arrays to concatenate
-	 * @return the concatenated array
-	 */
-	public static void unionAll(final ArrayNode union, final IJsonNode... arrays) {
-		// boolean hasStream = false; // , resettable = false;
-		// for (final IJsonNode param : arrays) {
-		// final boolean stream = param instanceof ArrayNode;
-		// hasStream |= stream;
-		// // if (stream && ((ArrayNode) param).isResettable()) {
-		// // resettable = true;
-		// // break;
-		// // }
-		// }
-		//
-		// if (hasStream) {
-		// final List<Iterator<IJsonNode>> iterators = new ArrayList<Iterator<IJsonNode>>(arrays.length);
-		// for (int index = 0; index < arrays.length; index++)
-		// iterators.add(((ArrayNode) arrays[index]).iterator());
-		// return ArrayNode.valueOf(new ConcatenatingIterator<IJsonNode>(iterators)/* , resettable */);
-		// }
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoFunction3#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		protected IJsonNode call(final TextNode input, final TextNode splitString) {
+			final Pattern searchPattern = this.patternCache.getPatternOf(splitString);
+			RegexTokenizer regexTokenizer = this.tokenizers.get(searchPattern);
+			if (regexTokenizer == null)
+				this.tokenizers.put(searchPattern, regexTokenizer = new RegexTokenizer(searchPattern));
+			regexTokenizer.tokenizeInto(input, this.result);
+			return this.result;
+		}
+	}.withDefaultParameters(WHITESPACES);
 
-		union.clear();
-		for (final IJsonNode param : arrays)
-			for (final IJsonNode child : (IArrayNode) param)
-				union.add(child);
-	}
+	@Name(noun = "substring")
+	public static final SopremoFunction SUBSTRING = new SopremoFunction3<TextNode, IntNode, IntNode>("substring") {
+		private final TextNode result = new TextNode();
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.function.SopremoFunction3#call(eu.stratosphere.sopremo.type.IJsonNode,
+		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		protected IJsonNode call(final TextNode input, final IntNode from, final IntNode to) {
+			final int length = input.length();
+			final int fromPos = resolveIndex(from.getIntValue(), length);
+			final int toPos = resolveIndex(to.getIntValue(), length);
+			this.result.setValue(input, fromPos, toPos);
+			return this.result;
+		}
+	}.withDefaultParameters(new IntNode(-1));
+
+	@Name(verb = "trim")
+	public static final SopremoFunction TRIM = new SopremoFunction1<TextNode>("trim") {
+		private final TextNode result = new TextNode();
+
+		@Override
+		protected IJsonNode call(final TextNode input) {
+			int start = 0, end = input.length() - 1;
+			while (start < end && input.charAt(start) == ' ')
+				start++;
+			while (end > start && input.charAt(end) == ' ')
+				end--;
+			this.result.setValue(input, start, end + 1);
+			return this.result;
+		}
+	}.withDefaultParameters(new IntNode(-1));
+
+	@Name(verb = "unionAll")
+	public static final SopremoFunction UNION_ALL = new SopremoVarargFunction("unionAll", 0) {
+		private final IArrayNode union = new ArrayNode();
+
+		@Override
+		public IJsonNode call(final IArrayNode params) {
+			this.union.clear();
+			for (final IJsonNode param : params)
+				for (final IJsonNode child : (IArrayNode) param)
+					this.union.add(child);
+			return this.union;
+		}
+	};
 
 	private static int resolveIndex(final int index, final int size) {
 		if (index < 0)

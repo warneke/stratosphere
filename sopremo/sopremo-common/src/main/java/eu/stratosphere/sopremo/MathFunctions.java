@@ -14,20 +14,43 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo;
 
+import eu.stratosphere.sopremo.cache.NodeCache;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
+import eu.stratosphere.sopremo.expressions.ConstantExpression;
+import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.function.SopremoFunction;
+import eu.stratosphere.sopremo.function.SopremoFunction1;
+import eu.stratosphere.sopremo.operator.Name;
 import eu.stratosphere.sopremo.packages.BuiltinProvider;
 import eu.stratosphere.sopremo.type.DoubleNode;
+import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.INumericNode;
 
 /**
  * @author Arvid Heise
  */
+@SuppressWarnings("serial")
 public class MathFunctions implements BuiltinProvider {
-	public void sqrt(DoubleNode result, INumericNode input) {
-		result.setValue(Math.sqrt(input.getDoubleValue()));
-	}
-	
-	public INumericNode sqr(INumericNode result, INumericNode input) {
-		return ArithmeticExpression.ArithmeticOperator.MULTIPLICATION.evaluate(input, input, result);
-	}
+	public static final EvaluationExpression PI = new ConstantExpression(Math.PI), E = new ConstantExpression(Math.E);
+
+	@Name(verb = "sqrt")
+	public static final SopremoFunction SQRT = new SopremoFunction1<INumericNode>("sqrt") {
+		private final DoubleNode result = new DoubleNode();
+
+		@Override
+		protected IJsonNode call(INumericNode input) {
+			this.result.setValue(Math.sqrt(input.getDoubleValue()));
+			return this.result;
+		}
+	};
+
+	@Name(verb = "sqr")
+	public static final SopremoFunction SQR = new SopremoFunction1<INumericNode>("sqr") {
+		private final transient NodeCache cache = new NodeCache();
+
+		@Override
+		protected IJsonNode call(INumericNode input) {
+			return ArithmeticExpression.ArithmeticOperator.MULTIPLICATION.evaluate(input, input, this.cache);
+		}
+	};
 }

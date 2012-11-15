@@ -14,9 +14,30 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
+import eu.stratosphere.sopremo.type.IArrayNode;
+import eu.stratosphere.sopremo.type.IJsonNode;
+
 /**
  * @author Arvid Heise
  */
-public class FunctionPointerExpression {
-	
+public abstract class SopremoFunction0 extends SopremoFunction {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8530159876315515042L;
+
+	public SopremoFunction0(String name) {
+		super(name, 0);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.function.Callable#call(java.lang.Object)
+	 */
+	@Override
+	public IJsonNode call(IArrayNode params) {
+		return this.call();
+	}
+
+	protected abstract IJsonNode call();
 }

@@ -1,10 +1,15 @@
 package eu.stratosphere.sopremo.aggregation;
 
+import java.io.IOException;
+
+import eu.stratosphere.sopremo.AbstractSopremoType;
+import eu.stratosphere.sopremo.ICloneable;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.expressions.AggregationExpression;
 import eu.stratosphere.sopremo.type.IJsonNode;
+import eu.stratosphere.util.reflect.ReflectUtil;
 
-public abstract class Aggregation<ElementType extends IJsonNode, AggregatorType extends IJsonNode> implements ISerializableSopremoType, Cloneable {
+public abstract class Aggregation extends AbstractSopremoType implements ISerializableSopremoType, ICloneable {
 	/**
 	 * 
 	 */
@@ -16,7 +21,7 @@ public abstract class Aggregation<ElementType extends IJsonNode, AggregatorType 
 		this.name = name;
 	}
 
-	public abstract AggregatorType aggregate(ElementType node, AggregatorType aggregator);
+	public abstract void aggregate(IJsonNode element);
 
 	/**
 	 * Creates an {@link AggregationExpression} for this function
@@ -31,10 +36,15 @@ public abstract class Aggregation<ElementType extends IJsonNode, AggregatorType 
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result +  this.name.hashCode();
+		result = prime * result + this.name.hashCode();
 		return result;
 	}
-	
+
+	protected Object readResolve() {
+		// HACK to force all transient fields to be initialized
+		return clone();
+	}
+
 	/**
 	 * Returns the name.
 	 * 
@@ -44,7 +54,6 @@ public abstract class Aggregation<ElementType extends IJsonNode, AggregatorType 
 		return this.name;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj)
@@ -53,36 +62,26 @@ public abstract class Aggregation<ElementType extends IJsonNode, AggregatorType 
 			return false;
 		if (this.getClass() != obj.getClass())
 			return false;
-		final Aggregation<ElementType, AggregatorType> other = (Aggregation<ElementType, AggregatorType>) obj;
+		final Aggregation other = (Aggregation) obj;
 		return this.name.equals(other.name);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public Aggregation<ElementType, AggregatorType> clone() {
+	public Aggregation clone() {
 		try {
-			return (Aggregation<ElementType, AggregatorType>) super.clone();
-		} catch (final CloneNotSupportedException e) {
-			throw new IllegalStateException("should not happen", e);
+			return ReflectUtil.newInstance(getClass(), this.name);
+		} catch (Exception e) {
+			throw new IllegalStateException("Aggregation must implement clone or conform to the ctor", e);
 		}
 	}
 
-	public abstract IJsonNode getFinalAggregate(AggregatorType aggregator, IJsonNode target);
+	public abstract IJsonNode getFinalAggregate();
 
-	public AggregatorType initialize(AggregatorType aggregator) {
-		return aggregator;
-
+	public void initialize() {
 	}
 
 	@Override
-	public String toString() {
-		final StringBuilder builder = new StringBuilder();
-		this.toString(builder);
-		return builder.toString();
-	}
-
-	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.name);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append(this.name);
 	}
 }

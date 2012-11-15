@@ -44,16 +44,24 @@ public class CachingList<T> extends AbstractList<T> implements Serializable {
 		this.size++;
 		this.backingList.add(index, element);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
 		this.backingList = (List<T>) ois.readObject();
 	}
-	
+
 	private void writeObject(ObjectOutputStream oos) throws IOException {
 		oos.writeObject(new ArrayList<T>(this.backingList.subList(0, this.size)));
 	}
 
+	/* (non-Javadoc)
+	 * @see java.util.AbstractList#set(int, java.lang.Object)
+	 */
+	@Override
+	public T set(int index, T element) {
+		return this.backingList.set(index, element);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see java.util.AbstractList#clear()
@@ -89,12 +97,18 @@ public class CachingList<T> extends AbstractList<T> implements Serializable {
 		return this.backingList.get(index);
 	}
 
+	/**
+	 * Reactivates the last element if such an element exists.<br />
+	 * Do not call {@link #add(Object)} in the successful case.
+	 * 
+	 * @return a reactivated element or null
+	 */
 	public T reuseUnusedElement() {
 		if (this.backingList.size() == this.size)
 			return null;
 		return this.backingList.get(this.size++);
 	}
-	
+
 	/**
 	 * Sets the size to the specified value.
 	 * 

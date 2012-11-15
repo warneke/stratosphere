@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.type.BooleanNode;
+import eu.stratosphere.sopremo.type.IJsonNode;
 
 /**
  * Represents all expressions with a boolean semantic.
@@ -14,6 +16,13 @@ public abstract class BooleanExpression extends EvaluationExpression implements 
 	 * 
 	 */
 	private static final long serialVersionUID = 9132030265765689872L;
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#evaluate(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public abstract BooleanNode evaluate(IJsonNode node);
 
 	/**
 	 * Wraps the given {@link EvaluationExpression} as a {@link BooleanExpression}.

@@ -16,10 +16,11 @@ import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
@@ -29,8 +30,9 @@ import org.apache.commons.logging.impl.SimpleLog;
 import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.nephele.util.StringUtils;
 import eu.stratosphere.pact.common.stubs.Stub;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
-import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.ICloneable;
+import eu.stratosphere.sopremo.SopremoRuntime;
+import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.type.BigIntegerNode;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.DecimalNode;
@@ -39,8 +41,6 @@ import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IPrimitiveNode;
 import eu.stratosphere.sopremo.type.IntNode;
 import eu.stratosphere.sopremo.type.LongNode;
-import eu.stratosphere.sopremo.type.TextNode;
-import eu.stratosphere.util.reflect.BoundType;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
 /**
@@ -77,11 +77,9 @@ public class SopremoUtil {
 				if (parameters.getString(stubField.getName(), null) != null)
 					try {
 						stubField.setAccessible(true);
-						stubField.set(stub, SopremoUtil
-							.deserializeCachingAware(parameters,
-								stubField.getName(),
-								stubField.getType(),
-								stubField.getGenericType(),
+						stubField.set(
+							stub,
+							SopremoUtil.deserialize(parameters, stubField.getName(), Serializable.class,
 								stubClass.getClassLoader()));
 					} catch (final Exception e) {
 						LOG.error(String.format(
@@ -89,37 +87,7 @@ public class SopremoUtil {
 							stubField.getName(), stubClass,
 							StringUtils.stringifyException(e)));
 					}
-	}
-
-	/**
-	 * Deserializes the value that is stored for the given key in the configuration
-	 * 
-	 * @param config
-	 *        the {@link Configuration} that holds the serialized values
-	 * @param key
-	 *        the key
-	 * @param objectClass
-	 *        the class of the value which is expected
-	 * @return the deserialized value of the given key
-	 */
-	@SuppressWarnings("unchecked")
-	public static Object deserializeCachingAware(final Configuration config, final String key,
-			final Class<?> targetRawType, final java.lang.reflect.Type targetType, final ClassLoader classLoader) {
-
-		final Object object = deserialize(config, key, Serializable.class, classLoader);
-		if (CachingExpression.class.isAssignableFrom(targetRawType)
-			&& !(object instanceof CachingExpression)) {
-			final Class<IJsonNode> cachingType;
-			if (targetType instanceof ParameterizedType)
-				cachingType = (Class<IJsonNode>) BoundType.of(
-					(ParameterizedType) targetType).getParameters()[0]
-					.getType();
-			else
-				cachingType = IJsonNode.class;
-			return CachingExpression.of((EvaluationExpression) object,
-				cachingType);
-		}
-		return object;
+		SopremoRuntime.getInstance().setCurrentEvaluationContext(((SopremoStub) stub).getContext());
 	}
 
 	public static <T extends Serializable> T deserialize(final Configuration config, final String key,
@@ -555,20 +523,56 @@ public class SopremoUtil {
 		}
 	}
 
-	private static ThreadLocal<Map<CharSequence, Pattern>> CACHED_PATTERN =
-		new ThreadLocal<Map<CharSequence, Pattern>>() {
-			@Override
-			protected Map<CharSequence, Pattern> initialValue() {
-				return new HashMap<CharSequence, Pattern>();
-			}
-		};
-
-	public static Pattern getPatternOf(TextNode node) {
-		final Map<CharSequence, Pattern> localCache = CACHED_PATTERN.get();
-		Pattern pattern = localCache.get(node);
-		if (pattern == null)
-			localCache.put(node, pattern = Pattern.compile(node.getJavaValue().toString()));
-		return pattern;
+	@SuppressWarnings("unchecked")
+	public static <T extends ICloneable> List<T> deepClone(List<T> originals) {
+		final ArrayList<T> clones = new ArrayList<T>(originals.size());
+		for (T t : originals)
+			clones.add((T) t.clone());
+		return clones;
 	}
 
+	public static void assertArguments(SopremoFunction function, int numberOfArguments) {
+		if (!function.accepts(numberOfArguments))
+			throw new IllegalArgumentException(
+				String.format("Cannot use the given function as it does not accept %d arguments", numberOfArguments));
+	}
+
+	private static final Map<Class<?>, Object> DefaultInitializations = new IdentityHashMap<Class<?>, Object>();
+
+	private static synchronized Object getDefault(Class<?> clazz, ICloneable uninitialized) {
+		final Object object = DefaultInitializations.get(clazz);
+		if (object != null)
+			return object;
+		final Object clone = uninitialized.clone();
+		DefaultInitializations.put(clazz, clone);
+		return clone;
+	}
+
+	/**
+	 * @param evaluationExpression
+	 */
+	public static void initTransientFields(ICloneable object) {
+		final Field[] fields = object.getClass().getDeclaredFields();
+		for (Field field : fields) {
+			try {
+				if ((field.getModifiers() & Modifier.TRANSIENT) > 0) {
+					final Class<?> type = field.getType();
+					field.setAccessible(true);
+					
+					// already initialized
+					if (field.get(object) != null)
+						continue;
+
+					if (ICloneable.class.isAssignableFrom(type)) { // make copy of one default instantiation
+						final Object defaultObject = getDefault(object.getClass(), object);
+						field.set(object, ((ICloneable) field.get(defaultObject)).clone());
+					} else
+						// try to create new object
+						field.set(object, type.newInstance());
+				}
+			} catch (Exception e) {
+				LOG.error("Cannot initialize transient field " + field, e);
+			}
+		}
+	}
 }

@@ -21,7 +21,6 @@ import org.antlr.runtime.TokenStream;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.JsonStreamExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
-import eu.stratosphere.sopremo.expressions.PathExpression;
 import eu.stratosphere.sopremo.packages.DefaultConstantRegistry;
 import eu.stratosphere.sopremo.packages.IConstantRegistry;
 import eu.stratosphere.sopremo.query.QueryWithVariablesParser;
@@ -86,8 +85,6 @@ public abstract class MeteorParserBase extends QueryWithVariablesParser<JsonStre
 	}
 
 	protected String getAssignmentName(EvaluationExpression expression) {
-		if (expression instanceof PathExpression)
-			return getAssignmentName(((PathExpression) expression).getLastFragment());
 		if (expression instanceof ObjectAccess)
 			return ((ObjectAccess) expression).getField();
 		return expression.toString();

@@ -23,6 +23,8 @@ import org.antlr.runtime.UnwantedTokenException;
 
 import eu.stratosphere.sopremo.CoreFunctions;
 import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.MathFunctions;
+import eu.stratosphere.sopremo.SecondOrderFunctions;
 import eu.stratosphere.sopremo.expressions.CoerceExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.FunctionCall;
@@ -31,6 +33,7 @@ import eu.stratosphere.sopremo.function.ExpressionFunction;
 import eu.stratosphere.sopremo.function.Inlineable;
 import eu.stratosphere.sopremo.function.MacroBase;
 import eu.stratosphere.sopremo.function.SopremoFunction;
+import eu.stratosphere.sopremo.function.SopremoFunctionWithDefaultParameters;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.operator.Operator;
 import eu.stratosphere.sopremo.operator.SopremoPlan;
@@ -71,6 +74,8 @@ public abstract class AbstractQueryParser extends Parser implements ParsingScope
 	private void init() {
 		this.currentPlan.setContext(new EvaluationContext(0, 0, this.getFunctionRegistry(), this.getConstantRegistry()));
 		this.packageManager.getFunctionRegistry().put(CoreFunctions.class);
+		this.packageManager.getFunctionRegistry().put(MathFunctions.class);
+		this.packageManager.getFunctionRegistry().put(SecondOrderFunctions.class);
 	}
 
 	@Override
@@ -149,7 +154,7 @@ public abstract class AbstractQueryParser extends Parser implements ParsingScope
 		if (callable == null)
 			throw new QueryParserException(String.format("Unknown function %s", name));
 		if (callable instanceof MacroBase)
-			return ((MacroBase) callable).call(params, null);
+			return ((MacroBase) callable).call(params);
 		if (callable instanceof Inlineable)
 			return ((Inlineable) callable).getDefinition();
 		if (!(callable instanceof SopremoFunction))
@@ -160,6 +165,13 @@ public abstract class AbstractQueryParser extends Parser implements ParsingScope
 			params = paramList.elements();
 		}
 		return new FunctionCall(name.getText(), (SopremoFunction) callable, params);
+	}
+
+	protected SopremoFunction getSopremoFunction(String packageName, Token name) {
+		Callable<?, ?> callable = this.getScope(packageName).getFunctionRegistry().get(name.getText());
+		if (!(callable instanceof SopremoFunction))
+			throw new QueryParserException(String.format("Unknown function %s", name));
+		return (SopremoFunction) callable;
 	}
 
 	// private Map<String, AtomicInteger> macroExpansionCounter = new HashMap<String, AtomicInteger>();
@@ -199,7 +211,7 @@ public abstract class AbstractQueryParser extends Parser implements ParsingScope
 		Class<? extends IJsonNode> targetType = this.typeNameToType.get(type);
 		if (targetType == null)
 			throw new IllegalArgumentException("unknown type " + type);
-		return new CoerceExpression(targetType, valueExpression);
+		return new CoerceExpression(targetType).withInputExpression(valueExpression);
 	}
 
 	@Override
@@ -251,7 +263,8 @@ public abstract class AbstractQueryParser extends Parser implements ParsingScope
 		return scope;
 	}
 
-	public OperatorInfo.OperatorPropertyInfo findOperatorPropertyRelunctantly(OperatorInfo<?> info, Token firstWord) throws RecognitionException {
+	public OperatorInfo.OperatorPropertyInfo findOperatorPropertyRelunctantly(OperatorInfo<?> info, Token firstWord)
+			throws RecognitionException {
 		String name = firstWord.getText();
 		OperatorInfo.OperatorPropertyInfo property;
 
@@ -264,7 +277,8 @@ public abstract class AbstractQueryParser extends Parser implements ParsingScope
 		}
 
 		if (property == null)
-			throw new RecognitionExceptionWithUsageHint(firstWord, String.format("Unknown property %s; possible alternatives %s", name,
+			throw new RecognitionExceptionWithUsageHint(firstWord, String.format(
+				"Unknown property %s; possible alternatives %s", name,
 				this.inputSuggestion.suggest(name, propertyRegistry)));
 
 		// consume additional tokens

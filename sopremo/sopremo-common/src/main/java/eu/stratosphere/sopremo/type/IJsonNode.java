@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import eu.stratosphere.pact.common.type.Key;
 import eu.stratosphere.pact.common.type.Value;
+import eu.stratosphere.sopremo.ICloneable;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 
 /**
@@ -28,7 +29,7 @@ import eu.stratosphere.sopremo.ISerializableSopremoType;
  * @author Michael Hopstock
  * @author Tommy Neubert
  */
-public interface IJsonNode extends ISerializableSopremoType, Value, Key {
+public interface IJsonNode extends ISerializableSopremoType, Value, Key, ICloneable {
 	/**
 	 * This enumeration contains all possible types of JsonNode.
 	 * 
@@ -50,11 +51,11 @@ public interface IJsonNode extends ISerializableSopremoType, Value, Key {
 		MissingNode(MissingNode.class, false),
 		CustomNode(AbstractJsonNode.class, false);
 
-		private final Class<? extends AbstractJsonNode> clazz;
+		private final Class<? extends IJsonNode> clazz;
 
 		private final boolean numeric;
 
-		private Type(final Class<? extends AbstractJsonNode> clazz, final boolean isNumeric) {
+		private Type(final Class<? extends IJsonNode> clazz, final boolean isNumeric) {
 			this.clazz = clazz;
 			this.numeric = isNumeric;
 		}
@@ -71,7 +72,7 @@ public interface IJsonNode extends ISerializableSopremoType, Value, Key {
 		 * 
 		 * @return the class of the represented node
 		 */
-		public Class<? extends AbstractJsonNode> getClazz() {
+		public Class<? extends IJsonNode> getClazz() {
 			return this.clazz;
 		}
 
@@ -94,7 +95,7 @@ public interface IJsonNode extends ISerializableSopremoType, Value, Key {
 	public abstract IJsonNode canonicalize();
 
 	/**
-	 * Copies the state of the given node to this node.
+	 * Deeply copies the state of the given node to this node.
 	 * 
 	 * @param otherNode
 	 *        the node of which the state should be copied
@@ -102,11 +103,24 @@ public interface IJsonNode extends ISerializableSopremoType, Value, Key {
 	public abstract void copyValueFrom(IJsonNode otherNode);
 
 	/**
-	 * Creates a new instance of this class and invokes {@link #copyValueFrom(IJsonNode)}.
+	 * Checks whether the state of the given node can be deeply copied with {@link #copyValueFrom(IJsonNode)} to this
+	 * node.
+	 * 
+	 * @param otherNode
+	 *        the node of which the state should be copied
+	 * @return true if it can be copied
+	 */
+	public boolean isCopyable(IJsonNode otherNode);
+
+	/**
+	 * Creates a new instance of this class and invokes {@link #copyValueFrom(IJsonNode)}.<br />
+	 * A call to this function should be completely avoided during runtime and only used during query construction and
+	 * optimization.
 	 * 
 	 * @return a copy of this object
 	 */
-	public IJsonNode copy();
+	@Override
+	public IJsonNode clone();
 
 	/**
 	 * Deserializes this node from a DataInput.
@@ -152,13 +166,6 @@ public interface IJsonNode extends ISerializableSopremoType, Value, Key {
 	public abstract boolean isTextual();
 
 	/**
-	 * Returns the internal representation of this nodes value.
-	 * 
-	 * @return this nodes value
-	 */
-	public abstract Object getJavaValue();
-
-	/**
 	 * Compares this node with another.
 	 * 
 	 * @param other
@@ -180,5 +187,4 @@ public interface IJsonNode extends ISerializableSopremoType, Value, Key {
 	public int getMaxNormalizedKeyLen();
 
 	public void copyNormalizedKey(final byte[] target, final int offset, final int len);
-
 }

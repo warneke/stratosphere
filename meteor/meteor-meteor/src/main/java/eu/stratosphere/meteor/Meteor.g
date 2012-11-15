@@ -46,20 +46,14 @@ catch (RecognitionException e) {
 	  getVariableRegistry().getRegistry(1).put(VAR.getText(), output);
 	  return true;
 	}
+  
+  protected EvaluationExpression getInputSelection(Token inputVar) {
+      return getVariable(inputVar).toInputSelection($operator::result);
+  }
 
   public void parseSinks() throws RecognitionException {
     script();
   }
-  
-  private EvaluationExpression makePath(Token inputVar, String... path) {
-      EvaluationExpression selection = getVariable(inputVar).toInputSelection($operator::result);
-      
-      List<EvaluationExpression> accesses = new ArrayList<EvaluationExpression>();
-      accesses.add((EvaluationExpression) selection);
-      for (String fragment : path)
-        accesses.add(new ObjectAccess(fragment));
-      return PathExpression.wrapIfNecessary(accesses);
-    }
 }
 
 script
@@ -76,8 +70,11 @@ assignment
 	:	target=VAR '=' source=operator { putVariable($target, new JsonStreamExpression($source.op)); } -> ;
 
 functionDefinition
+  : name=ID '=' func=inlineFunction { addFunction($name.text, $func.func); } -> ;
+  
+inlineFunction returns [ExpressionFunction func]
 @init { List<Token> params = new ArrayList(); }
-  : name=ID '=' FN '('  
+  : FN '('  
   (param=ID { params.add($param); }
   (',' param=ID { params.add($param); })*)? 
   ')' 
@@ -88,9 +85,9 @@ functionDefinition
   } 
   def=contextAwareExpression[null] 
   { 
-    addFunction(name.getText(), new ExpressionFunction(params.size(), def.tree));
+    $func = new ExpressionFunction(params.size(), def.tree);
     removeConstantScope(); 
-  } ->; 
+  } -> ; 
 
 javaudf
   : name=ID '=' JAVAUDF '(' path=STRING ')' 
@@ -164,29 +161,40 @@ castExpression
 	
 generalPathExpression
 	: value=valueExpression 
-	  ((pathExpression)=> path=pathExpression -> { PathExpression.wrapIfNecessary($value.tree, $path.tree) } 
-	  | -> $value);
+	  ((pathExpression[EvaluationExpression.VALUE])=> path=pathExpression[$value.tree] -> $path
+	   | -> $value);
 
 contextAwarePathExpression[EvaluationExpression context]
-  : path=pathExpression -> { PathExpression.wrapIfNecessary(context, $path.tree) };
+  : pathExpression[context];
   
-pathExpression
-scope {  List<EvaluationExpression> fragments; }
-@init { $pathExpression::fragments = new ArrayList<EvaluationExpression>();
-        paraphrase.push("a path expression"); }
+pathExpression[EvaluationExpression inExp]
+  : seg=pathSegment { ((PathSegmentExpression) seg.getTree()).setInputExpression(inExp); }
+  ((pathSegment)=> path=pathExpression[$seg.tree] -> $path
+   | -> $seg);
+
+pathSegment
+@init {  paraphrase.push("a path expression"); }
 @after { paraphrase.pop(); }
   : // add .field or [index] to path
-    ( (('?.')=> '?.' (field=ID { $pathExpression::fragments.add(new ObjectAccess($field.text, true)); } )) 
-        | (('.')=> '.' (field=ID { $pathExpression::fragments.add(new ObjectAccess($field.text)); } )) 
-        | ('[')=> arrayAccess { $pathExpression::fragments.add($arrayAccess.tree); } )+ 
-  -> { PathExpression.wrapIfNecessary($pathExpression::fragments) };
+    ('?.')=> '?.' field=ID -> ^(EXPRESSION["ObjectAccess"] {$field.text} {true})    
+  | ('.') => '.' field=ID -> ^(EXPRESSION["ObjectAccess"] {$field.text})    
+  | ('[') => arrayAccess;
+//    ( (pathSegment[EvaluationExpression.VALUE])=> pathSegment[$lastStep] | -> { lastStep });
 
+arrayAccess
+  : '[' STAR ']' path=pathExpression[EvaluationExpression.VALUE]
+  -> ^(EXPRESSION["ArrayProjection"] $path)  
+  | '[' (pos=INTEGER | pos=UINT) ']' 
+  -> ^(EXPRESSION["ArrayAccess"] { Integer.valueOf($pos.text) })
+  | '[' (start=INTEGER | start=UINT) ':' (end=INTEGER | end=UINT) ']' 
+  -> ^(EXPRESSION["ArrayAccess"] { Integer.valueOf($start.text) } { Integer.valueOf($end.text) });
+  
 valueExpression
 	:	(ID '(')=> methodCall[null]
 	| parenthesesExpression 
 	| literal 
 	| (VAR '[' VAR)=> streamIndexAccess
-	| VAR -> { makePath($VAR) }
+	| VAR -> { getInputSelection($VAR) }
   | ((ID ':')=> packageName=ID ':')? constant=ID { getScope($packageName.text).getConstantRegistry().get($constant.text) != null }? => 
     -> { getScope($packageName.text).getConstantRegistry().get($constant.text) }  
 	| arrayCreation 
@@ -203,15 +211,20 @@ methodCall [EvaluationExpression targetExpr]
         paraphrase.push("a method call"); }
 @after { paraphrase.pop(); }
 	:	(packageName=ID ':')? name=ID '('	
-	(param=expression { params.add($param.tree); }
-	(',' param=expression { params.add($param.tree); })*)? 
+	((param=expression { params.add($param.tree); } | func=lowerOrderFunction { params.add($func.tree); }) 
+	(',' (param=expression { params.add($param.tree); } | func=lowerOrderFunction { params.add($func.tree); }))*)? 
 	')' -> { createCheckedMethodCall($packageName.text, $name, $targetExpr, params.toArray(new EvaluationExpression[params.size()])) };
 	
+lowerOrderFunction
+  : '&' (packageName=ID ':')? name=ID 
+        -> ^(EXPRESSION["ConstantExpression"] { new FunctionNode(getSopremoFunction($packageName.text, $name)) })
+  | func=inlineFunction -> ^(EXPRESSION["ConstantExpression"] { new FunctionNode($func.func) });
+
 fieldAssignment
 	:	((ID ':')=> ID ':' expression 
     { $objectCreation::mappings.add(new ObjectCreation.FieldAssignment($ID.text, $expression.tree)); } -> )
   | VAR 
-    ( '.' STAR { $objectCreation::mappings.add(new ObjectCreation.CopyFields(makePath($VAR))); } ->
+    ( '.' STAR { $objectCreation::mappings.add(new ObjectCreation.CopyFields(getInputSelection($VAR))); } ->
       | '=' op=operator { setInnerOutput($VAR, $op.op) }?=>
       | p=contextAwarePathExpression[getVariable($VAR).toInputSelection($operator::result)]
       ( ':' e2=expression { $objectCreation::mappings.add(new ObjectCreation.TagMapping($p.tree, $e2.tree)); } ->
@@ -238,14 +251,6 @@ literal
   | (val=UINT | val=INTEGER) -> ^(EXPRESSION["ConstantExpression"] { parseInt($val.text) })
   | 'null' -> { ConstantExpression.NULL };
 
-arrayAccess
-  : '[' STAR ']' path=pathExpression
-  -> ^(EXPRESSION["ArrayProjection"] $path)  
-  | '[' (pos=INTEGER | pos=UINT) ']' 
-  -> ^(EXPRESSION["ArrayAccess"] { Integer.valueOf($pos.text) })
-  | '[' (start=INTEGER | start=UINT) ':' (end=INTEGER | end=UINT) ']' 
-  -> ^(EXPRESSION["ArrayAccess"] { Integer.valueOf($start.text) } { Integer.valueOf($end.text) });
-  
 streamIndexAccess
   : op=VAR { getVariable($op) != null }?=>
     '[' path=generalPathExpression ']' { !($path.tree instanceof ConstantExpression) }?

@@ -16,7 +16,7 @@ import eu.stratosphere.sopremo.type.StreamArrayNode;
  * standard input of the CoGroupStub to a more manageable representation (both inputs are converted to an
  * {@link IArrayNode}).
  */
-public abstract class SopremoCoGroup extends CoGroupStub {
+public abstract class SopremoCoGroup extends CoGroupStub implements SopremoStub {
 	private EvaluationContext context;
 
 	private JsonCollector collector;
@@ -33,7 +33,7 @@ public abstract class SopremoCoGroup extends CoGroupStub {
 	@Override
 	public void coGroup(final Iterator<PactRecord> records1, final Iterator<PactRecord> records2,
 			final Collector<PactRecord> out) {
-		this.context.increaseInputCounter();
+		this.context.incrementInputCount();
 		this.collector.configure(out, this.context);
 		this.cachedIterator1.setIterator(records1);
 		this.cachedIterator2.setIterator(records2);
@@ -87,7 +87,8 @@ public abstract class SopremoCoGroup extends CoGroupStub {
 	 */
 	protected abstract void coGroup(IStreamArrayNode values1, IStreamArrayNode values2, JsonCollector out);
 
-	protected final EvaluationContext getContext() {
+	@Override
+	public final EvaluationContext getContext() {
 		return this.context;
 	}
 }

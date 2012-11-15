@@ -25,7 +25,7 @@ import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperat
 import eu.stratosphere.sopremo.expressions.FunctionCall;
 import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.expressions.ObjectCreation;
-import eu.stratosphere.sopremo.function.VarReturnJavaMethod;
+import eu.stratosphere.sopremo.function.JavaMethod;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
 import eu.stratosphere.sopremo.operator.SopremoPlan;
@@ -67,8 +67,8 @@ public class FunctionTest extends MeteorTest {
 
 		final SopremoPlan expectedPlan = new SopremoPlan();
 		final Source input = new Source("input.json");
-		final VarReturnJavaMethod javaMethod = new VarReturnJavaMethod("testudf");
-		javaMethod.addSignature(getClass().getMethod("udfTest", IJsonNode.class, IJsonNode[].class));
+		final JavaMethod javaMethod = new JavaMethod("testudf");
+		javaMethod.addSignature(getClass().getMethod("udfTest", IJsonNode[].class));
 		final Projection projection =
 			new Projection().
 				withInputs(input).
@@ -81,8 +81,7 @@ public class FunctionTest extends MeteorTest {
 		Assert.assertEquals("unexpectedPlan", expectedPlan, actualPlan);
 	}
 
-	@SuppressWarnings("unused")
-	public static IJsonNode udfTest(final IJsonNode oldResult, final IJsonNode... nodes) {
+	public static IJsonNode udfTest(final IJsonNode... nodes) {
 		return nodes[0];
 	}
 }

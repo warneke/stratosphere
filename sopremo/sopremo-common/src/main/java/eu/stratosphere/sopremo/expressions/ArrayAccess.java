@@ -1,6 +1,8 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.pact.SopremoUtil;
+import java.io.IOException;
+
+import javolution.text.TypeFormat;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -20,7 +22,7 @@ import eu.stratosphere.sopremo.type.NullNode;
  * @author Arvid Heise
  */
 @OptimizerHints(scope = Scope.ARRAY, iterating = true)
-public class ArrayAccess extends EvaluationExpression {
+public class ArrayAccess extends PathSegmentExpression {
 
 	/**
 	 * 
@@ -66,6 +68,15 @@ public class ArrayAccess extends EvaluationExpression {
 		this.endIndex = endIndex;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new ArrayAccess(this.startIndex, this.endIndex);
+	}
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (!super.equals(obj))
@@ -74,29 +85,31 @@ public class ArrayAccess extends EvaluationExpression {
 		return this.startIndex == other.startIndex && this.endIndex == other.endIndex;
 	}
 
+	private final transient IArrayNode result = new ArrayNode();
+
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+	protected IJsonNode evaluateSegment(final IJsonNode node) {
 		if (!node.isArray())
 			return MissingNode.getInstance();
 
 		final IArrayNode arrayNode = (IArrayNode) node;
 		if (this.isSelectingAll()) {
-			final IArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
-			targetArray.addAll(arrayNode);
-			return targetArray;
+			this.result.clear();
+			this.result.addAll(arrayNode);
+			return this.result;
 		}
 		final int size = arrayNode.size();
 		if (this.isSelectingRange()) {
-			final IArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
+			this.result.clear();
 			int index = this.resolveIndex(this.startIndex, size);
 			final int endIndex = this.resolveIndex(this.endIndex, size);
 			final int increment = index < endIndex ? 1 : -1;
 
 			for (boolean moreElements = true; moreElements; index += increment) {
-				targetArray.add(arrayNode.get(index));
+				this.result.add(arrayNode.get(index));
 				moreElements = index != endIndex;
 			}
-			return targetArray;
+			return this.result;
 		}
 
 		final IJsonNode value = arrayNode.get(this.resolveIndex(this.startIndex, size));
@@ -166,18 +179,19 @@ public class ArrayAccess extends EvaluationExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append('[');
+	public void appendAsString(final Appendable appendable) throws IOException {
+		getInputExpression().appendAsString(appendable);
+		appendable.append('[');
 		if (this.isSelectingAll())
-			builder.append('*');
+			appendable.append('*');
 		else {
-			builder.append(this.startIndex);
+			TypeFormat.format(this.startIndex, appendable);
 			if (this.startIndex != this.endIndex) {
-				builder.append(':');
-				builder.append(this.endIndex);
+				appendable.append(':');
+				TypeFormat.format(this.endIndex, appendable);
 			}
 		}
-		builder.append(']');
+		appendable.append(']');
 	}
 
 	private int resolveIndex(final int index, final int size) {
@@ -188,7 +202,7 @@ public class ArrayAccess extends EvaluationExpression {
 
 	/**
 	 * Returns an optimal expression that returns an array that aggregates the given indices.<br>
-	 * Please note that the result of this expression is always an array in contrast to ArrayAccess with only one
+	 * Please note that the result of this expression is always an array in contrast to an ArrayAccess with only one
 	 * index.
 	 * 
 	 * @param indices

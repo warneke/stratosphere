@@ -659,7 +659,7 @@ public class SopremoTestPlan {
 			final ArrayList<IJsonNode> list = new ArrayList<IJsonNode>();
 			final Iterator<IJsonNode> iterator = iterator();
 			while(iterator.hasNext())
-				list.add(iterator.next().copy());
+				list.add(iterator.next().clone());
 			return list;
 		}
 	}
@@ -770,7 +770,7 @@ public class SopremoTestPlan {
 		public Iterator<IJsonNode> iterator() {
 			if (this.operator != null && !(this.operator instanceof MockupSource)) {
 				if (this.operator.isAdhoc())
-					return JsonUtil.asArray(this.operator.getAdhocValues(getContext())).iterator();
+					return JsonUtil.asArray(this.operator.getAdhocValues()).iterator();
 				return this.iteratorFromFile(this.operator.getInputPath());
 			}
 			return super.iterator();

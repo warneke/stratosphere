@@ -1,5 +1,6 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -8,6 +9,7 @@ import java.util.ListIterator;
 
 import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.EvaluationException;
+import eu.stratosphere.sopremo.ICloneable;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -20,7 +22,7 @@ import eu.stratosphere.sopremo.type.ObjectNode;
  * Creates an object with the given {@link Mapping}s.
  */
 @OptimizerHints(scope = Scope.ANY)
-public class ObjectCreation extends EvaluationExpression implements ExpressionParent {
+public class ObjectCreation extends EvaluationExpression {
 	/**
 	 * 
 	 */
@@ -29,21 +31,7 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 	/**
 	 * An ObjectCreation which copies the fields of all given {IObjectNode}s into a single node.
 	 */
-	public static final ObjectCreation CONCATENATION = new ObjectCreation() {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 5274811723343043990L;
-
-		@Override
-		public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-			final ObjectNode targetObject = SopremoUtil.reinitializeTarget(target, ObjectNode.class);
-			for (final IJsonNode jsonNode : (IArrayNode) node)
-				if (!jsonNode.isNull())
-					targetObject.putAll((IObjectNode) jsonNode);
-			return targetObject;
-		}
-	};
+	public static final ObjectCreation CONCATENATION = new Concatenation();
 
 	private List<Mapping<?>> mappings;
 
@@ -125,25 +113,23 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		return this.mappings.equals(other.mappings);
 	}
 
+	private transient final IObjectNode result = new ObjectNode();
+
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
-		final ObjectNode targetObject = SopremoUtil.reinitializeTarget(target, ObjectNode.class);
+	public IJsonNode evaluate(final IJsonNode node) {
+		this.result.clear();
 		for (final Mapping<?> mapping : this.mappings)
-			mapping.evaluate(node, targetObject);
-		return targetObject;
+			mapping.evaluate(node, this.result);
+		return this.result;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#clone()
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
 	@Override
-	public ObjectCreation clone() {
-		final ObjectCreation clone = (ObjectCreation) super.clone();
-		clone.mappings = new ArrayList<ObjectCreation.Mapping<?>>(this.mappings.size());
-		for (Mapping<?> mapping : this.mappings)
-			clone.mappings.add(mapping.clone());
-		return clone;
+	protected EvaluationExpression createCopy() {
+		return new ObjectCreation(SopremoUtil.deepClone(this.mappings));
 	}
 
 	/*
@@ -183,7 +169,7 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 	public int getMappingSize() {
 		return this.mappings.size();
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -193,16 +179,45 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("{");
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("{");
 		final Iterator<Mapping<?>> mappingIterator = this.mappings.iterator();
 		while (mappingIterator.hasNext()) {
 			final Mapping<?> entry = mappingIterator.next();
-			entry.toString(builder);
+			entry.appendAsString(appendable);
 			if (mappingIterator.hasNext())
-				builder.append(", ");
+				appendable.append(", ");
 		}
-		builder.append("}");
+		appendable.append("}");
+	}
+
+	/**
+	 * @author Arvid Heise
+	 */
+	private static final class Concatenation extends ObjectCreation {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 5274811723343043990L;
+
+		private transient final IObjectNode result = new ObjectNode();
+
+		@Override
+		public IJsonNode evaluate(final IJsonNode node) {
+			this.result.clear();
+			for (final IJsonNode jsonNode : (IArrayNode) node)
+				if (!jsonNode.isNull())
+					this.result.putAll((IObjectNode) jsonNode);
+			return this.result;
+		}
+		
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation#createCopy()
+		 */
+		@Override
+		protected EvaluationExpression createCopy() {
+			return new Concatenation();
+		}
 	}
 
 	/**
@@ -236,7 +251,7 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 			if (this.lastReturnedWasKey)
 				return this.lastMapping.expression;
 			this.lastMapping = this.iterator.next();
-			if (this.lastReturnedWasKey = (this.lastMapping.target instanceof EvaluationExpression))
+			if (this.lastReturnedWasKey = this.lastMapping.target instanceof EvaluationExpression)
 				return (EvaluationExpression) this.lastMapping.target;
 			return this.lastMapping.expression;
 		}
@@ -248,7 +263,7 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		@Override
 		public boolean hasPrevious() {
 			return this.iterator.hasPrevious() ||
-				(!this.lastReturnedWasKey && this.lastMapping.target instanceof EvaluationExpression);
+				!this.lastReturnedWasKey && this.lastMapping.target instanceof EvaluationExpression;
 		}
 
 		/*
@@ -347,14 +362,14 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 
 		@Override
 		protected void evaluate(final IJsonNode node, final IObjectNode target) {
-			final IJsonNode exprNode = this.getExpression().evaluate(node, null);
+			final IJsonNode exprNode = this.getExpression().evaluate(node);
 			target.putAll((IObjectNode) exprNode);
 		}
 
 		@Override
-		public void toString(final StringBuilder builder) {
-			this.getExpression().toString(builder);
-			builder.append(".*");
+		public void appendAsString(final Appendable appendable) throws IOException {
+			this.getExpression().appendAsString(appendable);
+			appendable.append(".*");
 		}
 	}
 
@@ -378,9 +393,27 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 
 		@Override
 		protected void evaluate(final IJsonNode node, final IObjectNode target) {
-			final IJsonNode value = this.expression.evaluate(node, target.get(this.target));
+			final IJsonNode value = this.expression.evaluate(node);
 			// if (!value.isNull())
 			target.put(this.target, value);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#clone()
+		 */
+		@Override
+		public Mapping<String> clone() {
+			return new FieldAssignment(this.target, this.expression.clone());
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#appendTarget(java.lang.Appendable)
+		 */
+		@Override
+		protected void appendTarget(Appendable appendable) throws IOException {
+			appendable.append(this.target);
 		}
 	}
 
@@ -410,6 +443,24 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		protected void evaluate(final IJsonNode node, final IObjectNode target) {
 			throw new EvaluationException("Only tag mapping");
 		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#clone()
+		 */
+		@Override
+		public Mapping<EvaluationExpression> clone() {
+			return new TagMapping(this.target.clone(), this.expression.clone());
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#appendTarget(java.lang.Appendable)
+		 */
+		@Override
+		protected void appendTarget(Appendable appendable) throws IOException {
+			this.target.appendAsString(appendable);
+		}
 	}
 
 	public static class ExpressionAssignment extends Mapping<EvaluationExpression> {
@@ -428,23 +479,30 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#clone()
 		 */
 		@Override
-		protected ExpressionAssignment clone() {
-			final ExpressionAssignment clone = (ExpressionAssignment) super.clone();
-			clone.target = clone.target.clone();
-			return clone;
+		public ExpressionAssignment clone() {
+			return new ExpressionAssignment(this.target.clone(), this.expression.clone());
 		}
 
 		private IJsonNode lastResult;
 
 		@Override
 		protected void evaluate(final IJsonNode node, final IObjectNode target) {
-			this.lastResult = this.expression.evaluate(node, this.lastResult);
+			this.lastResult = this.expression.evaluate(node);
 			this.target.set(target, this.lastResult);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#appendTarget(java.lang.Appendable)
+		 */
+		@Override
+		protected void appendTarget(Appendable appendable) throws IOException {
+			this.target.appendAsString(appendable);
 		}
 	}
 
 	public abstract static class Mapping<Target> extends AbstractSopremoType implements ISerializableSopremoType,
-			Cloneable {
+			ICloneable {
 		/**
 		 * 
 		 */
@@ -484,17 +542,8 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		 * (non-Javadoc)
 		 * @see java.lang.Object#clone()
 		 */
-		@SuppressWarnings("unchecked")
 		@Override
-		protected Mapping<Target> clone() {
-			try {
-				final Mapping<Target> clone = (Mapping<Target>) super.clone();
-				clone.expression = this.expression.clone();
-				return clone;
-			} catch (CloneNotSupportedException e) {
-				return null;
-			}
-		}
+		public abstract Mapping<Target> clone();
 
 		@Override
 		public boolean equals(final Object obj) {
@@ -538,10 +587,13 @@ public class ObjectCreation extends EvaluationExpression implements ExpressionPa
 		}
 
 		@Override
-		public void toString(final StringBuilder builder) {
-			builder.append(this.target).append("=");
-			this.expression.toString(builder);
+		public void appendAsString(final Appendable appendable) throws IOException {
+			this.appendTarget(appendable);
+			appendable.append("=");
+			this.expression.appendAsString(appendable);
 		}
+
+		protected abstract void appendTarget(Appendable appendable) throws IOException;
 	}
 
 }

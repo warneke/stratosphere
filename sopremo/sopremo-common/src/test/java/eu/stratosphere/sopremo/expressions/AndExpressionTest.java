@@ -38,7 +38,7 @@ public class AndExpressionTest extends BooleanExpressionTest<AndExpression> {
 	public void shouldBeTrueIfAllExprAreTrue() {
 		final IJsonNode result =
 			new AndExpression(TRUE, BooleanExpression.ensureBooleanExpression(EvaluationExpression.VALUE), TRUE).
-				evaluate(BooleanNode.TRUE, null);
+				evaluate(BooleanNode.TRUE);
 
 		Assert.assertEquals(BooleanNode.TRUE, result);
 	}
@@ -47,7 +47,7 @@ public class AndExpressionTest extends BooleanExpressionTest<AndExpression> {
 	public void shouldBeFalseIfOneExprIsFalse() {
 		final IJsonNode result =
 			new AndExpression(TRUE, BooleanExpression.ensureBooleanExpression(EvaluationExpression.VALUE), TRUE).
-				evaluate(BooleanNode.FALSE, null);
+				evaluate(BooleanNode.FALSE);
 
 		Assert.assertEquals(BooleanNode.FALSE, result);
 	}

@@ -14,14 +14,16 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.aggregation;
 
-import eu.stratosphere.sopremo.pact.SopremoUtil;
-import eu.stratosphere.sopremo.type.ArrayNode;
+import java.io.IOException;
+
+import javolution.text.TypeFormat;
+import eu.stratosphere.sopremo.type.CachingArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
 /**
  * @author Arvid Heise
  */
-public class ArrayAccessAsAggregation extends Aggregation<IJsonNode, ArrayNode> {
+public class ArrayAccessAsAggregation extends Aggregation {
 	private int startIndex, endIndex, elementsToSkip, remainingElements;
 
 	private boolean range;
@@ -47,63 +49,67 @@ public class ArrayAccessAsAggregation extends Aggregation<IJsonNode, ArrayNode> 
 	 */
 	private static final long serialVersionUID = -3359162289544753192L;
 
+	private transient final CachingArrayNode arrayResult = new CachingArrayNode();
+	
+//	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+//		ois.defaultReadObject();
+//		aggregator = new ArrayNode();
+//	}
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#initialize(eu.stratosphere.sopremo.type.IJsonNode)
+	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#initialize()
 	 */
 	@Override
-	public ArrayNode initialize(ArrayNode aggregator) {
+	public void initialize() {
 		this.elementsToSkip = this.startIndex;
 		this.remainingElements = this.endIndex - this.startIndex + 1;
-		return SopremoUtil.reinitializeTarget(aggregator, ArrayNode.class);
+		this.arrayResult.clear();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#aggregate(eu.stratosphere.sopremo.type.IJsonNode,
-	 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#aggregate(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
-	public ArrayNode aggregate(IJsonNode node, ArrayNode aggregator) {
+	public void aggregate(IJsonNode element) {
 		if (this.elementsToSkip > 0)
 			this.elementsToSkip--;
 		else if (this.remainingElements > 0) {
-			aggregator.add(node);
+			this.arrayResult.addClone(element);
 			this.remainingElements--;
 		}
-		return aggregator;
 	}
 
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#clone()
+	 */
+	@Override
+	public Aggregation clone() {
+		return new ArrayAccessAsAggregation(this.startIndex, this.endIndex, this.range);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		super.toString(builder);
-		builder.append('[');
-		builder.append(this.startIndex);
+	public void appendAsString(Appendable appendable) throws IOException {
+//		super.appendAsString(appendable);
+		appendable.append("@[");
+		TypeFormat.format(this.startIndex, appendable);
 		if (this.startIndex != this.endIndex) {
-			builder.append(':');
-			builder.append(this.endIndex);
+			appendable.append(':');
+			TypeFormat.format(this.endIndex, appendable);
 		}
-		builder.append(']');
+		appendable.append(']');
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#getFinalAggregate(eu.stratosphere.sopremo.type.IJsonNode,
-	 * eu.stratosphere.sopremo.type.IJsonNode)
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#getFinalAggregate()
 	 */
 	@Override
-	public IJsonNode getFinalAggregate(ArrayNode aggregator, IJsonNode target) {
-		if (this.range) {
-			final ArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
-			targetArray.copyValueFrom(aggregator);
-		}
-		final IJsonNode targetNode = SopremoUtil.ensureType(target, aggregator.get(0).getClass());
-		targetNode.copyValueFrom(aggregator.get(0));
-		return targetNode;
+	public IJsonNode getFinalAggregate() {
+		if (this.range) 
+			return this.arrayResult;
+		return this.arrayResult.get(0);
 	}
-
 }

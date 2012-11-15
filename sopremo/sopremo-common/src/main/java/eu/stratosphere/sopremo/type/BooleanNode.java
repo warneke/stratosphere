@@ -6,6 +6,8 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import javolution.text.TypeFormat;
+
 /**
  * This node represents a boolean value.
  * 
@@ -16,7 +18,6 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 
 	/**
 	 * @author Arvid Heise
-	 *
 	 */
 	private static final class UnmodifiableBoolean extends BooleanNode {
 		/**
@@ -26,22 +27,24 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 
 		/**
 		 * Initializes UnmodifiableBoolean.
-		 *
+		 * 
 		 * @param v
 		 */
 		private UnmodifiableBoolean(boolean v) {
 			super(v);
 		}
 
-		/* (non-Javadoc)
+		/*
+		 * (non-Javadoc)
 		 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#copy()
 		 */
 		@Override
-		public UnmodifiableBoolean copy() {
+		public UnmodifiableBoolean clone() {
 			return this;
 		}
-		
-		/* (non-Javadoc)
+
+		/*
+		 * (non-Javadoc)
 		 * @see eu.stratosphere.sopremo.type.BooleanNode#copyValueFrom(eu.stratosphere.sopremo.type.IJsonNode)
 		 */
 		@Override
@@ -50,10 +53,10 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 		}
 
 		@Override
-		public void read(DataInput in) throws IOException {	
+		public void read(DataInput in) throws IOException {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		private Object readResolve() {
 			return canonicalize();
 		}
@@ -82,11 +85,6 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 		this.value = v;
 	}
 
-	@Override
-	public Boolean getJavaValue() {
-		return this.value;
-	}
-
 	/**
 	 * Returns the instance of BooleanNode which represents the given <code>boolean</code>.
 	 * 
@@ -106,8 +104,8 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 	}
 
 	@Override
-	public IJsonNode clone() {
-		return this;
+	public BooleanNode clone() {
+		return (BooleanNode) super.clone();
 	}
 
 	@Override
@@ -193,4 +191,12 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		TypeFormat.format(this.value, appendable);
+	}
 }

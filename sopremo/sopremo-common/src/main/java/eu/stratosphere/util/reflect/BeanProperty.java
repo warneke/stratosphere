@@ -50,6 +50,14 @@ public class BeanProperty<Type> extends DynamicProperty<Type> {
 	public int getModifiers() {
 		return Modifier.PUBLIC;
 	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.util.reflect.DynamicProperty#getName()
+	 */
+	@Override
+	public String getName() {
+		return this.propertyDescriptor.getName();
+	}
 
 	/*
 	 * (non-Javadoc)

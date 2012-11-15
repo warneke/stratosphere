@@ -1,5 +1,6 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -13,7 +14,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * Determines a set contains an element or not.
  */
 @OptimizerHints(scope = Scope.ANY, iterating = true)
-public class ElementInSetExpression extends BinaryBooleanExpression implements ExpressionParent {
+public class ElementInSetExpression extends BinaryBooleanExpression {
 	/**
 	 * 
 	 */
@@ -43,10 +44,19 @@ public class ElementInSetExpression extends BinaryBooleanExpression implements E
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target) {
+	public BooleanNode evaluate(final IJsonNode node) {
 		// we can ignore 'target' because no new Object is created
-		return this.quantor.evaluate(this.elementExpr.evaluate(node, null),
-			ElementInSetExpression.asIterator(this.setExpr.evaluate(node, null)));
+		return this.quantor.evaluate(this.elementExpr.evaluate(node),
+			ElementInSetExpression.asIterator(this.setExpr.evaluate(node)));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new ElementInSetExpression(this.elementExpr.clone(), this.quantor, this.setExpr.clone());
 	}
 
 	/*
@@ -120,9 +130,10 @@ public class ElementInSetExpression extends BinaryBooleanExpression implements E
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.elementExpr).append(this.quantor == Quantor.EXISTS_NOT_IN ? " \u2209 " : " \u2208 ")
-			.append(this.setExpr);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.elementExpr.appendAsString(appendable);
+		appendable.append(this.quantor == Quantor.EXISTS_NOT_IN ? " \u2209 " : " \u2208 ");
+		this.setExpr.appendAsString(appendable);
 	}
 
 	//

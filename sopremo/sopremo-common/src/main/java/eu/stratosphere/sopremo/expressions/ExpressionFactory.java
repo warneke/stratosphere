@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.expressions;
 
-
 /**
  * This factory provides access to all classes located in the same package like {@link EvaluationExpression}.
  */

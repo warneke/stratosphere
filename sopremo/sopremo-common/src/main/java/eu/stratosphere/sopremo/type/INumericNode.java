@@ -64,4 +64,15 @@ public interface INumericNode extends IPrimitiveNode {
 	 * Returns either this node represents an integral number or not.
 	 */
 	public abstract boolean isIntegralNumber();
+	
+	/**
+	 * Returns the java number.
+	 */
+	public abstract Number getJavaValue();
+
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IJsonNode#clone()
+	 */
+	@Override
+	public INumericNode clone();
 }

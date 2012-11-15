@@ -2,6 +2,7 @@ package eu.stratosphere.sopremo.type;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -21,12 +22,24 @@ public class ArrayNode extends AbstractArrayNode {
 	private static final long serialVersionUID = 898220542834090837L;
 
 	private final List<IJsonNode> children;
+	
+	@SuppressWarnings("unchecked")
+	public final static IArrayNode EMPTY = new ArrayNode(Collections.EMPTY_LIST);
 
 	/**
 	 * Initializes an empty ArrayNode.
 	 */
 	public ArrayNode() {
 		this(new ArrayList<IJsonNode>());
+	}
+	
+	/**
+	 * Initializes an empty ArrayNode.
+	 */
+	public ArrayNode(int size) {
+		this(new ArrayList<IJsonNode>(size));
+		for (int index = 0; index < size; index++) 
+			add(MissingNode.getInstance());
 	}
 
 	/**
@@ -60,6 +73,14 @@ public class ArrayNode extends AbstractArrayNode {
 			this.children.add(node);
 	}
 
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
+	 */
+	@Override
+	public ArrayNode clone() {
+		return (ArrayNode) super.clone();
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IArrayNode#asCollection()
@@ -150,10 +171,6 @@ public class ArrayNode extends AbstractArrayNode {
 		return this.children.set(index, node);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.JsonArray#remove(int)
-	 */
 	@Override
 	public IJsonNode remove(final int index) {
 		if (0 <= index && index < this.children.size())
@@ -185,18 +202,13 @@ public class ArrayNode extends AbstractArrayNode {
 			return true;
 		if (obj == null)
 			return false;
-		if (this.getClass() != obj.getClass())
+		if (!(obj instanceof ArrayNode))
 			return false;
 
 		final ArrayNode other = (ArrayNode) obj;
 		if (!this.children.equals(other.children))
 			return false;
 		return true;
-	}
-
-	@Override
-	public List<IJsonNode> getJavaValue() {
-		return this.children;
 	}
 
 	@Override

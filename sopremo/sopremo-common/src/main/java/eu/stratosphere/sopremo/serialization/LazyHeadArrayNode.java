@@ -26,9 +26,9 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 	 */
 	private static final long serialVersionUID = -363746608697276853L;
 
-	protected PactRecord record;
+	private final PactRecord record;
 
-	protected HeadArraySchema schema;
+	private final HeadArraySchema schema;
 
 	/**
 	 * Initializes a LazyHeadArrayNode with the given {@link PactRecord} and the given {@link HeadArraySchema}.
@@ -41,6 +41,15 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 	public LazyHeadArrayNode(final PactRecord record, final HeadArraySchema schema) {
 		this.record = record;
 		this.schema = schema;
+	}
+	
+	/**
+	 * Returns the record.
+	 * 
+	 * @return the record
+	 */
+	PactRecord getRecord() {
+		return this.record;
 	}
 
 	@Override
@@ -107,11 +116,6 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 		if (index < this.schema.getHeadSize())
 			return SopremoUtil.unwrap(this.record.getField(index, JsonNodeWrapper.class));
 		return this.getOtherField().get(index - this.schema.getHeadSize());
-	}
-
-	@Override
-	public PactRecord getJavaValue() {
-		return this.record;
 	}
 
 	/**
@@ -224,7 +228,7 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 	}
 
 	@Override
-	public void toString(final StringBuilder sb) {
+	public void appendAsString(final Appendable sb) throws IOException {
 		sb.append('[');
 
 		int count = 0;
@@ -233,7 +237,7 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 				sb.append(',');
 			++count;
 
-			node.toString(sb);
+			node.appendAsString(sb);
 		}
 
 		sb.append(']');

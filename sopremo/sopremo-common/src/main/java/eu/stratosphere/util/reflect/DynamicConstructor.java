@@ -33,6 +33,15 @@ public class DynamicConstructor<DeclaringClass> extends
 		return member.isVarArgs();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.util.reflect.DynamicInvokable#getName()
+	 */
+	@Override
+	public String getName() {
+		return String.format("%s#init()", this.declaringClass);
+	}
+
 	@Override
 	protected Class<?>[] getParameterTypes(final Constructor<DeclaringClass> member) {
 		return member.getParameterTypes();
@@ -73,6 +82,7 @@ public class DynamicConstructor<DeclaringClass> extends
 	@SuppressWarnings("unchecked")
 	public static <C> DynamicConstructor<C> valueOf(final Class<C> clazz) {
 		final DynamicConstructor<C> ctor = new DynamicConstructor<C>();
+		ctor.declaringClass = clazz;
 		for (final Constructor<?> constructor : clazz.getDeclaredConstructors())
 			ctor.addSignature((Constructor<C>) constructor);
 		return ctor;
