@@ -10,9 +10,10 @@ import java.io.Writer;
 import java.util.EnumMap;
 import java.util.Map;
 
+import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
-import eu.stratosphere.sopremo.type.ObjectNode;
+import eu.stratosphere.sopremo.type.IStreamArrayNode;
 import eu.stratosphere.sopremo.type.TextNode;
 
 /**
@@ -29,7 +30,7 @@ public class JsonGenerator {
 	 * a sink.
 	 * 
 	 * @param stream
-	 *            the stream that should be used as a sink
+	 *        the stream that should be used as a sink
 	 */
 	public JsonGenerator(final OutputStream stream) {
 		this.writer = new BufferedWriter(new OutputStreamWriter(stream));
@@ -40,7 +41,7 @@ public class JsonGenerator {
 	 * sink.
 	 * 
 	 * @param writer
-	 *            the writer that should be used as a sink
+	 *        the writer that should be used as a sink
 	 */
 	public JsonGenerator(final Writer writer) {
 		this.writer = new BufferedWriter(writer);
@@ -50,7 +51,7 @@ public class JsonGenerator {
 	 * Initializes a JsonGenerator which uses the given {@link File} as a sink.
 	 * 
 	 * @param file
-	 *            the file that should be used as a sink
+	 *        the file that should be used as a sink
 	 * @throws IOException
 	 */
 	public JsonGenerator(final File file) throws IOException {
@@ -71,7 +72,7 @@ public class JsonGenerator {
 	 * string-representations of multiple invocations are separated by a comma.
 	 * 
 	 * @param iJsonNode
-	 *            the node that should be written to the sink
+	 *        the node that should be written to the sink
 	 * @throws IOException
 	 */
 	public void writeTree(final IJsonNode iJsonNode) throws IOException {
@@ -79,7 +80,7 @@ public class JsonGenerator {
 			if (!this.isFirst)
 				this.writer.write(",");
 			JsonTypeWriter<IJsonNode> typeWriter = JsonTypeWriterPool.getJsonTypeWriterFor(iJsonNode);
-			typeWriter.write(iJsonNode, writer);
+			typeWriter.write(iJsonNode, this.writer);
 			this.isFirst = false;
 		}
 	}
@@ -120,14 +121,17 @@ public class JsonGenerator {
 	 * This interface describes the general behavior of JsonTypeWriters.
 	 * 
 	 * @param <T>
-	 *            A JsonTypeWriter should only be used with types implementing
-	 *            IJsonNode
+	 *        A JsonTypeWriter should only be used with types implementing
+	 *        IJsonNode
 	 */
 	private static interface JsonTypeWriter<T extends IJsonNode> {
 		/**
 		 * This method takes a IJsonNode and a writer and let's the writer write the node in a type-specific way.
-		 * @param node The node you want to write.
-		 * @param writer The writer you want to write in.
+		 * 
+		 * @param node
+		 *        The node you want to write.
+		 * @param writer
+		 *        The writer you want to write in.
 		 * @throws IOException
 		 */
 		public void write(T node, Writer writer) throws IOException;
@@ -140,39 +144,62 @@ public class JsonGenerator {
 	 */
 	private static class TextNodeTypeWriter implements JsonTypeWriter<TextNode> {
 
-		private static TextNodeTypeWriter instance = new TextNodeTypeWriter();
+		private static TextNodeTypeWriter Instance = new TextNodeTypeWriter();
 
 		@Override
 		public void write(TextNode node, Writer writer) throws IOException {
-			writer.append("\"");
-			writer.append(node.getTextValue());
-			writer.append("\"");
+			writer.append('\"').append(node.getTextValue()).append('\"');
 		}
 	}
 	
+	/**
+	 * This class implements the JSON-Serialization for TextNodes
+	 * 
+	 * @param <T>
+	 */
+	private static class ArrayNodeTypeWriter implements JsonTypeWriter<IStreamArrayNode> {
+
+		private static ArrayNodeTypeWriter Instance = new ArrayNodeTypeWriter();
+
+		@Override
+		public void write(IStreamArrayNode node, Writer writer) throws IOException {
+			writer.append('[');
+
+			boolean first = true;
+			for (IJsonNode elem : node) {
+				if (first)
+					first = false;
+				else
+					writer.append(',');
+
+				JsonTypeWriterPool.getJsonTypeWriterFor(elem).write(elem, writer);
+			}
+
+			writer.append(']');
+		}
+	}
+
 	/**
 	 * This class implements the JSON-Serialization for ObjectNodes
 	 * 
 	 * @param <T>
 	 */
 	private static class ObjectNodeTypeWriter implements JsonTypeWriter<IObjectNode> {
-
-		private static ObjectNodeTypeWriter instance = new ObjectNodeTypeWriter();
+		
+		private static ObjectNodeTypeWriter Instance = new ObjectNodeTypeWriter();
 
 		@Override
 		public void write(IObjectNode node, Writer writer) throws IOException {
 			writer.append('{');
 
-			int count = 0;
-			for (final Map.Entry<String, IJsonNode> en : ((ObjectNode) node).getChildren().entrySet()) {
-				if (count > 0)
+			boolean first = true;
+			for (final Map.Entry<String, IJsonNode> en : node) {
+				if (first)
+					first = false;
+				else
 					writer.append(',');
-				++count;
 
-				writer.append("\"");
-				writer.append(en.getKey());
-				writer.append("\"");
-				writer.append(':');
+				writer.append('\"').append(en.getKey()).append("\":");
 				JsonTypeWriterPool.getJsonTypeWriterFor(en.getValue()).write(en.getValue(), writer);
 			}
 
@@ -188,11 +215,11 @@ public class JsonGenerator {
 	 */
 	private static class GenericNodeTypeWriter<T extends IJsonNode> implements JsonTypeWriter<IJsonNode> {
 
-		private static GenericNodeTypeWriter<IJsonNode> instance = new GenericNodeTypeWriter<IJsonNode>();
+		private static GenericNodeTypeWriter<IJsonNode> Instance = new GenericNodeTypeWriter<IJsonNode>();
 
 		@Override
 		public void write(IJsonNode node, Writer writer) throws IOException {
-			writer.write(node.toString());
+			node.appendAsString(writer);
 		}
 	}
 
@@ -200,7 +227,6 @@ public class JsonGenerator {
 	 * This class holds an Enum-Map with the JSON-node-types and their
 	 * corresponding TypeWriters. It therefore provides TypeWriters for concrete
 	 * IJsonNodes, and you can ask it to return one.
-	 * 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static class JsonTypeWriterPool {
@@ -208,23 +234,22 @@ public class JsonGenerator {
 
 		static {
 			writerMap = new EnumMap<IJsonNode.Type, JsonGenerator.JsonTypeWriter<IJsonNode>>(IJsonNode.Type.class);
-			writerMap.put(IJsonNode.Type.TextNode, (JsonTypeWriter)TextNodeTypeWriter.instance);
-			writerMap.put(IJsonNode.Type.ObjectNode, (JsonTypeWriter)ObjectNodeTypeWriter.instance);
+			writerMap.put(IJsonNode.Type.TextNode, (JsonTypeWriter) TextNodeTypeWriter.Instance);
+			writerMap.put(IJsonNode.Type.ObjectNode, (JsonTypeWriter) ObjectNodeTypeWriter.Instance);
+			writerMap.put(IJsonNode.Type.ArrayNode, (JsonTypeWriter) ArrayNodeTypeWriter.Instance);
 		}
 
 		/**
-		 * 
 		 * @param aJsonNode
-		 *            The JSON-node you want to have a writer for
-		 * @return The desired TypeWriter for your IJsonNode. A
-		 *         {@link GenericNodeTypeWriter} is return for all types without
+		 *        The JSON-node you want to have a writer for
+		 * @return The desired TypeWriter for your IJsonNode. A {@link GenericNodeTypeWriter} is return for all types
+		 *         without
 		 *         a specifically defined writer.
 		 */
 		public static JsonTypeWriter<IJsonNode> getJsonTypeWriterFor(IJsonNode aJsonNode) {
 			JsonTypeWriter<IJsonNode> writerToReturn = writerMap.get(aJsonNode.getType());
-			if (writerToReturn == null) {
-				writerToReturn = GenericNodeTypeWriter.instance;
-			}
+			if (writerToReturn == null)
+				writerToReturn = GenericNodeTypeWriter.Instance;
 			return writerToReturn;
 		}
 	}
