@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Scanner;
 
 import junit.framework.Assert;
 
@@ -74,6 +75,20 @@ public class JsonGeneratorTest {
 				gen.writeTree(parser.readValueAsTree());
 			gen.writeEndArray();
 			gen.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testObjectNodeSerialization() {
+		try {
+			final File file = File.createTempFile("test", "json");
+			final JsonGenerator gen = new JsonGenerator(file);
+			gen.writeTree(obj);
+			gen.close();
+			final JsonParser parser = new JsonParser(new FileReader(file));
+			Assert.assertEquals(obj, parser.readValueAsTree());
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}

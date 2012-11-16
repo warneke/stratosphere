@@ -26,6 +26,10 @@ public class ObjectNode extends AbstractObjectNode implements IObjectNode {
 		return this.children.size();
 	}
 
+	public Map<String, IJsonNode> getChildren() {
+		return children;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.JsonObject#put(java.lang.String, eu.stratosphere.sopremo.type.IJsonNode)
@@ -65,7 +69,7 @@ public class ObjectNode extends AbstractObjectNode implements IObjectNode {
 			return node;
 		return MissingNode.getInstance();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
