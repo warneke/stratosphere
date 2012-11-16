@@ -141,7 +141,8 @@ public class SopremoTestServer implements Closeable, SopremoExecutionProtocol {
 
 		for (; index < expected.length && !parser.checkEnd(); index++) {
 			final IJsonNode actual = parser.readValueAsTree();
-			Assert.assertTrue("Unexpected value " + actual, remainingValues.remove(actual));
+			Assert.assertTrue(String.format("Unexpected value %s; remaining %s", actual, remainingValues),
+				remainingValues.remove(actual));
 		}
 		if (!remainingValues.isEmpty())
 			Assert.fail("More elements expected " + remainingValues);

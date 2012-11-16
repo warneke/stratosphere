@@ -14,6 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo;
 
+import org.junit.Ignore;
+
 import junit.framework.Assert;
 import eu.stratosphere.sopremo.aggregation.Aggregation;
 import eu.stratosphere.sopremo.function.SopremoFunction;
@@ -24,6 +26,7 @@ import eu.stratosphere.sopremo.type.JavaToJsonMapper;
 /**
  * @author Arvid Heise
  */
+@Ignore
 public class FunctionTest {
 
 	public static void assertAggregate(Object expected, Aggregation function, Object... items) {

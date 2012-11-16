@@ -22,7 +22,6 @@ import eu.stratosphere.meteor.MeteorTest;
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.SecondOrderFunctions;
 import eu.stratosphere.sopremo.base.Grouping;
-import eu.stratosphere.sopremo.base.Projection;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperator;
 import eu.stratosphere.sopremo.expressions.ArrayCreation;
