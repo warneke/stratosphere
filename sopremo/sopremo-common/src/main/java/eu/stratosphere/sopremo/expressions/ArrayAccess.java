@@ -180,7 +180,7 @@ public class ArrayAccess extends PathSegmentExpression {
 
 	@Override
 	public void appendAsString(final Appendable appendable) throws IOException {
-		getInputExpression().appendAsString(appendable);
+		this.getInputExpression().appendAsString(appendable);
 		appendable.append('[');
 		if (this.isSelectingAll())
 			appendable.append('*');

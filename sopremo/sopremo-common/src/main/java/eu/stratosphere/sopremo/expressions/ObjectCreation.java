@@ -169,7 +169,7 @@ public class ObjectCreation extends EvaluationExpression {
 	public int getMappingSize() {
 		return this.mappings.size();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -210,8 +210,9 @@ public class ObjectCreation extends EvaluationExpression {
 					this.result.putAll((IObjectNode) jsonNode);
 			return this.result;
 		}
-		
-		/* (non-Javadoc)
+
+		/*
+		 * (non-Javadoc)
 		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation#createCopy()
 		 */
 		@Override
@@ -365,6 +366,14 @@ public class ObjectCreation extends EvaluationExpression {
 			final IJsonNode exprNode = this.getExpression().evaluate(node);
 			target.putAll((IObjectNode) exprNode);
 		}
+		
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.FieldAssignment#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return new CopyFields(getExpression().clone());
+		}
 
 		@Override
 		public void appendAsString(final Appendable appendable) throws IOException {
@@ -400,10 +409,10 @@ public class ObjectCreation extends EvaluationExpression {
 
 		/*
 		 * (non-Javadoc)
-		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#clone()
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 		 */
 		@Override
-		public Mapping<String> clone() {
+		protected AbstractSopremoType createCopy() {
 			return new FieldAssignment(this.target, this.expression.clone());
 		}
 
@@ -446,10 +455,10 @@ public class ObjectCreation extends EvaluationExpression {
 
 		/*
 		 * (non-Javadoc)
-		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#clone()
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 		 */
 		@Override
-		public Mapping<EvaluationExpression> clone() {
+		protected AbstractSopremoType createCopy() {
 			return new TagMapping(this.target.clone(), this.expression.clone());
 		}
 
@@ -476,10 +485,10 @@ public class ObjectCreation extends EvaluationExpression {
 
 		/*
 		 * (non-Javadoc)
-		 * @see eu.stratosphere.sopremo.expressions.ObjectCreation.Mapping#clone()
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 		 */
 		@Override
-		public ExpressionAssignment clone() {
+		protected AbstractSopremoType createCopy() {
 			return new ExpressionAssignment(this.target.clone(), this.expression.clone());
 		}
 
@@ -537,13 +546,6 @@ public class ObjectCreation extends EvaluationExpression {
 
 			this.expression = expression;
 		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Object#clone()
-		 */
-		@Override
-		public abstract Mapping<Target> clone();
 
 		@Override
 		public boolean equals(final Object obj) {

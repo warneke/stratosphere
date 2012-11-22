@@ -8,9 +8,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
-import eu.stratosphere.sopremo.SopremoRuntime;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.aggregation.Aggregation;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.ConcatenatingChildIterator;
@@ -33,8 +32,6 @@ public class BatchAggregationExpression extends PathSegmentExpression {
 	private final List<Partial> partials;
 
 	private final transient IArrayNode results = new ArrayNode();
-
-	private transient EvaluationContext context;
 
 	/**
 	 * Initializes a BatchAggregationExpression with the given {@link AggregationFunction}s.
@@ -106,32 +103,15 @@ public class BatchAggregationExpression extends PathSegmentExpression {
 		return this.partials.get(index);
 	}
 
-	private transient int lastId = -1;
-
-	private EvaluationContext getContext() {
-		if (this.context == null)
-			this.context = SopremoRuntime.getInstance().getCurrentEvaluationContext();
-		return this.context;
-	}
-	
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#initTransients()
-	 */
-	@Override
-	protected void initTransients() {
-		super.initTransients();
-		this.lastId = -1;
-		this.context = null;
-	}
-
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluateSegment(eu.stratosphere.sopremo.type.IJsonNode)
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluateSegment(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
 	protected IJsonNode evaluateSegment(final IJsonNode node) {
 		final IStreamArrayNode stream = (IStreamArrayNode) node;
-		final int streamId = this.getContext().getInputCount();
-		if (streamId == this.lastId)
+		if (stream.isEmpty())
 			return this.results;
 
 		this.results.clear();
@@ -150,7 +130,6 @@ public class BatchAggregationExpression extends PathSegmentExpression {
 		for (int index = 0; index < this.partials.size(); index++)
 			this.results.set(index, this.partials.get(index).getAggregation().getFinalAggregate());
 
-		this.lastId = streamId;
 		return this.results;
 	}
 
@@ -163,14 +142,11 @@ public class BatchAggregationExpression extends PathSegmentExpression {
 		return new BatchAggregationExpression();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#copyPropertiesFrom(eu.stratosphere.sopremo.expressions
-	 * .EvaluationExpression)
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#copyPropertiesFrom(eu.stratosphere.sopremo.ISopremoType)
 	 */
 	@Override
-	protected void copyPropertiesFrom(EvaluationExpression original) {
+	public void copyPropertiesFrom(ISopremoType original) {
 		super.copyPropertiesFrom(original);
 		for (Partial partial : ((BatchAggregationExpression) original).partials)
 			this.partials.add(partial.partialClone(this));
@@ -265,13 +241,14 @@ public class BatchAggregationExpression extends PathSegmentExpression {
 		public void appendAsString(Appendable appendable) throws IOException {
 			this.getAggregation().appendAsString(appendable);
 			appendable.append('(');
-			 BatchAggregationExpression.this.appendAsString(appendable);
-//			if (this.getInputExpression() != EvaluationExpression.VALUE)
-//				this.getInputExpression().appendAsString(appendable);
+			BatchAggregationExpression.this.appendAsString(appendable);
+			// if (this.getInputExpression() != EvaluationExpression.VALUE)
+			// this.getInputExpression().appendAsString(appendable);
 			appendable.append(')');
 		}
-		
-		/* (non-Javadoc)
+
+		/*
+		 * (non-Javadoc)
 		 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#iterator()
 		 */
 		@Override
@@ -307,7 +284,7 @@ public class BatchAggregationExpression extends PathSegmentExpression {
 
 	@Override
 	public void appendAsString(final Appendable appendable) throws IOException {
-		getInputExpression().appendAsString(appendable);
+		this.getInputExpression().appendAsString(appendable);
 		appendable.append('^');
 	}
 }

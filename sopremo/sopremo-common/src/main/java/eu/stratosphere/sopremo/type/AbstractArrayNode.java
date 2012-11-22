@@ -50,18 +50,18 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 		IArrayNode array = (IArrayNode) otherNode;
 		int index = 0;
 		// try to reuse existing nodes
-		for (int length = Math.max(size(), array.size()); index < length; index++) {
-			final IJsonNode existingNode = get(index);
+		for (int length = Math.max(this.size(), array.size()); index < length; index++) {
+			final IJsonNode existingNode = this.get(index);
 			final IJsonNode newNode = array.get(index);
 			if (existingNode.isCopyable(newNode))
 				existingNode.copyValueFrom(newNode);
 			else
-				set(index, newNode.clone());
+				this.set(index, newNode.clone());
 		}
 
 		for (int length = array.size(); index < length; index++)
 			this.add(array.get(0).clone());
-		for (int length = size(); index < length; length--)
+		for (int length = this.size(); index < length; length--)
 			this.remove(index);
 	}
 
@@ -159,16 +159,16 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 	@Override
 	public void setAll(final IJsonNode[] nodes) {
 		for (int index = 0; index < nodes.length; index++)
-			set(index, nodes[index]);
-		final int size = size();
+			this.set(index, nodes[index]);
+		final int size = this.size();
 		for (int index = size; index > nodes.length; index--)
-			remove(nodes.length);
+			this.remove(nodes.length);
 	}
 
 	@Override
 	public IJsonNode[] toArray(ArrayCache<IJsonNode> arrayCache) {
 		IJsonNode[] result = arrayCache.getArray(this.size());
-		fillArray(result);
+		this.fillArray(result);
 		return result;
 	}
 
@@ -220,7 +220,7 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 		if (this.getClass() != obj.getClass())
 			return false;
 
-		final Iterator<IJsonNode> thisIter = iterator(), thatIter = ((Iterable<IJsonNode>) obj).iterator();
+		final Iterator<IJsonNode> thisIter = this.iterator(), thatIter = ((Iterable<IJsonNode>) obj).iterator();
 		while (thisIter.hasNext() && thatIter.hasNext())
 			if (!thisIter.next().equals(thatIter.next()))
 				return false;

@@ -172,7 +172,8 @@ public class LongNode extends AbstractNumericNode implements INumericNode {
 		this.value.copyNormalizedKey(target, offset, len);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override

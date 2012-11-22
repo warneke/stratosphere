@@ -27,6 +27,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
 import eu.stratosphere.sopremo.type.MissingNode;
 import eu.stratosphere.util.AbstractIterator;
+import eu.stratosphere.util.ConcatenatingIterable;
 import eu.stratosphere.util.ConcatenatingIterator;
 
 /**
@@ -67,7 +68,7 @@ public class LazyObjectNode extends AbstractObjectNode {
 			this.record.setNull(i);
 		this.getOtherField().clear();
 	}
-	
+
 	/**
 	 * Returns the record.
 	 * 
@@ -134,8 +135,8 @@ public class LazyObjectNode extends AbstractObjectNode {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Iterator<String> getFieldNames() {
-		return new ConcatenatingIterator<String>(this.schema.getMappings().iterator(),
+	public Iterable<String> getFieldNames() {
+		return new ConcatenatingIterable<String>(this.schema.getMappings(),
 			this.getOtherField().getFieldNames());
 	}
 

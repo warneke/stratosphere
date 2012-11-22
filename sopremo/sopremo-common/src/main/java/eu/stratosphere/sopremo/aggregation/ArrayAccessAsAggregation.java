@@ -50,11 +50,11 @@ public class ArrayAccessAsAggregation extends Aggregation {
 	private static final long serialVersionUID = -3359162289544753192L;
 
 	private transient final CachingArrayNode arrayResult = new CachingArrayNode();
-	
-//	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-//		ois.defaultReadObject();
-//		aggregator = new ArrayNode();
-//	}
+
+	// private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+	// ois.defaultReadObject();
+	// aggregator = new ArrayNode();
+	// }
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#initialize()
@@ -66,7 +66,8 @@ public class ArrayAccessAsAggregation extends Aggregation {
 		this.arrayResult.clear();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#aggregate(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
@@ -79,21 +80,22 @@ public class ArrayAccessAsAggregation extends Aggregation {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#clone()
 	 */
 	@Override
 	public Aggregation clone() {
 		return new ArrayAccessAsAggregation(this.startIndex, this.endIndex, this.range);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#toString(java.lang.StringBuilder)
 	 */
 	@Override
 	public void appendAsString(Appendable appendable) throws IOException {
-//		super.appendAsString(appendable);
+		// super.appendAsString(appendable);
 		appendable.append("@[");
 		TypeFormat.format(this.startIndex, appendable);
 		if (this.startIndex != this.endIndex) {
@@ -103,12 +105,13 @@ public class ArrayAccessAsAggregation extends Aggregation {
 		appendable.append(']');
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#getFinalAggregate()
 	 */
 	@Override
 	public IJsonNode getFinalAggregate() {
-		if (this.range) 
+		if (this.range)
 			return this.arrayResult;
 		return this.arrayResult.get(0);
 	}

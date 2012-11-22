@@ -36,14 +36,14 @@ public abstract class FixedTypeTransitiveAggregation<ElementType extends IJsonNo
 	 */
 	@Override
 	public void aggregate(IJsonNode element) {
-		aggregateInto(this.aggregator, element);
+		this.aggregateInto(this.aggregator, element);
 	}
 
 	@Override
 	public void initialize() {
 		this.aggregator.copyValueFrom(this.initialAggregate);
 	}
-	
+
 	protected abstract void aggregateInto(ElementType aggregator, IJsonNode element);
 
 	/*

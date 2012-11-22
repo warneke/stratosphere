@@ -40,7 +40,7 @@ public class SubArrayNode extends AbstractArrayNode {
 	}
 
 	public void init(IArrayNode originalArray, int startIndex) {
-		init(originalArray, startIndex, originalArray.size());
+		this.init(originalArray, startIndex, originalArray.size() - startIndex);
 	}
 
 	public void setSize(int length) {

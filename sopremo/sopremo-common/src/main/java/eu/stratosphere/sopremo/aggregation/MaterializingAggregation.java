@@ -31,8 +31,9 @@ public class MaterializingAggregation extends Aggregation {
 	public void initialize() {
 		this.aggregator.clear();
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#aggregate(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
@@ -43,13 +44,14 @@ public class MaterializingAggregation extends Aggregation {
 	@Override
 	public Aggregation clone() {
 		try {
-			return ReflectUtil.newInstance(getClass(), this.getName());
+			return ReflectUtil.newInstance(this.getClass(), this.getName());
 		} catch (Exception e) {
 			throw new IllegalStateException("Aggregation must implement clone or conform to the ctor", e);
 		}
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.aggregation.Aggregation#getFinalAggregate()
 	 */
 	@Override

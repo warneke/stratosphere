@@ -57,8 +57,9 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 			throw new UnsupportedOperationException();
 		}
 
-		private Object readResolve() {
-			return canonicalize();
+		@Override
+		protected Object readResolve() {
+			return this.canonicalize();
 		}
 	}
 
@@ -141,7 +142,8 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 		this.value = in.readInt() == 1;
 	}
 
-	private Object readResolve() {
+	@Override
+	protected Object readResolve() {
 		return valueOf(this.value);
 	}
 

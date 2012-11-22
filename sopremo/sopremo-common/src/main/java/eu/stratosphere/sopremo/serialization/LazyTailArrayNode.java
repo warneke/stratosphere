@@ -55,7 +55,7 @@ public class LazyTailArrayNode extends AbstractArrayNode {
 		this.record = record;
 		this.schema = schema;
 	}
-	
+
 	/**
 	 * Returns the record.
 	 * 

@@ -16,8 +16,9 @@ public abstract class JsonNodeTest<T extends IJsonNode> {
 	@Before
 	public void setUp() {
 		try {
-			this.node = (T) BoundTypeUtil.getBindingOfSuperclass(this.getClass(), JsonNodeTest.class).getParameters()[0]
-				.getType().newInstance();
+			this.node =
+				(T) BoundTypeUtil.getBindingOfSuperclass(this.getClass(), JsonNodeTest.class).getParameters()[0]
+					.getType().newInstance();
 		} catch (final InstantiationException e) {
 			e.printStackTrace();
 		} catch (final IllegalAccessException e) {

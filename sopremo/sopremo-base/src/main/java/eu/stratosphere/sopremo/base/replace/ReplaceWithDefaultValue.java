@@ -16,9 +16,9 @@ package eu.stratosphere.sopremo.base.replace;
 
 import java.util.Iterator;
 
-import eu.stratosphere.sopremo.base.Replace;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.InputCardinality;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoCoGroup;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -31,8 +31,9 @@ public class ReplaceWithDefaultValue extends ReplaceBase<ReplaceWithDefaultValue
 	 */
 	private static final long serialVersionUID = 7334161941683036846L;
 
-	private EvaluationExpression defaultExpression = Replace.KEEP_VALUE;
+	private EvaluationExpression defaultExpression = EvaluationExpression.VALUE;
 
+	@Property
 	public void setDefaultExpression(EvaluationExpression defaultExpression) {
 		if (defaultExpression == null)
 			throw new NullPointerException("defaultExpression must not be null");

@@ -14,6 +14,7 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
 /**
@@ -38,10 +39,10 @@ public abstract class SopremoVarargFunction extends SopremoFunction {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.Callable#clone()
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 	 */
 	@Override
-	public SopremoFunction clone() {
-		return ReflectUtil.newInstance(this.getClass(), getName(), getMinimumNumberOfParameters());
+	protected AbstractSopremoType createCopy() {
+		return ReflectUtil.newInstance(this.getClass(), this.getName(), this.getMinimumNumberOfParameters());
 	}
 }

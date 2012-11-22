@@ -14,13 +14,14 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.tokenizer;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.type.CachingArrayNode;
 import eu.stratosphere.sopremo.type.TextNode;
 
 /**
  * @author Arvid Heise
  */
-public abstract class AbstractTokenizer implements Tokenizer {
+public abstract class AbstractTokenizer extends AbstractSopremoType implements Tokenizer {
 	/**
 	 * 
 	 */

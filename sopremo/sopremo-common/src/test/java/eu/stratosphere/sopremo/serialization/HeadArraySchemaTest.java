@@ -36,7 +36,7 @@ public class HeadArraySchemaTest {
 		final HeadArraySchema schema = new HeadArraySchema(2);
 		final IArrayNode array = new ArrayNode();
 		array.add(IntNode.valueOf(1));
-		final PactRecord result = schema.jsonToRecord(array, null, null);
+		final PactRecord result = schema.jsonToRecord(array, null);
 
 		final PactRecord expected = new PactRecord(3);
 		expected.setField(0, SopremoUtil.wrap(IntNode.valueOf(1)));
@@ -70,7 +70,7 @@ public class HeadArraySchemaTest {
 		record.setField(5, SopremoUtil.wrap(new ArrayNode()));
 
 		final IJsonNode node = schema.recordToJson(record, null);
-		final PactRecord result = schema.jsonToRecord(node, null, null);
+		final PactRecord result = schema.jsonToRecord(node, null);
 
 		Assert.assertTrue(PactRecordEqualer.recordsEqual(record, result, schema.getPactSchema()));
 	}

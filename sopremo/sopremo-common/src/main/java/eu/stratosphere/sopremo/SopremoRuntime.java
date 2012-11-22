@@ -52,7 +52,7 @@ public class SopremoRuntime {
 	}
 
 	public void mockRuntime() {
-		setCurrentEvaluationContext(new EvaluationContext());
+		this.setCurrentEvaluationContext(new EvaluationContext());
 	}
-	
+
 }

@@ -65,7 +65,7 @@ public class GeneratorInputFormat extends GenericInputFormat {
 	@Override
 	public void configure(final Configuration parameters) {
 		super.configure(parameters);
-		
+
 		this.context = SopremoUtil.deserialize(parameters, SopremoUtil.CONTEXT, EvaluationContext.class);
 		this.schema = this.context.getOutputSchema(0);
 		final EvaluationExpression expression =
@@ -137,7 +137,7 @@ public class GeneratorInputFormat extends GenericInputFormat {
 			throw new IOException("End of input split is reached");
 
 		final IJsonNode value = this.valueIterator.next();
-		final PactRecord result = this.schema.jsonToRecord(value, record, this.context);
+		final PactRecord result = this.schema.jsonToRecord(value, record);
 		if (result != record)
 			result.copyTo(record);
 		return true;

@@ -1,4 +1,4 @@
-// $ANTLR 3.4 /home/arv/workspace/master/meteor/meteor-meteor/src/main/java/eu/stratosphere/meteor/Meteor.g 2012-11-15 17:03:13
+// $ANTLR 3.4 /home/arv/workspace/master/meteor/meteor-meteor/src/main/java/eu/stratosphere/meteor/Meteor.g 2012-11-16 17:20:31
  
 package eu.stratosphere.meteor; 
 
@@ -1801,7 +1801,7 @@ public TreeAdaptor getTreeAdaptor() {
                     if ( state.backtracking==0 ) stream_orExpression.add(ifClause2.getTree());
 
                     // AST REWRITE
-                    // elements: ifExpr2, ifClause2
+                    // elements: ifClause2, ifExpr2
                     // token labels: 
                     // rule labels: retval, ifExpr2, ifClause2
                     // token list labels: 
@@ -2300,7 +2300,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: elem, set, elem
+            // elements: elem, elem, set
             // token labels: 
             // rule labels: elem, retval, set
             // token list labels: 
@@ -2534,7 +2534,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: e1, e1, e2, e1, e2, e1, e2
+            // elements: e2, e1, e2, e2, e1, e1, e1
             // token labels: 
             // rule labels: retval, e1, e2
             // token list labels: 
@@ -2744,7 +2744,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: e1, e2, e1
+            // elements: e2, e1, e1
             // token labels: 
             // rule labels: retval, e1, e2
             // token list labels: 
@@ -2914,7 +2914,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: e1, e1, e2
+            // elements: e1, e2, e1
             // token labels: 
             // rule labels: retval, e1, e2
             // token list labels: 

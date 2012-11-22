@@ -78,7 +78,7 @@ public interface IObjectNode extends IJsonNode, Iterable<Entry<String, IJsonNode
 	 * 
 	 * @return iterator over all Strings
 	 */
-	public abstract Iterator<String> getFieldNames();
+	public abstract Iterable<String> getFieldNames();
 
 	/**
 	 * Returns an Iterator over all Bindings within this node.
@@ -95,7 +95,8 @@ public interface IObjectNode extends IJsonNode, Iterable<Entry<String, IJsonNode
 	 */
 	public abstract int size();
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#clone()
 	 */
 	@Override

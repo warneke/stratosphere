@@ -96,7 +96,7 @@ public abstract class AbstractObjectNode extends AbstractJsonNode implements IOb
 	public void appendAsString(final Appendable appendable) throws IOException {
 		appendable.append("{");
 		boolean first = true;
-		final Iterator<Entry<String, IJsonNode>> iterator = iterator();
+		final Iterator<Entry<String, IJsonNode>> iterator = this.iterator();
 		while (iterator.hasNext()) {
 			if (first)
 				first = false;
@@ -109,21 +109,21 @@ public abstract class AbstractObjectNode extends AbstractJsonNode implements IOb
 		appendable.append("}");
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
 	 */
 	@Override
 	public AbstractObjectNode clone() {
 		return (AbstractObjectNode) super.clone();
 	}
-	
+
 	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
 		this.checkForSameType(otherNode);
 		final IObjectNode objectNode = (IObjectNode) otherNode;
 		this.clear();
-		
-		
+
 		for (final Entry<String, IJsonNode> child : objectNode)
 			this.put(child.getKey(), child.getValue().clone());
 	}

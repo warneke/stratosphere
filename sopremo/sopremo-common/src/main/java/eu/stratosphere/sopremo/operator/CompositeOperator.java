@@ -59,12 +59,12 @@ public abstract class CompositeOperator<Self extends CompositeOperator<Self>> ex
 	 */
 	@Override
 	public final ElementarySopremoModule asElementaryOperators(EvaluationContext context) {
-		SopremoModule module = new SopremoModule(getName(), getNumInputs(), getNumOutputs());
-		addImplementation(module, context);
+		SopremoModule module = new SopremoModule(this.getName(), this.getNumInputs(), this.getNumOutputs());
+		this.addImplementation(module, context);
 		module.validate();
 		return module.asElementary(context);
 	}
-	
+
 	public abstract void addImplementation(SopremoModule module, EvaluationContext context);
 
 	@Override

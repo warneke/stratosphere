@@ -10,6 +10,7 @@ import java.util.Arrays;
 import eu.stratosphere.pact.common.type.Key;
 import eu.stratosphere.pact.common.util.ReflectionUtil;
 import eu.stratosphere.sopremo.AbstractSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 
 /**
  * Abstract class to provide basic implementations for all node types.
@@ -40,11 +41,31 @@ public abstract class AbstractJsonNode extends AbstractSopremoType implements IJ
 		return this;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return ReflectionUtil.newInstance(this.getClass());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		this.copyValueFrom((IJsonNode) original);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#clone()
+	 */
 	@Override
 	public AbstractJsonNode clone() {
-		AbstractJsonNode copy = ReflectionUtil.newInstance(getClass());
-		copy.copyValueFrom(this);
-		return copy;
+		return (AbstractJsonNode) super.clone();
 	}
 
 	/*
@@ -71,6 +92,13 @@ public abstract class AbstractJsonNode extends AbstractSopremoType implements IJ
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#initTransients()
+	 */
+	@Override
+	protected void initTransients() {
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#isMissing()

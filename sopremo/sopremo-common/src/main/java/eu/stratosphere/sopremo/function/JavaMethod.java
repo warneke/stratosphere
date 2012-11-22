@@ -17,7 +17,9 @@ package eu.stratosphere.sopremo.function;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.EvaluationException;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.cache.ArrayCache;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -35,7 +37,7 @@ public class JavaMethod extends SopremoFunction {
 	private static final long serialVersionUID = 2195013413330805401L;
 
 	protected final DynamicMethod<IJsonNode> method;
-	
+
 	private final transient ArrayCache<IJsonNode> arrayCache = new ArrayCache<IJsonNode>(IJsonNode.class);
 
 	/**
@@ -65,14 +67,23 @@ public class JavaMethod extends SopremoFunction {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.Callable#clone()
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 	 */
 	@Override
-	public JavaMethod clone() {
-		final JavaMethod javaMethod = new JavaMethod(this.getName());
-		for (Signature signature : this.method.getSignatures())
-			javaMethod.addSignature(this.method.getMethod(signature));
-		return javaMethod;
+	protected AbstractSopremoType createCopy() {
+		return new JavaMethod(this.getName());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		DynamicMethod<?> method = ((JavaMethod) original).method;
+		for (Signature signature : method.getSignatures())
+			this.addSignature(method.getMethod(signature));
 	}
 
 	@Override

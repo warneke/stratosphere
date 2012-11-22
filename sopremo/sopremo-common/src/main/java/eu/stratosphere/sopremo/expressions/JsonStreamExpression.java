@@ -105,6 +105,14 @@ public class JsonStreamExpression extends UnevaluableExpression {
 		}
 		return inputSelection;
 	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.UnevaluableExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new JsonStreamExpression(getStream(), getInputIndex());
+	}
 
 	@Override
 	public int hashCode() {

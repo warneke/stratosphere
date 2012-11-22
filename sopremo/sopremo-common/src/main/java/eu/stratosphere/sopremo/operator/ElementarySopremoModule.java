@@ -124,6 +124,18 @@ public class ElementarySopremoModule extends SopremoModule {
 		return module;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.operator.SopremoModule#clone()
+	 */
+	@Override
+	public ElementarySopremoModule clone() {
+		final ElementarySopremoModule module =
+			new ElementarySopremoModule(this.getName(), this.getNumInputs(), this.getNumOutputs());
+		module.copyPropertiesFrom(this);
+		return module;
+	}
+
 	/**
 	 * Helper class needed to assemble a Pact program from the {@link PactModule}s of several {@link Operator<?>}s.
 	 * 
@@ -138,7 +150,7 @@ public class ElementarySopremoModule extends SopremoModule {
 		private final EvaluationContext context;
 
 		public PactAssembler(final EvaluationContext context) {
-			this.context = new EvaluationContext(context);
+			this.context = context.clone();
 		}
 
 		public Collection<Contract> assemble() {
@@ -178,10 +190,10 @@ public class ElementarySopremoModule extends SopremoModule {
 					public void nodeTraversed(final Operator<?> node) {
 						final PactModule module = node.asPactModule(PactAssembler.this.context);
 						PactAssembler.this.modules.put(node, module);
-							final List<FileDataSink> outputStubs = module.getOutputs();
+						final List<FileDataSink> outputStubs = module.getOutputs();
 						final List<List<Contract>> outputContracts = new ArrayList<List<Contract>>();
-							for (FileDataSink fileDataSink : outputStubs)
-								outputContracts.add(fileDataSink.getInputs());
+						for (FileDataSink fileDataSink : outputStubs)
+							outputContracts.add(fileDataSink.getInputs());
 						PactAssembler.this.operatorOutputs.put(node, outputContracts);
 					}
 				});
@@ -218,13 +230,12 @@ public class ElementarySopremoModule extends SopremoModule {
 
 		private List<Contract> findPACTSinks() {
 			final List<Contract> pactSinks = new ArrayList<Contract>();
-			for (final Operator<?> sink : ElementarySopremoModule.this.getAllOutputs()) {
+			for (final Operator<?> sink : ElementarySopremoModule.this.getAllOutputs())
 				for (final FileDataSink outputStub : this.modules.get(sink).getAllOutputs())
 					if (sink instanceof Sink)
 						pactSinks.add(outputStub);
 					else
 						pactSinks.addAll(outputStub.getInputs());
-			}
 			return pactSinks;
 		}
 	}

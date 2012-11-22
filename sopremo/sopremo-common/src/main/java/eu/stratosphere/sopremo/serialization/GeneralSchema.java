@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 import eu.stratosphere.pact.common.type.PactRecord;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.pact.JsonNodeWrapper;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -33,7 +33,7 @@ public class GeneralSchema extends AbstractSchema {
 	 */
 	private static final long serialVersionUID = -4363364708964922955L;
 
-	List<EvaluationExpression> mappings = new ArrayList<EvaluationExpression>();
+	private final List<EvaluationExpression> mappings = new ArrayList<EvaluationExpression>();
 
 	/**
 	 * Initializes a new GeneralSchema with the provided {@link EvaluationExpression}s in proper sequence.
@@ -42,8 +42,7 @@ public class GeneralSchema extends AbstractSchema {
 	 *        {@link EvaluationExpression}s that should be set as mappings
 	 */
 	public GeneralSchema(final EvaluationExpression... mappings) {
-		super(mappings.length + 1, CollectionUtil.setRangeFrom(0, mappings.length));
-		this.mappings = Arrays.asList(mappings);
+		this(Arrays.asList(mappings));
 	}
 
 	/**
@@ -76,8 +75,17 @@ public class GeneralSchema extends AbstractSchema {
 		return IntSets.singleton(index);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
 	@Override
-	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target, final EvaluationContext context) {
+	protected AbstractSopremoType createCopy() {
+		return new GeneralSchema(SopremoUtil.deepClone(this.mappings));
+	}
+
+	@Override
+	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target) {
 
 		if (target == null)
 			target = new PactRecord(this.mappings.size() + 1);

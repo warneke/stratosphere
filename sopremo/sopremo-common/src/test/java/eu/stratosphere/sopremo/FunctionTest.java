@@ -14,9 +14,10 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo;
 
+import junit.framework.Assert;
+
 import org.junit.Ignore;
 
-import junit.framework.Assert;
 import eu.stratosphere.sopremo.aggregation.Aggregation;
 import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.type.IArrayNode;

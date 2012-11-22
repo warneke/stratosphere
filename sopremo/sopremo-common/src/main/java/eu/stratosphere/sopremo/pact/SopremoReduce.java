@@ -72,9 +72,8 @@ public abstract class SopremoReduce extends ReduceStub implements SopremoStub {
 				ArrayNode array = new ArrayNode(this.array);
 				SopremoUtil.LOG.trace(String.format("%s %s", this.getContext().operatorTrace(), array));
 				this.reduce(array, this.collector);
-			} else {
+			} else
 				this.reduce(this.array, this.collector);
-			}
 		} catch (final RuntimeException e) {
 			SopremoUtil.LOG.error(String.format("Error occurred @ %s with %s: %s", this.getContext().operatorTrace(),
 				this.array, e));

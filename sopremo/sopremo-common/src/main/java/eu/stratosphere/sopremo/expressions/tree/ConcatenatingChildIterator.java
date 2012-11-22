@@ -118,7 +118,7 @@ public class ConcatenatingChildIterator implements ChildIterator {
 	 */
 	@Override
 	public void remove() {
-		checkValidState();
+		this.checkValidState();
 		this.iterators[this.currentIterator].remove();
 	}
 
@@ -128,7 +128,7 @@ public class ConcatenatingChildIterator implements ChildIterator {
 	 */
 	@Override
 	public void set(EvaluationExpression e) {
-		checkValidState();
+		this.checkValidState();
 		this.iterators[this.currentIterator].set(e);
 	}
 
@@ -138,7 +138,7 @@ public class ConcatenatingChildIterator implements ChildIterator {
 	 */
 	@Override
 	public void add(EvaluationExpression e) {
-		checkValidState();
+		this.checkValidState();
 		this.iterators[this.currentIterator].add(e);
 	}
 
@@ -148,7 +148,7 @@ public class ConcatenatingChildIterator implements ChildIterator {
 	 */
 	@Override
 	public boolean canChildrenBeRemoved() {
-		checkValidState();
+		this.checkValidState();
 		return this.iterators[this.currentIterator].canChildrenBeRemoved();
 	}
 
@@ -158,7 +158,7 @@ public class ConcatenatingChildIterator implements ChildIterator {
 	 */
 	@Override
 	public String getChildName() {
-		checkValidState();
+		this.checkValidState();
 		return this.iterators[this.currentIterator].getChildName();
 	}
 

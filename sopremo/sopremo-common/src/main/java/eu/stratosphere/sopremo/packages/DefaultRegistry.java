@@ -23,6 +23,8 @@ import java.util.Set;
 
 import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
+import eu.stratosphere.util.reflect.ReflectUtil;
 
 /**
  * Default implementation of {@link IRegistry}.
@@ -34,7 +36,7 @@ public class DefaultRegistry<T extends ISerializableSopremoType> extends Abstrac
 	 * 
 	 */
 	private static final long serialVersionUID = 8600814085154060117L;
-	
+
 	private Map<String, T> elements = new HashMap<String, T>();
 
 	@Override
@@ -54,6 +56,28 @@ public class DefaultRegistry<T extends ISerializableSopremoType> extends Abstrac
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return ReflectUtil.newInstance(getClass());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		DefaultRegistry<? extends ISerializableSopremoType> originalRegistry = (DefaultRegistry<?>) original;
+		for (Entry<String, ? extends ISerializableSopremoType> element : originalRegistry.elements.entrySet())
+			this.put(element.getKey(), (T) element.getValue().clone());
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
@@ -63,9 +87,10 @@ public class DefaultRegistry<T extends ISerializableSopremoType> extends Abstrac
 		for (final Entry<String, T> method : this.elements.entrySet()) {
 			appendable.append(method.getKey()).append(": ");
 			method.getValue().appendAsString(appendable);
-			if(first)
+			if (first)
 				first = false;
-			else appendable.append(", ");
+			else
+				appendable.append(", ");
 		}
 		appendable.append("}");
 	}

@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import javolution.text.TextFormat;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.type.CachingArrayNode;
 
 /**
@@ -82,6 +83,15 @@ public class DelimiterTokenizer extends AbstractTokenizer implements Tokenizer {
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new DelimiterTokenizer(new CharOpenHashSet(this.delimiters));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
@@ -92,8 +102,10 @@ public class DelimiterTokenizer extends AbstractTokenizer implements Tokenizer {
 		appendable.append("]");
 	}
 
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.tokenizer.Tokenizer#tokenizeInto(java.lang.CharSequence, eu.stratosphere.sopremo.type.CachingArrayNode)
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.tokenizer.Tokenizer#tokenizeInto(java.lang.CharSequence,
+	 * eu.stratosphere.sopremo.type.CachingArrayNode)
 	 */
 	@Override
 	public void tokenizeInto(CharSequence text, CachingArrayNode tokens) {
@@ -102,16 +114,14 @@ public class DelimiterTokenizer extends AbstractTokenizer implements Tokenizer {
 		int textIndex = 0, tokenStart = 0;
 		for (; textIndex < text.length(); textIndex++) {
 			final char ch = text.charAt(textIndex);
-			if (this.delimiters.contains(ch)) {
+			if (this.delimiters.contains(ch))
 				if (textIndex == tokenStart)
 					tokenStart++;
-				else {
-					addToken(tokens, text, tokenStart, textIndex);
-				}
-			}
+				else
+					this.addToken(tokens, text, tokenStart, textIndex);
 		}
 
 		if (textIndex != tokenStart)
-			addToken(tokens, text, tokenStart, textIndex);
+			this.addToken(tokens, text, tokenStart, textIndex);
 	}
 }

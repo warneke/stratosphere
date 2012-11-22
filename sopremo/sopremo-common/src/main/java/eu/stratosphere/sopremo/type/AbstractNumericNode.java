@@ -37,16 +37,18 @@ public abstract class AbstractNumericNode extends AbstractJsonNode implements IN
 		if (!(node instanceof INumericNode))
 			throw new IllegalArgumentException("Not a number " + node);
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
 	 */
 	@Override
 	public AbstractNumericNode clone() {
 		return (AbstractNumericNode) super.clone();
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#isCopyable(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override

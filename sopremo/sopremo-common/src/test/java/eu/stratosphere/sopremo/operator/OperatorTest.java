@@ -12,15 +12,15 @@ import java.util.List;
 import org.junit.Test;
 
 import eu.stratosphere.pact.common.plan.PactModule;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.SopremoTest;
 
 /**
  * The class <code>OperatorTest</code> contains tests for the class <code>{@link Operator<?>}</code>.
  * 
  * @author Arvid Heise
  */
-public class OperatorTest extends SopremoTest<OperatorTest.OpImpl> {
+public class OperatorTest extends EqualCloneTest<OperatorTest.OpImpl> {
 	@Override
 	protected OpImpl createDefaultInstance(final int index) {
 		return new OpImpl(index);
@@ -290,6 +290,14 @@ public class OperatorTest extends SopremoTest<OperatorTest.OpImpl> {
 			this.index = index;
 		}
 
+		/**
+		 * Initializes OperatorTest.OpImpl.
+		 *
+		 */
+		public OpImpl() {
+			this.index = 0;
+		}
+		
 		/*
 		 * (non-Javadoc)
 		 * @see eu.stratosphere.sopremo.Operator#asElementaryOperators()

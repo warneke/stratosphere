@@ -57,7 +57,7 @@ public class UnaryExpression extends BooleanExpression {
 	}
 
 	private transient final NodeCache nodeCache = new NodeCache();
-	
+
 	@Override
 	public BooleanNode evaluate(final IJsonNode node) {
 		// no need to reuse target of coercion - no new boolean node is created anew

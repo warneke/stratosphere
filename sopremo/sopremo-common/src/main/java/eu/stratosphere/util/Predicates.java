@@ -17,6 +17,7 @@ public class Predicates {
 	public final static <Param> Predicate<Param> True() {
 		return (Predicate<Param>) True;
 	}
+
 	@SuppressWarnings("unchecked")
 	public final static <Param> Predicate<Param> False() {
 		return (Predicate<Param>) True;

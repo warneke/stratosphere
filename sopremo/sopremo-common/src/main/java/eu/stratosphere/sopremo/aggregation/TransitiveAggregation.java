@@ -1,5 +1,8 @@
 package eu.stratosphere.sopremo.aggregation;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
@@ -17,6 +20,12 @@ public abstract class TransitiveAggregation<ElementType extends IJsonNode> exten
 	public TransitiveAggregation(final String name, final ElementType initialAggregate) {
 		super(name);
 		this.initialAggregate = initialAggregate;
+		this.aggregator = (ElementType) ReflectUtil.newInstance(this.initialAggregate.getClass());
+	}
+
+	@SuppressWarnings("unchecked")
+	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		ois.defaultReadObject();
 		this.aggregator = (ElementType) ReflectUtil.newInstance(this.initialAggregate.getClass());
 	}
 
@@ -43,7 +52,7 @@ public abstract class TransitiveAggregation<ElementType extends IJsonNode> exten
 	public Aggregation clone() {
 		try {
 			// initial aggregate does not need to be cloned as it is never modified
-			return ReflectUtil.newInstance(getClass(), this.getName(), this.initialAggregate);
+			return ReflectUtil.newInstance(this.getClass(), this.getName(), this.initialAggregate);
 		} catch (Exception e) {
 			throw new IllegalStateException("Aggregation must implement clone or conform to the ctor", e);
 		}
@@ -55,7 +64,7 @@ public abstract class TransitiveAggregation<ElementType extends IJsonNode> exten
 	 */
 	@Override
 	public void aggregate(IJsonNode element) {
-		this.aggregator = aggregate(this.aggregator, element);
+		this.aggregator = this.aggregate(this.aggregator, element);
 	}
 
 	protected abstract ElementType aggregate(ElementType aggregator, IJsonNode element);

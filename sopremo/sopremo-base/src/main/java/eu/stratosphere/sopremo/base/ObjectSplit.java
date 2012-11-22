@@ -1,11 +1,10 @@
 package eu.stratosphere.sopremo.base;
 
-import java.util.Iterator;
-
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoMap;
 import eu.stratosphere.sopremo.type.IArrayNode;
@@ -54,10 +53,12 @@ public class ObjectSplit extends ElementaryOperator<ObjectSplit> {
 	 * 
 	 * @param valueProjection
 	 */
+	@Property
 	public void setValueProjection(EvaluationExpression valueProjection) {
 		this.valueProjection = valueProjection;
 	}
 
+	@Property
 	public ObjectSplit setObjectProjection(EvaluationExpression objectPath) {
 		this.objectPath = objectPath;
 		return this;
@@ -80,11 +81,9 @@ public class ObjectSplit extends ElementaryOperator<ObjectSplit> {
 				throw new EvaluationException("Cannot split non-object");
 			final IObjectNode object = (IObjectNode) targetValue;
 
-			final Iterator<String> fieldNames = object.getFieldNames();
 			final TextNode fieldNode = TextNode.valueOf("");
 			IArrayNode contextNode = JsonUtil.asArray(NullNode.getInstance(), fieldNode, object, value);
-			while (fieldNames.hasNext()) {
-				String field = fieldNames.next();
+			for (String field : object.getFieldNames()) {
 				fieldNode.setValue(field);
 				out.collect(this.valueProjection.evaluate(contextNode));
 			}

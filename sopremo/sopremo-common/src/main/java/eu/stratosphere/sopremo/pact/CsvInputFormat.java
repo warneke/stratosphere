@@ -91,7 +91,7 @@ public class CsvInputFormat extends FileInputFormat {
 		public int read(char[] cbuf, int off, int len) throws IOException {
 			int toRead = len - off;
 			while (toRead > 0) {
-				fillCharBufferIfEmpty();
+				this.fillCharBufferIfEmpty();
 				int currentReadCount = Math.min(toRead, this.charBuffer.length());
 				this.charBuffer.get(cbuf, off, currentReadCount);
 				toRead -= currentReadCount;
@@ -127,7 +127,7 @@ public class CsvInputFormat extends FileInputFormat {
 		 */
 		@Override
 		public int read() throws IOException {
-			fillCharBufferIfEmpty();
+			this.fillCharBufferIfEmpty();
 			if (this.charBuffer.remaining() == 0)
 				return -1;
 			return this.charBuffer.get();
@@ -240,7 +240,7 @@ public class CsvInputFormat extends FileInputFormat {
 		}
 
 		// skip to beginning of the first record
-		if (this.splitStart > 0) {
+		if (this.splitStart > 0)
 			if (this.usesQuotation) {
 				// TODO: how to detect if where are inside a quotation?
 				this.reader.seek(this.splitStart - 1);
@@ -257,7 +257,6 @@ public class CsvInputFormat extends FileInputFormat {
 					;
 				this.endReached = ch == -1;
 			}
-		}
 	}
 
 	/**
@@ -345,7 +344,7 @@ public class CsvInputFormat extends FileInputFormat {
 
 		if (this.objectNode.size() == 0)
 			return false;
-		this.targetSchema.jsonToRecord(this.objectNode, record, this.context);
+		this.targetSchema.jsonToRecord(this.objectNode, record);
 		this.endReached = lastCharacter == -1 || this.reader.reachedLimit();
 		return true;
 	}

@@ -37,7 +37,8 @@ public class CharSequenceUtil {
 		return uncheckedRegionMatches(seq1, start1, seq2, start2, len, ignoreCase);
 	}
 
-	private static boolean uncheckedRegionMatches(CharSequence seq1, int start1, CharSequence seq2, int start2, int len,
+	private static boolean uncheckedRegionMatches(CharSequence seq1, int start1, CharSequence seq2, int start2,
+			int len,
 			boolean ignoreCase) {
 		for (int index1 = start1, index2 = start2, remaining = len; remaining > 0; remaining++) {
 			final char ch1 = seq1.charAt(index1), ch2 = seq2.charAt(index2);
@@ -45,11 +46,10 @@ public class CharSequenceUtil {
 			if (ch1 == ch2)
 				continue;
 
-			if (ignoreCase) {
+			if (ignoreCase)
 				if (Character.toUpperCase(ch1) == Character.toUpperCase(ch2) ||
 					Character.toLowerCase(ch1) == Character.toLowerCase(ch2))
 					continue;
-			}
 
 			return false;
 		}

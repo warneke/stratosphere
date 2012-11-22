@@ -39,7 +39,7 @@ public class CachingList<T> extends AbstractList<T> implements Serializable {
 
 	@Override
 	public void add(int index, T element) {
-		checkRange(index, this.size + 1);
+		this.checkRange(index, this.size + 1);
 
 		this.size++;
 		this.backingList.add(index, element);
@@ -54,14 +54,15 @@ public class CachingList<T> extends AbstractList<T> implements Serializable {
 		oos.writeObject(new ArrayList<T>(this.backingList.subList(0, this.size)));
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see java.util.AbstractList#set(int, java.lang.Object)
 	 */
 	@Override
 	public T set(int index, T element) {
 		return this.backingList.set(index, element);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.util.AbstractList#clear()
@@ -73,7 +74,7 @@ public class CachingList<T> extends AbstractList<T> implements Serializable {
 
 	@Override
 	public T remove(int index) {
-		checkRange(index, this.size);
+		this.checkRange(index, this.size);
 
 		final T oldObject = this.backingList.remove(index);
 		this.backingList.add(oldObject);
@@ -92,7 +93,7 @@ public class CachingList<T> extends AbstractList<T> implements Serializable {
 	 */
 	@Override
 	public T get(int index) {
-		checkRange(index, this.size);
+		this.checkRange(index, this.size);
 
 		return this.backingList.get(index);
 	}

@@ -5,10 +5,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.packages.IRegistry;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 
-public class StackedRegistry<T extends ISerializableSopremoType, R extends IRegistry<T>> implements IRegistry<T> {
+public class StackedRegistry<T extends ISerializableSopremoType, R extends IRegistry<T>> extends AbstractSopremoType
+		implements IRegistry<T> {
 	/**
 	 * 
 	 */
@@ -53,6 +57,26 @@ public class StackedRegistry<T extends ISerializableSopremoType, R extends IRegi
 		for (R registry : this.registryStack)
 			keys.addAll(registry.keySet());
 		return keys;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		final LinkedList<R> stack = ((StackedRegistry<T, R>) original).registryStack;
+		this.registryStack.addAll(SopremoUtil.deepClone(stack.subList(1, stack.size())));
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new StackedRegistry<T, R>(this.registryStack.peekFirst());
 	}
 
 	@Override

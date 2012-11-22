@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import eu.stratosphere.sopremo.CoreFunctions;
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
@@ -17,7 +17,7 @@ import eu.stratosphere.sopremo.expressions.FunctionCall;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class ReplaceTest extends SopremoTest<Replace> {
+public class ReplaceTest extends EqualCloneTest<Replace> {
 	@Override
 	protected Replace createDefaultInstance(int index) {
 		return new Replace().withReplaceExpression(new ArrayAccess(index));
@@ -25,7 +25,7 @@ public class ReplaceTest extends SopremoTest<Replace> {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.SopremoTest#initVerifier(nl.jqno.equalsverifier.EqualsVerifier)
+	 * @see eu.stratosphere.sopremo.EqualCloneTest#initVerifier(nl.jqno.equalsverifier.EqualsVerifier)
 	 */
 	@Override
 	protected void initVerifier(EqualsVerifier<Replace> equalVerifier) {

@@ -21,7 +21,7 @@ import eu.stratosphere.sopremo.expressions.EvaluationExpression;
  */
 public abstract class NamedChildIterator implements ChildIterator {
 	private int index = -1;
-	
+
 	private final String[] childNames;
 
 	public NamedChildIterator(String... childNames) {
@@ -43,13 +43,13 @@ public abstract class NamedChildIterator implements ChildIterator {
 	 */
 	@Override
 	public EvaluationExpression next() {
-		return get(++this.index);
+		return this.get(++this.index);
 	}
 
 	protected int getSize() {
 		return this.childNames.length;
 	}
-	
+
 	/**
 	 * @param i
 	 * @return
@@ -71,7 +71,7 @@ public abstract class NamedChildIterator implements ChildIterator {
 	 */
 	@Override
 	public EvaluationExpression previous() {
-		return get(--this.index);
+		return this.get(--this.index);
 	}
 
 	/*
@@ -107,7 +107,7 @@ public abstract class NamedChildIterator implements ChildIterator {
 	 */
 	@Override
 	public void set(EvaluationExpression childExpression) {
-		set(this.index, childExpression);
+		this.set(this.index, childExpression);
 	}
 
 	protected abstract void set(int index, EvaluationExpression childExpression);

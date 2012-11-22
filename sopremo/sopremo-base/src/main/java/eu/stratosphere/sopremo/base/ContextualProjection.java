@@ -4,6 +4,7 @@ import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoCross;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -28,6 +29,7 @@ public class ContextualProjection extends ElementaryOperator<ContextualProjectio
 		return this.contextPath;
 	}
 
+	@Property
 	public void setContextPath(final EvaluationExpression contextPath) {
 		if (contextPath == null)
 			throw new NullPointerException("contextPath must not be null");

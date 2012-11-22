@@ -42,7 +42,7 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 		this.record = record;
 		this.schema = schema;
 	}
-	
+
 	/**
 	 * Returns the record.
 	 * 

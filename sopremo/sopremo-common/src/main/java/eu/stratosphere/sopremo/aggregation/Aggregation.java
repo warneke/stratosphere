@@ -40,9 +40,18 @@ public abstract class Aggregation extends AbstractSopremoType implements ISerial
 		return result;
 	}
 
-	protected Object readResolve() {
-		// HACK to force all transient fields to be initialized
-		return clone();
+	// protected Object readResolve() {
+	// // HACK to force all transient fields to be initialized
+	// return clone();
+	// }
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#clone()
+	 */
+	@Override
+	public Aggregation clone() {
+		return (Aggregation) super.clone();
 	}
 
 	/**
@@ -66,12 +75,16 @@ public abstract class Aggregation extends AbstractSopremoType implements ISerial
 		return this.name.equals(other.name);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
 	@Override
-	public Aggregation clone() {
+	protected AbstractSopremoType createCopy() {
 		try {
-			return ReflectUtil.newInstance(getClass(), this.name);
+			return ReflectUtil.newInstance(this.getClass(), this.name);
 		} catch (Exception e) {
-			throw new IllegalStateException("Aggregation must implement clone or conform to the ctor", e);
+			throw new IllegalStateException("Aggregation must implement createCopy or conform to the ctor", e);
 		}
 	}
 

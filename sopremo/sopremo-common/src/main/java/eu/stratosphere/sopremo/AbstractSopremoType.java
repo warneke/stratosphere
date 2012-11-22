@@ -16,6 +16,8 @@ package eu.stratosphere.sopremo;
 
 import java.io.IOException;
 
+import eu.stratosphere.sopremo.pact.SopremoUtil;
+
 /**
  * Provides basic implementations of the required methods of {@link SopremoType}
  * 
@@ -29,6 +31,55 @@ public abstract class AbstractSopremoType implements ISopremoType {
 	@Override
 	public String toString() {
 		return toString(this);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	public AbstractSopremoType clone() {
+		AbstractSopremoType copy = this.createCopy();
+		if (SopremoUtil.DEBUG)
+			checkCopyType(copy);
+		copy.copyPropertiesFrom(this);
+		return copy;
+	}
+
+	protected void checkCopyType(AbstractSopremoType copy) {
+		if (copy.getClass() != this.getClass())
+			throw new AssertionError(String.format("Create copy returned wrong type. Expected %s but was %s", getClass(), copy.getClass()));
+	}
+
+	@SuppressWarnings("unchecked")
+	public final <T extends AbstractSopremoType> T copy() {
+		return (T) this.clone();
+	}
+
+	/**
+	 * Copies the values of the given object. The object has the same type as this object.
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+	}
+
+	/**
+	 * Creates a copy of this object with the same properties for the overriding class.<br/>
+	 * A successive call to {@link #copyPropertiesFrom(EvaluationExpression)} ensures that all properties of super
+	 * classes are applied.<br/>
+	 * However, all final fields should be properly initialized by this method.
+	 * 
+	 * @return a newly created expression
+	 */
+	protected abstract AbstractSopremoType createCopy();
+
+	protected Object readResolve() {
+		this.initTransients();
+		return this;
+	}
+
+	protected void initTransients() {
+		SopremoUtil.initTransientFields(this);
 	}
 
 	/**

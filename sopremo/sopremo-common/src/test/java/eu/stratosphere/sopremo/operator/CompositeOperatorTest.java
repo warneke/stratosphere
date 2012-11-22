@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.SopremoTest;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
 import eu.stratosphere.sopremo.pact.JsonCollector;
@@ -19,12 +19,11 @@ import eu.stratosphere.util.dag.GraphLevelPartitioner;
 import eu.stratosphere.util.dag.GraphLevelPartitioner.Level;
 
 /**
- * The class <code>CompositeOperatorTest</code> contains tests for the class
- * <code>{@link CompositeOperator<?>}</code>.
+ * The class <code>CompositeOperatorTest</code> contains tests for the class <code>{@link CompositeOperator<?>}</code>.
  * 
  * @author Arvid Heise
  */
-public class CompositeOperatorTest extends SopremoTest<CompositeOperatorTest.CompositeOperatorImpl> {
+public class CompositeOperatorTest extends EqualCloneTest<CompositeOperatorTest.CompositeOperatorImpl> {
 	@Override
 	protected CompositeOperatorImpl createDefaultInstance(final int index) {
 		return new CompositeOperatorImpl(index);
@@ -46,7 +45,7 @@ public class CompositeOperatorTest extends SopremoTest<CompositeOperatorTest.Com
 
 		assertNotNull(module);
 		final List<Level<Operator<?>>> reachableNodes = GraphLevelPartitioner.getLevels(
-				module.getAllOutputs(), OperatorNavigator.INSTANCE);
+			module.getAllOutputs(), OperatorNavigator.INSTANCE);
 		assertEquals(3, reachableNodes.get(0).getLevelNodes().size());
 		assertEquals(1, reachableNodes.get(1).getLevelNodes().size());
 		assertEquals(1, reachableNodes.get(2).getLevelNodes().size());
@@ -55,9 +54,9 @@ public class CompositeOperatorTest extends SopremoTest<CompositeOperatorTest.Com
 		for (int index = 0; index < 3; index++)
 			assertSame(Source.class, reachableNodes.get(0).getLevelNodes().get(index).getClass());
 		assertSame(ElementaryOperatorImpl.class, reachableNodes.get(1)
-				.getLevelNodes().get(0).getClass());
+			.getLevelNodes().get(0).getClass());
 		assertSame(ElementaryOperatorImpl.class, reachableNodes.get(2)
-				.getLevelNodes().get(0).getClass());
+			.getLevelNodes().get(0).getClass());
 		assertSame(Sink.class, reachableNodes.get(3).getLevelNodes().get(0).getClass());
 	}
 
@@ -73,17 +72,24 @@ public class CompositeOperatorTest extends SopremoTest<CompositeOperatorTest.Com
 			super(3, 1);
 			this.index = index;
 		}
+		
+		/**
+		 * Initializes CompositeOperatorTest.CompositeOperatorImpl.
+		 *
+		 */
+		public CompositeOperatorImpl() {
+			this(0);
+		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
 		 * @see eu.stratosphere.sopremo.operator.CompositeOperator#asModule(eu.
 		 * stratosphere.sopremo.EvaluationContext)
 		 */
 		@Override
 		public void addImplementation(SopremoModule module, EvaluationContext context) {
 			module.embed(new ElementaryOperatorImpl().withInputs(null,
-					new ElementaryOperatorImpl().withInputs(null, null)));
+				new ElementaryOperatorImpl().withInputs(null, null)));
 		}
 
 		@Override
@@ -117,7 +123,6 @@ public class CompositeOperatorTest extends SopremoTest<CompositeOperatorTest.Com
 		static class Implementation extends SopremoCross {
 			/*
 			 * (non-Javadoc)
-			 * 
 			 * @see
 			 * eu.stratosphere.sopremo.pact.SopremoCross#cross(eu.stratosphere
 			 * .sopremo.type.IJsonNode, eu.stratosphere.sopremo.type.IJsonNode,

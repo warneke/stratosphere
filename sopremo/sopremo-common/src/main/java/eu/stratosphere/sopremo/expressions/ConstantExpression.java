@@ -17,7 +17,7 @@ public class ConstantExpression extends EvaluationExpression {
 	 * @author Arvid Heise
 	 */
 	@Singleton
-	private static final class MissingConstant extends ConstantExpression {
+	private static final class SingletonConstant extends ConstantExpression {
 		/**
 		 * 
 		 */
@@ -28,7 +28,7 @@ public class ConstantExpression extends EvaluationExpression {
 		 * 
 		 * @param constant
 		 */
-		private MissingConstant(IJsonNode constant) {
+		private SingletonConstant(IJsonNode constant) {
 			super(constant);
 		}
 
@@ -50,7 +50,22 @@ public class ConstantExpression extends EvaluationExpression {
 
 	private final IJsonNode constant;
 
-	public static final EvaluationExpression MISSING = new MissingConstant(MissingNode.getInstance());
+	public static final EvaluationExpression MISSING = new ConstantExpression(MissingNode.getInstance()) {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7674060699864203775L;
+
+		@Override
+		protected EvaluationExpression createCopy() {
+			return this;
+		}
+
+		@Override
+		protected Object readResolve() {
+			return MISSING;
+		}
+	};
 
 	public static final EvaluationExpression NULL = new ConstantExpression(NullNode.getInstance()) {
 
@@ -58,6 +73,11 @@ public class ConstantExpression extends EvaluationExpression {
 		 * 
 		 */
 		private static final long serialVersionUID = -2375203649638430872L;
+
+		@Override
+		protected EvaluationExpression createCopy() {
+			return this;
+		}
 
 		@Override
 		protected Object readResolve() {

@@ -61,14 +61,14 @@ public class FunctionRegistryTest {
 	public void shouldFailIfNoApproporiateMatchingJavaFunction() {
 		this.registry.put(JavaFunctions.class);
 
-		evaluate("sum", new IntNode(1), new IntNode(2), new TextNode("3"));
+		this.evaluate("sum", new IntNode(1), new IntNode(2), new TextNode("3"));
 	}
 
 	@Test
 	public void shouldInvokeArrayJavaFunctionForArrayNode() {
 		this.registry.put(JavaFunctions.class);
 
-		Assert.assertSame(ARRAY_NODE, evaluate("count", new ArrayNode()));
+		Assert.assertSame(ARRAY_NODE, this.evaluate("count", new ArrayNode()));
 	}
 
 	private IJsonNode evaluate(String name, IJsonNode... parameters) {
@@ -81,37 +81,38 @@ public class FunctionRegistryTest {
 	public void shouldInvokeDerivedVarargJavaFunction() {
 		this.registry.put(JavaFunctions.class);
 
-		Assert.assertSame(SUM_NODE, evaluate("sum", new IntNode(1), new IntNode(2), new IntNode(3)));
-		Assert.assertSame(SUM_NODE, evaluate("sum", new IntNode(1)));
+		Assert.assertSame(SUM_NODE, this.evaluate("sum", new IntNode(1), new IntNode(2), new IntNode(3)));
+		Assert.assertSame(SUM_NODE, this.evaluate("sum", new IntNode(1)));
 	}
 
 	@Test
 	public void shouldInvokeExactMatchingJavaFunction() {
 		this.registry.put(JavaFunctions.class);
 
-		Assert.assertSame(TWO_INT_NODE, evaluate("count", new IntNode(1), new IntNode(2)));
+		Assert.assertSame(TWO_INT_NODE, this.evaluate("count", new IntNode(1), new IntNode(2)));
 	}
 
 	@Test
 	public void shouldInvokeFallbackJavaFunction() {
 		this.registry.put(JavaFunctions.class);
 
-		Assert.assertSame(GENERIC_NODE, evaluate("count", new ObjectNode()));
+		Assert.assertSame(GENERIC_NODE, this.evaluate("count", new ObjectNode()));
 	}
 
 	@Test
 	public void shouldInvokeGenericVarargJavaFunctionsIfNoExactMatch() {
 		this.registry.put(JavaFunctions.class);
 
-		Assert.assertSame(GENERIC_VARARG_NODE, evaluate("count", new ObjectNode(), new ObjectNode(), new ObjectNode()));
+		Assert.assertSame(GENERIC_VARARG_NODE,
+			this.evaluate("count", new ObjectNode(), new ObjectNode(), new ObjectNode()));
 	}
 
 	@Test
 	public void shouldInvokeMostSpecificVarargJavaFunction() {
 		this.registry.put(JavaFunctions.class);
 
-		Assert.assertSame(ONE_INT_VARARG_NODE, evaluate("count", new IntNode(1), new IntNode(2), new IntNode(3)));
-		Assert.assertSame(ONE_INT_VARARG_NODE, evaluate("count", new IntNode(1)));
+		Assert.assertSame(ONE_INT_VARARG_NODE, this.evaluate("count", new IntNode(1), new IntNode(2), new IntNode(3)));
+		Assert.assertSame(ONE_INT_VARARG_NODE, this.evaluate("count", new IntNode(1)));
 	}
 
 	@SuppressWarnings("unused")

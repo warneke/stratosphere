@@ -83,11 +83,13 @@ public class MissingNode extends AbstractJsonNode implements IPrimitiveNode {
 		return Type.MissingNode;
 	}
 
-	private Object readResolve() {
+	@Override
+	protected Object readResolve() {
 		return Instance;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#copy()
 	 */
 	@Override

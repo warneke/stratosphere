@@ -54,12 +54,13 @@ public interface IArrayNode extends IStreamArrayNode {
 	 */
 	public abstract IArrayNode add(final int index, final IJsonNode element);
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#clone()
 	 */
 	@Override
 	public IArrayNode clone();
-	
+
 	/**
 	 * Returns the node which is saved in the array at the specified <code>index</code>.
 	 * 
@@ -138,7 +139,7 @@ public interface IArrayNode extends IStreamArrayNode {
 	 * @param nodes
 	 */
 	public abstract void setAll(IJsonNode[] nodes);
-	
+
 	public abstract Collection<IJsonNode> asCollection();
 
 	/**

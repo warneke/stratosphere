@@ -19,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javolution.text.TextFormat;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.type.CachingArrayNode;
 
 /**
@@ -82,19 +83,27 @@ public class RegexTokenizer extends AbstractTokenizer {
 
 		tokens.clear();
 		if (!matcher.find()) {
-			addToken(tokens, text, 0, text.length());
+			this.addToken(tokens, text, 0, text.length());
 			return;
 		}
 
 		int start = 0, end = 0;
 		do {
 			end = matcher.start();
-			if (end > start) {
-				addToken(tokens, text, start, end);
-			}
+			if (end > start)
+				this.addToken(tokens, text, start, end);
 			start = matcher.end();
 		} while (matcher.find());
-		addToken(tokens, text, start, text.length());
+		this.addToken(tokens, text, start, text.length());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new RegexTokenizer(this.pattern);
 	}
 
 	/*

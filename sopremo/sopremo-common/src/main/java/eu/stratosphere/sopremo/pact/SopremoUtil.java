@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
@@ -31,6 +32,7 @@ import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.nephele.util.StringUtils;
 import eu.stratosphere.pact.common.stubs.Stub;
 import eu.stratosphere.sopremo.ICloneable;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.SopremoRuntime;
 import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.type.BigIntegerNode;
@@ -531,6 +533,26 @@ public class SopremoUtil {
 		return clones;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <K, V extends ICloneable> Map<K, V> deepClone(Map<K, V> originals) {
+		final Map<K, V> clones = new HashMap<K, V>(originals.size());
+		for (Entry<K, V> original : originals.entrySet())
+			clones.put(original.getKey(), (V) original.getValue().clone());
+		return clones;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> deepCloneIfPossible(Map<K, V> originals) {
+		final Map<K, V> clones = new HashMap<K, V>(originals.size());
+		for (Entry<K, V> original : originals.entrySet()) {
+			V value = original.getValue();
+			if (value instanceof ICloneable)
+				value = (V) ((ICloneable) value).clone();
+			clones.put(original.getKey(), value);
+		}
+		return clones;
+	}
+
 	public static void assertArguments(SopremoFunction function, int numberOfArguments) {
 		if (!function.accepts(numberOfArguments))
 			throw new IllegalArgumentException(
@@ -552,27 +574,43 @@ public class SopremoUtil {
 	 * @param evaluationExpression
 	 */
 	public static void initTransientFields(ICloneable object) {
-		final Field[] fields = object.getClass().getDeclaredFields();
-		for (Field field : fields) {
-			try {
-				if ((field.getModifiers() & Modifier.TRANSIENT) > 0) {
-					final Class<?> type = field.getType();
-					field.setAccessible(true);
-					
-					// already initialized
-					if (field.get(object) != null)
-						continue;
+		for (Class<?> clazz = object.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
+			final Field[] fields = clazz.getDeclaredFields();
+			for (Field field : fields)
+				try {
+					if ((field.getModifiers() & Modifier.TRANSIENT) > 0) {
+						final Class<?> type = field.getType();
+						field.setAccessible(true);
 
-					if (ICloneable.class.isAssignableFrom(type)) { // make copy of one default instantiation
-						final Object defaultObject = getDefault(object.getClass(), object);
-						field.set(object, ((ICloneable) field.get(defaultObject)).clone());
-					} else
-						// try to create new object
-						field.set(object, type.newInstance());
+						// already initialized
+						if (field.get(object) != null)
+							continue;
+
+						if (ICloneable.class.isAssignableFrom(type)) { // make copy of one default instantiation
+							final Object defaultObject = getDefault(object.getClass(), object);
+							field.set(object, ((ICloneable) field.get(defaultObject)).clone());
+						} else
+							// try to create new object
+							field.set(object, type.newInstance());
+					}
+				} catch (Exception e) {
+					LOG.error("Cannot initialize transient field " + field, e);
 				}
-			} catch (Exception e) {
-				LOG.error("Cannot initialize transient field " + field, e);
-			}
 		}
+	}
+
+	/**
+	 * Appends the textual representation of the given objects to the appendable.
+	 */
+	public static void append(Appendable appendable, Object... objects) throws IOException {
+		for (Object object : objects)
+			if (object instanceof CharSequence)
+				appendable.append((CharSequence) object);
+			else if (object instanceof ISopremoType)
+				((ISopremoType) object).appendAsString(appendable);
+			else if (object instanceof Character)
+				appendable.append((Character) object);
+			else
+				appendable.append(object.toString());
 	}
 }

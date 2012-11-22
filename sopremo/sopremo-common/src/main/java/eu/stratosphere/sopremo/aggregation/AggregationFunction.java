@@ -16,6 +16,7 @@ package eu.stratosphere.sopremo.aggregation;
 
 import java.io.IOException;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -50,23 +51,25 @@ public class AggregationFunction extends SopremoFunction {
 	public Aggregation getAggregation() {
 		return this.aggregation;
 	}
-	
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.SopremoFunction#clone()
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 	 */
 	@Override
-	public AggregationFunction clone() {
+	protected AbstractSopremoType createCopy() {
 		return new AggregationFunction(this.aggregation.clone());
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.function.SopremoFunction#appendAsString(java.lang.Appendable)
 	 */
 	@Override
 	public void appendAsString(Appendable appendable) throws IOException {
 		this.aggregation.appendAsString(appendable);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.function.Callable#call(java.lang.Object, java.lang.Object,
@@ -96,7 +99,7 @@ public class AggregationFunction extends SopremoFunction {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		AggregationFunction other = (AggregationFunction) obj;
 		return this.aggregation.equals(other.aggregation);

@@ -68,7 +68,8 @@ public class EvaluationExpressionTest {
 		Assert.assertFalse(expression.equals(referenceExpression));
 
 		final EvaluationExpression expected =
-			new ArithmeticExpression(EvaluationExpression.VALUE, ArithmeticOperator.ADDITION, ConstantExpression.MISSING);
+			new ArithmeticExpression(EvaluationExpression.VALUE, ArithmeticOperator.ADDITION,
+				ConstantExpression.MISSING);
 
 		Assert.assertEquals(expected, expression);
 		Assert.assertNull(expression.findFirst(InputSelection.class));

@@ -105,7 +105,7 @@ public class TwoSourceJoin extends TwoSourceJoinBase<TwoSourceJoin> {
 		return this.strategy.getKeyExpressions(inputIndex);
 	}
 
-	public ArrayCreation getOuterJoinSources() {
+	public EvaluationExpression getOuterJoinSources() {
 		EvaluationExpression[] expressions = new EvaluationExpression[this.outerJoinSources.size()];
 		final IntIterator iterator = this.outerJoinSources.iterator();
 		for (int index = 0; iterator.hasNext(); index++) {
@@ -115,6 +115,7 @@ public class TwoSourceJoin extends TwoSourceJoinBase<TwoSourceJoin> {
 		return new ArrayCreation(expressions);
 	}
 
+	@Property
 	public void setCondition(BinaryBooleanExpression condition) {
 		if (condition == null)
 			throw new NullPointerException("condition must not be null");

@@ -5,6 +5,7 @@ import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoMap;
 import eu.stratosphere.sopremo.type.IArrayNode;
@@ -80,6 +81,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		return new ObjectAccess(this.idFieldName);
 	}
 
+	@Property
 	public void setEnumerationExpression(final EvaluationExpression enumerationExpression) {
 		if (enumerationExpression == null)
 			throw new NullPointerException();
@@ -87,6 +89,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		this.enumerationExpression = enumerationExpression;
 	}
 
+	@Property
 	public void setIdFieldName(final String enumerationFieldName) {
 		if (enumerationFieldName == null)
 			throw new NullPointerException();
@@ -114,6 +117,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		return this;
 	}
 
+	@Property
 	public void setIdGeneration(final EvaluationExpression idGeneration) {
 		if (idGeneration == null)
 			throw new NullPointerException("idGeneration must not be null");
@@ -125,6 +129,7 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		return this.valueFieldName;
 	}
 
+	@Property
 	public void setValueFieldName(String valueFieldName) {
 		if (valueFieldName == null)
 			throw new NullPointerException("valueFieldName must not be null");

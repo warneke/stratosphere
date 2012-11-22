@@ -110,7 +110,7 @@ public class FunctionNode extends AbstractJsonNode {
 			return true;
 		if (!super.equals(obj))
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		FunctionNode other = (FunctionNode) obj;
 		return this.function.equals(other.function);

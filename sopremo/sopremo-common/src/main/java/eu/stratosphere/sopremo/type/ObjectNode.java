@@ -109,8 +109,8 @@ public class ObjectNode extends AbstractObjectNode implements IObjectNode {
 	 * @see eu.stratosphere.sopremo.type.JsonObject#getFieldNames()
 	 */
 	@Override
-	public Iterator<String> getFieldNames() {
-		return this.children.keySet().iterator();
+	public Iterable<String> getFieldNames() {
+		return this.children.keySet();
 	}
 
 	@Override

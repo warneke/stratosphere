@@ -16,6 +16,7 @@ import eu.stratosphere.util.reflect.BoundTypeUtil;
  * 
  * @author Arvid Heise
  */
+@SuppressWarnings("serial")
 public class BoundTypeUtilTest {
 	/**
 	 * 
@@ -97,33 +98,27 @@ public class BoundTypeUtilTest {
 		return new BoundType[] { BoundType.of(klass, types) };
 	}
 
-	@SuppressWarnings("serial")
 	private static class BoundList extends ArrayList<String> {
 		// no reimplementation since only the static binding of types is tested
 	}
 
-	@SuppressWarnings("serial")
 	private static class BoundMap extends HashMap<String, Integer> {
 		// no reimplementation since only the static binding of types is tested
 	}
 
-	@SuppressWarnings("serial")
 	private static class CompletedBoundMap extends PartialBoundMap<String> {
 		// no reimplementation since only the static binding of types is tested
 	}
 
-	@SuppressWarnings("serial")
 	private static class NestedList extends ArrayList<LinkedList<ArrayList<String>>> {
 		// no reimplementation since only the static binding of types is tested
 	}
 
-	@SuppressWarnings("serial")
 	private static class NestedMap extends
 			HashMap<LinkedList<ArrayList<String>>, HashMap<ArrayList<Integer>, NestedList>> {
 		// no reimplementation since only the static binding of types is tested
 	}
 
-	@SuppressWarnings("serial")
 	private static class PartialBoundMap<T> extends HashMap<T, Integer> {
 		// no reimplementation since only the static binding of types is tested
 	}

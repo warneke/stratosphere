@@ -84,7 +84,7 @@ public class CoreFunctions implements BuiltinProvider {
 	@Name(verb = "sort")
 	public static final Aggregation SORT = new MaterializingAggregation("sort") {
 		private final transient ArrayCache<IJsonNode> arrayCache = new ArrayCache<IJsonNode>(IJsonNode.class);
-		
+
 		@Override
 		protected IJsonNode processNodes(final CachingArrayNode nodeArray) {
 			final IJsonNode[] nodes = nodeArray.toArray(this.arrayCache);

@@ -18,7 +18,6 @@ import eu.stratosphere.sopremo.EvaluationContext;
 
 /**
  * @author Arvid Heise
- *
  */
 public interface SopremoStub {
 	public EvaluationContext getContext();

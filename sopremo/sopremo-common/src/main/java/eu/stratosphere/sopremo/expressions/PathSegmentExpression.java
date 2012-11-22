@@ -16,6 +16,7 @@ package eu.stratosphere.sopremo.expressions;
 
 import java.io.IOException;
 
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -76,19 +77,16 @@ public abstract class PathSegmentExpression extends EvaluationExpression {
 	 */
 	@Override
 	public IJsonNode evaluate(IJsonNode node) {
-		return evaluateSegment(this.getInputExpression().evaluate(node));
+		return this.evaluateSegment(this.getInputExpression().evaluate(node));
 	}
 
 	protected abstract IJsonNode evaluateSegment(IJsonNode node);
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#copyPropertiesFrom(eu.stratosphere.sopremo.expressions
-	 * .EvaluationExpression)
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.ISopremoType)
 	 */
 	@Override
-	protected void copyPropertiesFrom(EvaluationExpression original) {
+	public void copyPropertiesFrom(ISopremoType original) {
 		super.copyPropertiesFrom(original);
 		this.setInputExpression(((PathSegmentExpression) original).getInputExpression().clone());
 	}

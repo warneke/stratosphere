@@ -10,7 +10,6 @@ import java.io.Writer;
 import java.util.EnumMap;
 import java.util.Map;
 
-import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
 import eu.stratosphere.sopremo.type.IStreamArrayNode;
@@ -151,7 +150,7 @@ public class JsonGenerator {
 			writer.append('\"').append(node.getTextValue()).append('\"');
 		}
 	}
-	
+
 	/**
 	 * This class implements the JSON-Serialization for TextNodes
 	 * 
@@ -185,7 +184,7 @@ public class JsonGenerator {
 	 * @param <T>
 	 */
 	private static class ObjectNodeTypeWriter implements JsonTypeWriter<IObjectNode> {
-		
+
 		private static ObjectNodeTypeWriter Instance = new ObjectNodeTypeWriter();
 
 		@Override

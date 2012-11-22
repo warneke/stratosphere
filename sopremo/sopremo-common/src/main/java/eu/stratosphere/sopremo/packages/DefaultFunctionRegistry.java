@@ -89,9 +89,10 @@ public class DefaultFunctionRegistry extends DefaultRegistry<Callable<?, ?>> imp
 		for (final Entry<String, Callable<?, ?>> method : this.methods.entrySet()) {
 			appendable.append(method.getKey()).append(": ");
 			method.getValue().appendAsString(appendable);
-			if(first)
+			if (first)
 				first = false;
-			else appendable.append(", ");
+			else
+				appendable.append(", ");
 		}
 		appendable.append("}");
 	}
@@ -106,9 +107,8 @@ public class DefaultFunctionRegistry extends DefaultRegistry<Callable<?, ?>> imp
 		for (int index = 0; index < parameterTypes.length; index++)
 			if (!IJsonNode.class.isAssignableFrom(parameterTypes[index])
 				&& !(index == parameterTypes.length - 1 && method.isVarArgs() &&
-				IJsonNode.class.isAssignableFrom(parameterTypes[index].getComponentType()))) {
+				IJsonNode.class.isAssignableFrom(parameterTypes[index].getComponentType())))
 				return false;
-			}
 		return true;
 	}
 
@@ -118,16 +118,16 @@ public class DefaultFunctionRegistry extends DefaultRegistry<Callable<?, ?>> imp
 	 */
 	@Override
 	public void put(String registeredName, Class<?> clazz, String staticMethodName) {
-		final List<Method> functions = getCompatibleMethods(
+		final List<Method> functions = this.getCompatibleMethods(
 			ReflectUtil.getMethods(clazz, staticMethodName, Modifier.STATIC | Modifier.PUBLIC));
 
 		if (functions.isEmpty())
 			throw new IllegalArgumentException(
 				String.format("Method %s not found in class %s", staticMethodName, clazz));
 
-		Callable<?, ?> javaMethod = get(registeredName);
+		Callable<?, ?> javaMethod = this.get(registeredName);
 		if (javaMethod == null || !(javaMethod instanceof JavaMethod))
-			this.put(registeredName, javaMethod = createJavaMethod(registeredName, functions.get(0)));
+			this.put(registeredName, javaMethod = this.createJavaMethod(registeredName, functions.get(0)));
 		for (Method method : functions)
 			((JavaMethod) javaMethod).addSignature(method);
 	}
@@ -140,7 +140,7 @@ public class DefaultFunctionRegistry extends DefaultRegistry<Callable<?, ?>> imp
 
 	@Override
 	public void put(final Class<?> javaFunctions) {
-		final List<Method> functions = getCompatibleMethods(
+		final List<Method> functions = this.getCompatibleMethods(
 			ReflectUtil.getMethods(javaFunctions, null, Modifier.STATIC | Modifier.PUBLIC));
 
 		for (final Method method : functions)
@@ -153,13 +153,13 @@ public class DefaultFunctionRegistry extends DefaultRegistry<Callable<?, ?>> imp
 			try {
 				if (Aggregation.class.isAssignableFrom(field.getType())) {
 					final Aggregation aggregation = (Aggregation) field.get(null);
-					String name = getName(field);
+					String name = this.getName(field);
 					if (name == null)
 						name = aggregation.getName();
 					this.put(name, new AggregationFunction(aggregation));
 				} else if (SopremoFunction.class.isAssignableFrom(field.getType())) {
 					final SopremoFunction function = (SopremoFunction) field.get(null);
-					String name = getName(field);
+					String name = this.getName(field);
 					if (name == null)
 						name = function.getName();
 					this.put(name, function);
@@ -183,9 +183,9 @@ public class DefaultFunctionRegistry extends DefaultRegistry<Callable<?, ?>> imp
 
 	@Override
 	public void put(final Method method) {
-		Callable<?, ?> javaMethod = get(method.getName());
+		Callable<?, ?> javaMethod = this.get(method.getName());
 		if (javaMethod == null || !(javaMethod instanceof JavaMethod))
-			this.put(method.getName(), javaMethod = createJavaMethod(method.getName(), method));
+			this.put(method.getName(), javaMethod = this.createJavaMethod(method.getName(), method));
 		((JavaMethod) javaMethod).addSignature(method);
 	}
 

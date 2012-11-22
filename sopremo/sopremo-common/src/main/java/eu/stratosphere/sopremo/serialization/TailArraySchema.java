@@ -17,7 +17,7 @@ package eu.stratosphere.sopremo.serialization;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import eu.stratosphere.pact.common.type.PactRecord;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.pact.JsonNodeWrapper;
@@ -60,6 +60,15 @@ public class TailArraySchema extends AbstractSchema {
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new TailArraySchema(this.tailSize);
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see
 	 * eu.stratosphere.sopremo.serialization.Schema#indicesOf(eu.stratosphere.sopremo.expressions.EvaluationExpression)
 	 */
@@ -98,7 +107,7 @@ public class TailArraySchema extends AbstractSchema {
 	 * eu.stratosphere.pact.common.type.PactRecord)
 	 */
 	@Override
-	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target, final EvaluationContext context) {
+	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target) {
 		IArrayNode others;
 		if (target == null || target.getNumFields() != 1) {
 

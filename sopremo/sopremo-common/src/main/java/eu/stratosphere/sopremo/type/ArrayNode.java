@@ -22,7 +22,7 @@ public class ArrayNode extends AbstractArrayNode {
 	private static final long serialVersionUID = 898220542834090837L;
 
 	private final List<IJsonNode> children;
-	
+
 	@SuppressWarnings("unchecked")
 	public final static IArrayNode EMPTY = new ArrayNode(Collections.EMPTY_LIST);
 
@@ -32,14 +32,14 @@ public class ArrayNode extends AbstractArrayNode {
 	public ArrayNode() {
 		this(new ArrayList<IJsonNode>());
 	}
-	
+
 	/**
 	 * Initializes an empty ArrayNode.
 	 */
 	public ArrayNode(int size) {
 		this(new ArrayList<IJsonNode>(size));
-		for (int index = 0; index < size; index++) 
-			add(MissingNode.getInstance());
+		for (int index = 0; index < size; index++)
+			this.add(MissingNode.getInstance());
 	}
 
 	/**
@@ -73,14 +73,15 @@ public class ArrayNode extends AbstractArrayNode {
 			this.children.add(node);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
 	 */
 	@Override
 	public ArrayNode clone() {
 		return (ArrayNode) super.clone();
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IArrayNode#asCollection()
@@ -245,9 +246,8 @@ public class ArrayNode extends AbstractArrayNode {
 	@Override
 	protected void fillArray(IJsonNode[] result) {
 		IJsonNode[] array = this.children.toArray(new IJsonNode[this.children.size()]);
-		for (int i = 0; i < this.children.size(); i++) {
+		for (int i = 0; i < this.children.size(); i++)
 			result[i] = array[i];
-		}
 	}
 
 	@Override

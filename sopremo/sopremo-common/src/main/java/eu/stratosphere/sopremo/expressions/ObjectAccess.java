@@ -71,8 +71,10 @@ public class ObjectAccess extends PathSegmentExpression {
 	 * cases, the return value is the node associated with the field name of this FieldAccess instance or
 	 * {@link NullNode} if no such value exists.
 	 */
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluateSegment(eu.stratosphere.sopremo.type.IJsonNode)
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluateSegment(eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
 	protected IJsonNode evaluateSegment(final IJsonNode node) {

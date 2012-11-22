@@ -63,11 +63,7 @@ public class PackageManager implements ParsingScope {
 
 			QueryUtil.LOG.debug("adding package " + packagePath);
 			try {
-				if (packagePath.getName().endsWith(".jar"))
-					packageInfo.importFromJar(packagePath);
-				else
-					// should only happen while debugging
-					packageInfo.importFromProject(packagePath.getAbsoluteFile());
+				packageInfo.importFrom(packagePath);
 			} catch (IOException e) {
 				throw new IllegalArgumentException(String.format("could not load package %s", packagePath));
 			}

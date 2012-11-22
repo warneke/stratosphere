@@ -28,11 +28,11 @@ import eu.stratosphere.util.IdentitySet;
  * Skeleton implementation of {@link SubGraph}.
  * 
  * @param <Node>
- *            the type of all node
+ *        the type of all node
  * @param <InputNode>
- *            the type of all input nodes
+ *        the type of all input nodes
  * @param <OutputNode>
- *            the type of all output nodes
+ *        the type of all output nodes
  */
 public abstract class GraphModule<Node, InputNode extends Node, OutputNode extends Node> implements
 		SubGraph<Node, InputNode, OutputNode>, Serializable {
@@ -61,15 +61,14 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 	private final String name;
 
 	/**
-	 * Initializes a GraphModule having the given inputs, outputs, and
-	 * {@link Navigator}.
+	 * Initializes a GraphModule having the given inputs, outputs, and {@link Navigator}.
 	 * 
 	 * @param inputNodes
-	 *            the inputs
+	 *        the inputs
 	 * @param outputNodes
-	 *            the outputs
+	 *        the outputs
 	 * @param navigator
-	 *            the navigator used to traverse the graph of nodes
+	 *        the navigator used to traverse the graph of nodes
 	 */
 	protected GraphModule(final String name, final List<InputNode> inputNodes, final List<OutputNode> outputNodes,
 			final ConnectionNavigator<Node> navigator) {
@@ -84,11 +83,11 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 	 * and {@link Navigator}.
 	 * 
 	 * @param numInputs
-	 *            the number of inputs
+	 *        the number of inputs
 	 * @param numOutputs
-	 *            the number of outputs
+	 *        the number of outputs
 	 * @param navigator
-	 *            the navigator used to traverse the graph of nodes
+	 *        the navigator used to traverse the graph of nodes
 	 */
 	protected GraphModule(final String name, final int numInputs, final int numOutputs,
 			final ConnectionNavigator<Node> navigator) {
@@ -114,7 +113,8 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 
 	@Override
 	public List<OutputNode> getAllOutputs() {
-		if (this.internalOutputNodes.isEmpty()) return getOutputs();
+		if (this.internalOutputNodes.isEmpty())
+			return this.getOutputs();
 		final List<OutputNode> allOutputs = new ArrayList<OutputNode>(this.outputNodes);
 		allOutputs.addAll(this.internalOutputNodes);
 		return allOutputs;
@@ -132,10 +132,11 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 
 	@Override
 	public List<InputNode> getInputs() {
-		return new ArrayList<InputNode>( this.inputNodes);
+		return new ArrayList<InputNode>(this.inputNodes);
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.util.dag.SubGraph#getNumInputs()
 	 */
 	@Override
@@ -169,7 +170,6 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see eu.stratosphere.util.dag.SubGraph#getNumOutputs()
 	 */
 	@Override
@@ -195,7 +195,7 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 			for (final Node node : this.navigator.getConnectedNodes(output))
 				if (node == null)
 					throw new IllegalStateException(String.format("%s: output %s is not fully connected",
-							this.getName(), output));
+						this.getName(), output));
 
 		final Iterable<? extends Node> reachableNodes = this.getReachableNodes();
 		final List<InputNode> inputList = new LinkedList<InputNode>(this.inputNodes);
@@ -204,7 +204,7 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 
 		if (!inputList.isEmpty())
 			throw new IllegalStateException(String.format("%s: inputs %s are not fully connected", this.getName(),
-					inputList));
+				inputList));
 	}
 
 	@Override
@@ -218,9 +218,12 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (this.getClass() != obj.getClass()) return false;
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (this.getClass() != obj.getClass())
+			return false;
 
 		@SuppressWarnings({ "rawtypes", "unchecked" })
 		final GraphModule<Node, InputNode, OutputNode> other = (GraphModule) obj;
@@ -249,11 +252,13 @@ public abstract class GraphModule<Node, InputNode extends Node, OutputNode exten
 			final Node node1 = iterator1.next();
 			final Node node2 = iterator2.next();
 
-			if (!node1.equals(node2)) return Arrays.asList(node1, node2);
+			if (!node1.equals(node2))
+				return Arrays.asList(node1, node2);
 
 			final List<Node> unmatching = this.getUnmatchingNode(this.navigator.getConnectedNodes(node1),
-					this.navigator.getConnectedNodes(node2), seen);
-			if (!unmatching.isEmpty()) return unmatching;
+				this.navigator.getConnectedNodes(node2), seen);
+			if (!unmatching.isEmpty())
+				return unmatching;
 		}
 
 		return new ArrayList<Node>();

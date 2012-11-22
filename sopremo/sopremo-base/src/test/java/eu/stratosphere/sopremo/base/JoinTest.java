@@ -4,7 +4,7 @@ import static eu.stratosphere.sopremo.type.JsonUtil.createPath;
 
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.expressions.AndExpression;
 import eu.stratosphere.sopremo.expressions.ArrayCreation;
 import eu.stratosphere.sopremo.expressions.BooleanExpression;
@@ -17,7 +17,7 @@ import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.expressions.ObjectCreation;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class JoinTest extends SopremoTest<Join> {
+public class JoinTest extends EqualCloneTest<Join> {
 	@Override
 	protected Join createDefaultInstance(final int index) {
 		final ObjectCreation transformation = new ObjectCreation();

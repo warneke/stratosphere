@@ -10,7 +10,7 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IntNode;
@@ -66,7 +66,7 @@ public class JsonGeneratorTest {
 	public void shouldGenerateGivenFile() {
 		try {
 			final JsonParser parser = new JsonParser(new URL(
-				SopremoTest.getResourcePath("SopremoTestPlan/test.json")));
+				SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json")));
 			final File file = File.createTempFile("test", "json");
 			final JsonGenerator gen = new JsonGenerator(file);
 			gen.writeStartArray();
@@ -78,7 +78,7 @@ public class JsonGeneratorTest {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void testObjectNodeSerialization() {
 		try {

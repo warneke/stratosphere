@@ -23,8 +23,8 @@ import com.google.common.collect.DiscreteDomains;
 import com.google.common.collect.Ranges;
 
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
-import eu.stratosphere.sopremo.expressions.ComparativeExpression;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperator;
+import eu.stratosphere.sopremo.expressions.ComparativeExpression;
 import eu.stratosphere.sopremo.expressions.ComparativeExpression.BinaryOperator;
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
 import eu.stratosphere.sopremo.expressions.InputSelection;

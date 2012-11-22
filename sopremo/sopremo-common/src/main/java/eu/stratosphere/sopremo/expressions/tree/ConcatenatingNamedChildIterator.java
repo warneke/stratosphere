@@ -41,7 +41,7 @@ public class ConcatenatingNamedChildIterator extends NamedChildIterator {
 	 */
 	@Override
 	protected EvaluationExpression get(int index) {
-		int iteratorIndex = getIteratorIndex(index);
+		int iteratorIndex = this.getIteratorIndex(index);
 		return this.iterators[iteratorIndex].get(index - this.startIndexes[iteratorIndex]);
 	}
 
@@ -59,7 +59,7 @@ public class ConcatenatingNamedChildIterator extends NamedChildIterator {
 	 */
 	@Override
 	protected void set(int index, EvaluationExpression childExpression) {
-		int iteratorIndex = getIteratorIndex(index);
+		int iteratorIndex = this.getIteratorIndex(index);
 		this.iterators[iteratorIndex].set(index - this.startIndexes[iteratorIndex], childExpression);
 	}
 

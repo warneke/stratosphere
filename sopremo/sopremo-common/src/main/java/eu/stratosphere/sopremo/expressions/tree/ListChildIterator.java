@@ -31,8 +31,11 @@ public class ListChildIterator extends GenericListChildIterator<EvaluationExpres
 		super(expressionIterator);
 	}
 
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions.EvaluationExpression)
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions
+	 * .EvaluationExpression)
 	 */
 	@Override
 	protected final EvaluationExpression convert(EvaluationExpression childExpression) {

@@ -15,7 +15,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.io.JsonGenerator;
 import eu.stratosphere.sopremo.io.JsonParser;
 
@@ -104,7 +104,7 @@ public class SerializableTest {
 
 		try {
 			final JsonParser parser = new JsonParser(new URL(
-				SopremoTest.getResourcePath("SopremoTestPlan/test.json")));
+				SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json")));
 			final File file = File.createTempFile("test", "json");
 
 			while (!parser.checkEnd())

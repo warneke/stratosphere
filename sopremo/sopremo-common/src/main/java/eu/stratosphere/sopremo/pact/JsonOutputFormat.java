@@ -41,7 +41,7 @@ public class JsonOutputFormat extends FileOutputFormat {
 	private IJsonNode node;
 
 	private Schema schema;
-	
+
 	private EvaluationContext context;
 
 	private Charset encoding;

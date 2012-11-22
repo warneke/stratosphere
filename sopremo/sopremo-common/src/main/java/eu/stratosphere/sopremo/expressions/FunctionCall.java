@@ -11,8 +11,9 @@ import eu.stratosphere.sopremo.expressions.tree.ListChildIterator;
 import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.packages.EvaluationScope;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
+import eu.stratosphere.sopremo.type.ArrayNode;
+import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
-import eu.stratosphere.sopremo.type.JsonUtil;
 
 /**
  * Calls the specified function with the provided parameters and returns the result.
@@ -162,6 +163,8 @@ public class FunctionCall extends EvaluationExpression {
 		return hash;
 	}
 
+	private transient final IArrayNode params = new ArrayNode();
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#evaluate(eu.stratosphere.sopremo.type.IJsonNode)
@@ -169,12 +172,12 @@ public class FunctionCall extends EvaluationExpression {
 	@Override
 	public IJsonNode evaluate(IJsonNode node) {
 		final List<EvaluationExpression> paramExprs = this.paramExprs;
-		final IJsonNode[] params = new IJsonNode[paramExprs.size()];
-		for (int index = 0; index < params.length; index++)
-			params[index] = paramExprs.get(index).evaluate(node);
+		this.params.clear();
+		for (int index = 0; index < paramExprs.size(); index++)
+			this.params.add(paramExprs.get(index).evaluate(node));
 
 		try {
-			return this.function.call(JsonUtil.asArray(params));
+			return this.function.call(this.params);
 		} catch (Exception e) {
 			throw new EvaluationException(e);
 		}

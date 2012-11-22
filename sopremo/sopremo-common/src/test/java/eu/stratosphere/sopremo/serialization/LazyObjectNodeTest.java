@@ -44,7 +44,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 		final ObjectSchema schema = new ObjectSchema("firstName", "lastName", "age");
 		final PactRecord record = schema.jsonToRecord(
 			new ObjectNode().put("firstName", TextNode.valueOf("Hans")).put("age", IntNode.valueOf(25))
-				.put("gender", TextNode.valueOf("male")), null, null);
+				.put("gender", TextNode.valueOf("male")), null);
 
 		return new LazyObjectNode(record, schema);
 	}
@@ -71,7 +71,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 		final ObjectSchema schema = new ObjectSchema("firstName", "lastName", "age");
 		final PactRecord record = schema.jsonToRecord(
 			new ObjectNode().put("firstName", TextNode.valueOf("Hans")).put("age", IntNode.valueOf(25))
-				.put("gender", TextNode.valueOf("female")), null, null);
+				.put("gender", TextNode.valueOf("female")), null);
 
 		return new LazyObjectNode(record, schema);
 	}
@@ -81,7 +81,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 		final ObjectSchema schema = new ObjectSchema("firstName", "lastName", "age");
 		final PactRecord record = schema.jsonToRecord(
 			new ObjectNode().put("firstName", TextNode.valueOf("Hans")).put("age", IntNode.valueOf(25))
-				.put("gender", TextNode.valueOf("male")), null, null);
+				.put("gender", TextNode.valueOf("male")), null);
 
 		return new LazyObjectNode(record, schema);
 	}

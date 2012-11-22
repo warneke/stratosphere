@@ -117,7 +117,7 @@ public class GroupingExpression extends EvaluationExpression {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + this.groupingExpression.hashCode();
-		result = prime * result + getResultExpression().hashCode();
+		result = prime * result + this.getResultExpression().hashCode();
 		return result;
 	}
 
@@ -127,7 +127,7 @@ public class GroupingExpression extends EvaluationExpression {
 	 */
 	@Override
 	protected EvaluationExpression createCopy() {
-		return new GroupingExpression(this.groupingExpression.clone(), getResultExpression().clone());
+		return new GroupingExpression(this.groupingExpression.clone(), this.getResultExpression().clone());
 	}
 
 	@Override
@@ -136,7 +136,7 @@ public class GroupingExpression extends EvaluationExpression {
 			return false;
 		final GroupingExpression other = (GroupingExpression) obj;
 		return this.groupingExpression.equals(other.groupingExpression)
-			&& getResultExpression().equals(other.resultExpressions.getTemplate());
+			&& this.getResultExpression().equals(other.resultExpressions.getTemplate());
 	}
 
 	@Override
@@ -144,7 +144,7 @@ public class GroupingExpression extends EvaluationExpression {
 		appendable.append("g(");
 		this.groupingExpression.appendAsString(appendable);
 		appendable.append(") -> ");
-		getResultExpression().appendAsString(appendable);
+		this.getResultExpression().appendAsString(appendable);
 	}
 
 	private EvaluationExpression getResultExpression() {

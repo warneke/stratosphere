@@ -37,7 +37,6 @@ public class JsonUtil {
 	// */
 	// public static final JsonFactory FACTORY = new JsonFactory();
 
-
 	/**
 	 * Creates an efficient read-only wrapper for the given node array.
 	 * 
@@ -160,7 +159,8 @@ public class JsonUtil {
 	}
 
 	/**
-	 * Creates an {@link StreamArrayNode} that contains all given constants as elements. This method converts the whole array
+	 * Creates an {@link StreamArrayNode} that contains all given constants as elements. This method converts the whole
+	 * array
 	 * of parameters to an StreamArrayNode.
 	 * 
 	 * @param constants

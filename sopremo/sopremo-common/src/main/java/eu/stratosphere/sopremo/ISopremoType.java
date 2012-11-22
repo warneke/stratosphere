@@ -21,9 +21,8 @@ import java.io.IOException;
  * 
  * @author Arvid Heise
  */
-public interface ISopremoType {
+public interface ISopremoType extends ICloneable {
 	public void appendAsString(Appendable appendable) throws IOException;
 
-	@Override
-	public abstract String toString();
+	public void copyPropertiesFrom(ISopremoType original);
 }

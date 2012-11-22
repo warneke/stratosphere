@@ -203,7 +203,7 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		DynamicInvokable<?, ?, ?> other = (DynamicInvokable<?, ?, ?>) obj;
 		return this.name.equals(other.name) && this.originalSignatures.equals(other.originalSignatures);

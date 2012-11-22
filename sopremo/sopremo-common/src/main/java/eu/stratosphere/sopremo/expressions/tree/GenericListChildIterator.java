@@ -46,23 +46,25 @@ public abstract class GenericListChildIterator<E extends EvaluationExpression> i
 	public boolean hasPrevious() {
 		return this.expressionIterator.hasPrevious();
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see java.util.ListIterator#add(java.lang.Object)
 	 */
 	@Override
 	public void add(EvaluationExpression e) {
-		this.expressionIterator.add(convert(e));
+		this.expressionIterator.add(this.convert(e));
 	}
-	
+
 	protected abstract E convert(EvaluationExpression childExpression);
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see java.util.ListIterator#set(java.lang.Object)
 	 */
 	@Override
 	public void set(EvaluationExpression e) {
-		this.expressionIterator.set(convert(e));
+		this.expressionIterator.set(this.convert(e));
 	}
 
 	/*

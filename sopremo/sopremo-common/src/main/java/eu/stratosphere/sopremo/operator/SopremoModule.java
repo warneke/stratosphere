@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
 import eu.stratosphere.util.dag.GraphModule;
@@ -43,9 +44,9 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	public SopremoModule(final String name, final int numberOfInputs, final int numberOfOutputs) {
 		super(name, numberOfInputs, numberOfOutputs, OperatorNavigator.INSTANCE);
 		for (int index = 0; index < numberOfInputs; index++)
-			setInput(index, new Source(String.format("%s %d", name, index)));
+			this.setInput(index, new Source(String.format("%s %d", name, index)));
 		for (int index = 0; index < numberOfOutputs; index++)
-			setOutput(index, new Sink(String.format("%s %d", name, index)));
+			this.setOutput(index, new Sink(String.format("%s %d", name, index)));
 	}
 
 	/**
@@ -55,6 +56,31 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	 */
 	public Operator<?> asOperator() {
 		return new ModuleOperator(this.getInputs(), this.getOutputs());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	public SopremoModule clone() {
+		final SopremoModule module = new SopremoModule(this.getName(), this.getNumInputs(), this.getNumOutputs());
+		module.copyPropertiesFrom(this);
+		return module;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.ISopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		SopremoModule sopremoModule = (SopremoModule) original;
+		// this is currently not a deep clone
+		for (int index = 0; index < this.getNumInputs(); index++)
+			this.setInput(index, sopremoModule.getInput(index));
+		for (int index = 0; index < this.getNumOutputs(); index++)
+			this.setOutput(index, sopremoModule.getOutput(index));
 	}
 
 	@Override
@@ -70,7 +96,9 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	 */
 	@Override
 	public void appendAsString(Appendable appendable) throws IOException {
-		appendable.append(toString());
+		final GraphPrinter<Operator<?>> graphPrinter = new GraphPrinter<Operator<?>>();
+		graphPrinter.setWidth(40);
+		graphPrinter.print(appendable, this.getAllOutputs(), OperatorNavigator.INSTANCE);
 	}
 
 	/**
@@ -91,14 +119,14 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	}
 
 	public void embed(final Operator<?>... sinks) {
-		embed(Arrays.asList(sinks));
+		this.embed(Arrays.asList(sinks));
 	}
-	
+
 	public void embed(final Collection<? extends Operator<?>> sinks) {
 		final List<Operator<?>> inputs = findInputs(sinks);
-		if (inputs.size() != getNumInputs())
-			throw new IllegalArgumentException(String.format("Expected %d instead of %d inputs", getNumInputs(),
-					inputs.size()));
+		if (inputs.size() != this.getNumInputs())
+			throw new IllegalArgumentException(String.format("Expected %d instead of %d inputs", this.getNumInputs(),
+				inputs.size()));
 		connectOutputs(this, sinks);
 		connectInputs(this, inputs);
 	}
@@ -173,7 +201,7 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 			this.setInputs(inputs);
 			this.setOutputs(outputs);
 		}
-		
+
 		@Override
 		public void addImplementation(SopremoModule module, EvaluationContext context) {
 			module.inputNodes.addAll(SopremoModule.this.inputNodes);

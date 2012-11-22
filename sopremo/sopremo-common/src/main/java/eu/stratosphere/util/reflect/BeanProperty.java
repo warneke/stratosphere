@@ -42,16 +42,18 @@ public class BeanProperty<Type> extends DynamicProperty<Type> {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.util.reflect.DynamicProperty#getModifiers()
 	 */
 	@Override
 	public int getModifiers() {
 		return Modifier.PUBLIC;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.util.reflect.DynamicProperty#getName()
 	 */
 	@Override

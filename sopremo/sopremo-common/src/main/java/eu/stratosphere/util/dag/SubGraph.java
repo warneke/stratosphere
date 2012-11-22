@@ -9,11 +9,11 @@ import java.util.List;
  * 
  * @author Arvid Heise
  * @param <Node>
- *            the type of all node
+ *        the type of all node
  * @param <InputNode>
- *            the type of all input nodes
+ *        the type of all input nodes
  * @param <OutputNode>
- *            the type of all output nodes
+ *        the type of all output nodes
  */
 public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node> {
 
@@ -25,7 +25,7 @@ public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node>
 	 * publicly.
 	 * 
 	 * @param output
-	 *            the output to add internally
+	 *        the output to add internally
 	 */
 	public abstract void addInternalOutput(OutputNode output);
 
@@ -40,7 +40,7 @@ public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node>
 	 * Returns the input at the specified position.
 	 * 
 	 * @param index
-	 *            the index of the input
+	 *        the index of the input
 	 * @return the input at the specified position
 	 */
 	public abstract InputNode getInput(int index);
@@ -49,9 +49,9 @@ public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node>
 	 * Sets the input at the specified position.
 	 * 
 	 * @param index
-	 *            the index of the input
+	 *        the index of the input
 	 * @param input
-	 *            the input at the specified position
+	 *        the input at the specified position
 	 */
 	public void setInput(final int index, final InputNode input);
 
@@ -66,7 +66,7 @@ public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node>
 	 * Returns the output at the specified position.
 	 * 
 	 * @param index
-	 *            the index of the output
+	 *        the index of the output
 	 * @return the output at the specified position
 	 */
 	public abstract OutputNode getOutput(int index);
@@ -75,7 +75,7 @@ public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node>
 	 * Returns the internal output at the specified position.
 	 * 
 	 * @param index
-	 *            the index of the output
+	 *        the index of the output
 	 * @return the internal output at the specified position
 	 */
 	public OutputNode getInternalOutputNodes(int index);
@@ -84,9 +84,9 @@ public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node>
 	 * Sets the output at the specified position.
 	 * 
 	 * @param index
-	 *            the index of the output
+	 *        the index of the output
 	 * @param input
-	 *            the output at the specified position
+	 *        the output at the specified position
 	 */
 	public void setOutput(final int index, final OutputNode output);
 
@@ -123,7 +123,7 @@ public interface SubGraph<Node, InputNode extends Node, OutputNode extends Node>
 	 * Checks whether all declared inputs and outputs are fully connected.
 	 * 
 	 * @throws IllegalStateException
-	 *             if the module is invalid
+	 *         if the module is invalid
 	 */
 	public abstract void validate();
 

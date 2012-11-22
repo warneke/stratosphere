@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.base.Selection;
 import eu.stratosphere.sopremo.execution.ExecutionRequest;
 import eu.stratosphere.sopremo.execution.ExecutionResponse;
@@ -120,7 +120,7 @@ public class SopremoServerTest {
 
 	static SopremoPlan createPlan() {
 		final SopremoPlan plan = new SopremoPlan();
-		final Source input = new Source(SopremoTest.createTemporaryFile("input"));
+		final Source input = new Source(SopremoTestUtil.createTemporaryFile("input"));
 		final Selection selection = new Selection().
 			withCondition(
 				new OrExpression(
@@ -128,7 +128,7 @@ public class SopremoServerTest {
 					new ComparativeExpression(JsonUtil.createPath("0", "income"), BinaryOperator.GREATER,
 						new ConstantExpression(30000)))).
 			withInputs(input);
-		final Sink output = new Sink(SopremoTest.createTemporaryFile("output")).withInputs(selection);
+		final Sink output = new Sink(SopremoTestUtil.createTemporaryFile("output")).withInputs(selection);
 		plan.setSinks(output);
 		return plan;
 	}

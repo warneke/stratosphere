@@ -23,7 +23,9 @@ import java.util.Queue;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.operator.Operator;
 import eu.stratosphere.sopremo.packages.BuiltinProvider;
 import eu.stratosphere.sopremo.packages.ConstantRegistryCallback;
@@ -36,7 +38,7 @@ import eu.stratosphere.util.reflect.ReflectUtil;
 /**
  * @author Arvid Heise
  */
-public class PackageInfo implements ISerializableSopremoType, ParsingScope {
+public class PackageInfo extends AbstractSopremoType implements ISerializableSopremoType, ParsingScope {
 	/**
 	 * 
 	 */
@@ -85,17 +87,15 @@ public class PackageInfo implements ISerializableSopremoType, ParsingScope {
 		}
 	}
 
-	public void importFromProject(File packagePath) {
-		this.packagePath = packagePath;
-
+	public void importFromProject() {
 		Queue<File> directories = new LinkedList<File>();
-		directories.add(packagePath);
+		directories.add(this.packagePath);
 		while (!directories.isEmpty())
 			for (File file : directories.poll().listFiles())
 				if (file.isDirectory())
 					directories.add(file);
 				else if (file.getName().endsWith(".class") && !file.getName().contains("$"))
-					this.importFromFile(file, packagePath);
+					this.importFromFile(file, this.packagePath);
 	}
 
 	private void importFromFile(File file, File packagePath) {
@@ -110,9 +110,8 @@ public class PackageInfo implements ISerializableSopremoType, ParsingScope {
 			((ConstantRegistryCallback) ReflectUtil.newInstance(clazz)).registerConstants(this.getConstantRegistry());
 	}
 
-	public void importFromJar(File jar) throws IOException {
-		this.packagePath = jar;
-		Enumeration<JarEntry> entries = new JarFile(jar).entries();
+	public void importFromJar() throws IOException {
+		Enumeration<JarEntry> entries = new JarFile(this.packagePath).entries();
 		while (entries.hasMoreElements()) {
 			JarEntry jarEntry = entries.nextElement();
 			if (jarEntry.getName().endsWith(".class")) {
@@ -149,11 +148,47 @@ public class PackageInfo implements ISerializableSopremoType, ParsingScope {
 		return this.functionRegistry;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new PackageInfo(getPackageName());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		PackageInfo origInfo = (PackageInfo) original;
+		this.constantRegistry.copyPropertiesFrom(origInfo.constantRegistry);
+		this.functionRegistry.copyPropertiesFrom(origInfo.functionRegistry);
+		this.operatorRegistry.copyPropertiesFrom(origInfo.operatorRegistry);
+		this.packagePath = origInfo.packagePath;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
 		return getPackageName();
+	}
+
+	/**
+	 * @param packagePath2
+	 */
+	public void importFrom(File packagePath) throws IOException {
+		this.packagePath = packagePath.getAbsoluteFile();
+		if (packagePath.getName().endsWith(".jar"))
+			importFromJar();
+		else
+			// should only happen while debugging
+			importFromProject();
 	}
 }

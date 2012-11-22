@@ -21,8 +21,10 @@ public final class NumberCoercer {
 	private final Map<Class<? extends IJsonNode>, Coercer<? extends INumericNode, ? extends INumericNode>> classCoercers =
 		new IdentityHashMap<Class<? extends IJsonNode>, Coercer<? extends INumericNode, ? extends INumericNode>>();
 
-//	private final Map<Class<? extends INumericNode>, Map<Class<? extends INumericNode>, Class<? extends INumericNode>>> widerClass =
-//		new IdentityHashMap<Class<? extends INumericNode>, Map<Class<? extends INumericNode>, Class<? extends INumericNode>>>();
+	// private final Map<Class<? extends INumericNode>, Map<Class<? extends INumericNode>, Class<? extends
+	// INumericNode>>> widerClass =
+	// new IdentityHashMap<Class<? extends INumericNode>, Map<Class<? extends INumericNode>, Class<? extends
+	// INumericNode>>>();
 
 	public NumberCoercer() {
 		this.coercers.put(AbstractJsonNode.Type.IntNode, new Coercer<INumericNode, IntNode>(IntNode.class) {
@@ -94,7 +96,7 @@ public final class NumberCoercer {
 		return leftType.ordinal() >= rightType.ordinal() ? leftType : rightType;
 	}
 
-//	public Class<? extends AbstractJsonNode> getWiderClass(final IJsonNode leftType, final IJsonNode rightType) {
-//		return this.widerClass.get(leftType.getClass()).get(rightType.getClass());
-//	}
+	// public Class<? extends AbstractJsonNode> getWiderClass(final IJsonNode leftType, final IJsonNode rightType) {
+	// return this.widerClass.get(leftType.getClass()).get(rightType.getClass());
+	// }
 }

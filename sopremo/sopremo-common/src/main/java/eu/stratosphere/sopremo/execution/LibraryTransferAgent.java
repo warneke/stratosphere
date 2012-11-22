@@ -35,12 +35,11 @@ public class LibraryTransferAgent implements LibraryTransferProtocol {
 		LibraryCacheProfileResponse response = new LibraryCacheProfileResponse(request);
 		String[] requiredLibraries = request.getRequiredLibraries();
 
-		for (int i = 0; i < requiredLibraries.length; i++) {
+		for (int i = 0; i < requiredLibraries.length; i++)
 			if (LibraryCacheManager.contains(requiredLibraries[i]) == null)
 				response.setCached(i, false);
 			else
 				response.setCached(i, true);
-		}
 
 		return response;
 	}

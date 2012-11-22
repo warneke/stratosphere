@@ -32,7 +32,6 @@ public abstract class EvaluationExpression extends AbstractSopremoType implement
 	 * {@link Operator}s that do not perform any transformation to the input, such as a filter operator.
 	 */
 	public static final EvaluationExpression VALUE = new SingletonExpression("x") {
-
 		/**
 		 * 
 		 */
@@ -71,9 +70,7 @@ public abstract class EvaluationExpression extends AbstractSopremoType implement
 	 */
 	@Override
 	public final EvaluationExpression clone() {
-		EvaluationExpression copy = this.createCopy();
-		copy.copyPropertiesFrom(this);
-		return copy;
+		return (EvaluationExpression) super.clone();
 	}
 
 	// private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
@@ -81,20 +78,15 @@ public abstract class EvaluationExpression extends AbstractSopremoType implement
 	// initTransients();
 	// }
 
+	@Override
 	protected Object readResolve() {
-		initTransients();
+		this.initTransients();
 		return this;
 	}
 
+	@Override
 	protected void initTransients() {
 		SopremoUtil.initTransientFields(this);
-	}
-
-	/**
-	 * Copies the values of the given expression. The expression has the same type as this expression.
-	 */
-	@SuppressWarnings("unused")
-	protected void copyPropertiesFrom(EvaluationExpression original) {
 	}
 
 	/**
@@ -105,6 +97,7 @@ public abstract class EvaluationExpression extends AbstractSopremoType implement
 	 * 
 	 * @return a newly created expression
 	 */
+	@Override
 	protected abstract EvaluationExpression createCopy();
 
 	@Override

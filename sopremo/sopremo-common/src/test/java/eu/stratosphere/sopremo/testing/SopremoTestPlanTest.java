@@ -33,7 +33,8 @@ import org.junit.internal.ArrayComparisonFailure;
 
 import eu.stratosphere.pact.common.contract.ReduceContract.Combinable;
 import eu.stratosphere.pact.testing.TestRecords;
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualVerifyTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
@@ -58,7 +59,7 @@ import eu.stratosphere.sopremo.type.TextNode;
  * @author Arvid Heise
  */
 
-public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
+public class SopremoTestPlanTest extends EqualVerifyTest<SopremoTestPlan> {
 	/**
 	 * Tests if a {@link SopremoTestPlan} without explicit data sources and sinks can be executed.
 	 */
@@ -96,7 +97,7 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 	 */
 	@Test
 	public void completeTestPasses() throws IOException {
-		final Source source = new Source(getResourcePath("SopremoTestPlan/test.json"));
+		final Source source = new Source(SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json"));
 
 		final Identity projection = new Identity();
 		projection.setInputs(source);
@@ -116,9 +117,9 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 	@Test
 	public void completeTestPassesWithExpectedValues() {
 		final SopremoTestPlan testPlan = new SopremoTestPlan(new Identity().
-			withInputs(new Source(getResourcePath("SopremoTestPlan/test.json"))));
+			withInputs(new Source(SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json"))));
 
-		testPlan.getExpectedOutput(0).setOperator(new Source(getResourcePath("SopremoTestPlan/test.json")));
+		testPlan.getExpectedOutput(0).setOperator(new Source(SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json")));
 		testPlan.run();
 	}
 
@@ -151,9 +152,9 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 			withPrefabValues(
 				TestRecords.class,
 				new TestRecords(redSchema.getPactSchema()).add(
-					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "red"), null, null)),
+					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "red"), null)),
 				new TestRecords(redSchema.getPactSchema()).add(
-					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "black"), null, null))).
+					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "black"), null))).
 			withPrefabValues(Schema.class,
 				redSchema,
 				new ObjectSchema("blackField")).
@@ -351,12 +352,12 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 
 		final SopremoTestPlan testPlan = new SopremoTestPlan(countWords);
 		final String[] lines =
-		{
-			"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-			"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-			"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-			"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-		};
+			{
+				"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+				"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+				"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+				"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+			};
 		for (final String line : lines)
 			testPlan.getInput(0).add(JsonUtil.createObjectNode("line", TextNode.valueOf(line.toLowerCase())));
 

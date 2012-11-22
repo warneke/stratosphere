@@ -54,7 +54,7 @@ public final class NodeCache implements ISopremoCache {
 	 * Creates a clone and reuses an existing node in the cache with the same type.
 	 */
 	public IJsonNode clone(IJsonNode node) {
-		final IJsonNode clone = getNode(node.getClass());
+		final IJsonNode clone = this.getNode(node.getClass());
 		clone.copyValueFrom(node);
 		return clone;
 	}

@@ -139,7 +139,6 @@ public class CoreFunctionsTest {
 		assertAggregate(6, CoreFunctions.SUM, 1, 2, 3);
 	}
 
-
 	/**
 	 * 
 	 */

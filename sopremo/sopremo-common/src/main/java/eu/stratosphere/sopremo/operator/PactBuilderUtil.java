@@ -30,45 +30,42 @@ public class PactBuilderUtil
 {
 	public static void addKeys(ReduceContract.Builder builder, Class<? extends Key>[] keyClasses, int[] keyIndices) {
 		Preconditions.checkArgument(keyClasses.length == keyIndices.length,
-				"Lenght of keyClasses and keyIndices must match.");
-		for (int i = 0; i < keyClasses.length; ++i) {
+			"Lenght of keyClasses and keyIndices must match.");
+		for (int i = 0; i < keyClasses.length; ++i)
 			builder.keyField(keyClasses[i], keyIndices[i]);
-		}
 	}
 
 	public static void addKeys(CoGroupContract.Builder builder, Class<? extends Key>[] keyClasses, int[] keyIndices1,
 			int[] keyIndices2) {
 		Preconditions.checkArgument(keyClasses.length == keyIndices1.length && keyClasses.length == keyIndices2.length,
-				"Lenght of keyClasses and keyIndices must match.");
-		for (int i = 0; i < keyClasses.length; ++i) {
+			"Lenght of keyClasses and keyIndices must match.");
+		for (int i = 0; i < keyClasses.length; ++i)
 			builder.keyField(keyClasses[i], keyIndices1[i], keyIndices2[i]);
-		}
 	}
-	
-	public static void addKeysExceptFirst(CoGroupContract.Builder builder, Class<? extends Key>[] keyClasses, int[] keyIndices1,
+
+	public static void addKeysExceptFirst(CoGroupContract.Builder builder, Class<? extends Key>[] keyClasses,
+			int[] keyIndices1,
 			int[] keyIndices2) {
 		Preconditions.checkArgument(keyClasses.length == keyIndices1.length && keyClasses.length == keyIndices2.length,
-				"Lenght of keyClasses and keyIndices must match.");
-		for (int i = 1; i < keyClasses.length; ++i) {
+			"Lenght of keyClasses and keyIndices must match.");
+		for (int i = 1; i < keyClasses.length; ++i)
 			builder.keyField(keyClasses[i], keyIndices1[i], keyIndices2[i]);
-		}
 	}
 
 	public static void addKeys(MatchContract.Builder builder, Class<? extends Key>[] keyClasses, int[] keyIndices1,
 			int[] keyIndices2) {
 		Preconditions.checkArgument(keyClasses.length == keyIndices1.length && keyClasses.length == keyIndices2.length,
-				"Lenght of keyClasses and keyIndices must match.");
-		for (int i = 0; i < keyClasses.length; ++i) {
+			"Lenght of keyClasses and keyIndices must match.");
+		for (int i = 0; i < keyClasses.length; ++i)
 			builder.keyField(keyClasses[i], keyIndices1[i], keyIndices2[i]);
-		}
 	}
 
-	public static void addKeysExceptFirst(MatchContract.Builder builder, Class<? extends Key>[] keyClasses, int[] keyIndices1,
+	public static void addKeysExceptFirst(MatchContract.Builder builder, Class<? extends Key>[] keyClasses,
+			int[] keyIndices1,
 			int[] keyIndices2) {
 		Preconditions.checkArgument(keyClasses.length == keyIndices1.length && keyClasses.length == keyIndices2.length,
-				"Lenght of keyClasses and keyIndices must match.");
-		for (int i = 1; i < keyClasses.length; ++i) {
+			"Lenght of keyClasses and keyIndices must match.");
+		for (int i = 1; i < keyClasses.length; ++i)
 			builder.keyField(keyClasses[i], keyIndices1[i], keyIndices2[i]);
-		}
 	}
 }

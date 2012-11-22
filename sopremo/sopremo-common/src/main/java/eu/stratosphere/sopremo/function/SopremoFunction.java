@@ -49,10 +49,12 @@ public abstract class SopremoFunction extends Callable<IJsonNode, IArrayNode> {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.Callable#clone()
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#clone()
 	 */
 	@Override
-	public abstract SopremoFunction clone();
+	public SopremoFunction clone() {
+		return (SopremoFunction) super.clone();
+	}
 
 	/**
 	 * Returns the maximumNumberOfParameters.
@@ -97,7 +99,7 @@ public abstract class SopremoFunction extends Callable<IJsonNode, IArrayNode> {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		SopremoFunction other = (SopremoFunction) obj;
 		return this.maximumNumberOfParameters == other.maximumNumberOfParameters &&

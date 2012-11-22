@@ -175,7 +175,8 @@ public class DecimalNode extends AbstractNumericNode implements INumericNode {
 			this.value = BigDecimal.ZERO;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override

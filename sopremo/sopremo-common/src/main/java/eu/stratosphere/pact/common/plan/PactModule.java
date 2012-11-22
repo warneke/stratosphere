@@ -59,10 +59,10 @@ public class PactModule extends GraphModule<Contract, FileDataSource, FileDataSi
 	public PactModule(final String name, final int numberOfInputs, final int numberOfOutputs) {
 		super(name, numberOfInputs, numberOfOutputs, ContractNavigator.INSTANCE);
 		for (int index = 0; index < numberOfInputs; index++)
-			setInput(index, 
+			this.setInput(index,
 				new FileDataSource(SequentialInputFormat.class, String.format("%s %d", name, index)));
 		for (int index = 0; index < numberOfOutputs; index++)
-			setOutput(index, 
+			this.setOutput(index,
 				new FileDataSink(SequentialOutputFormat.class, String.format("%s %d", name, index)));
 	}
 

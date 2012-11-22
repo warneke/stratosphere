@@ -17,7 +17,7 @@ package eu.stratosphere.sopremo.serialization;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import eu.stratosphere.pact.common.type.PactRecord;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.pact.JsonNodeWrapper;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -53,7 +53,7 @@ public class DirectSchema extends AbstractSchema {
 	 * eu.stratosphere.pact.common.type.PactRecord)
 	 */
 	@Override
-	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target, final EvaluationContext context) {
+	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target) {
 		if (target == null)
 			target = new PactRecord(new JsonNodeWrapper());
 		else if (target.getNumFields() != 1)
@@ -63,6 +63,15 @@ public class DirectSchema extends AbstractSchema {
 		wrapper.setValue(value);
 		target.setField(0, wrapper);
 		return target;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new DirectSchema();
 	}
 
 	/*

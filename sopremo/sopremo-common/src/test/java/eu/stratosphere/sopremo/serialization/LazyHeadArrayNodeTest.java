@@ -19,7 +19,7 @@ public class LazyHeadArrayNodeTest extends ArrayNodeBaseTest<LazyHeadArrayNode> 
 	public void initArrayNode() {
 		final HeadArraySchema schema = new HeadArraySchema(5);
 		final PactRecord record = schema.jsonToRecord(
-			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null, null);
+			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null);
 
 		this.node = new LazyHeadArrayNode(record, schema);
 	}
@@ -44,7 +44,7 @@ public class LazyHeadArrayNodeTest extends ArrayNodeBaseTest<LazyHeadArrayNode> 
 	protected IJsonNode lowerNode() {
 		final HeadArraySchema schema = new HeadArraySchema(5);
 		final PactRecord record = schema.jsonToRecord(
-			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null, null);
+			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null);
 
 		return new LazyHeadArrayNode(record, schema);
 	}
@@ -53,7 +53,7 @@ public class LazyHeadArrayNodeTest extends ArrayNodeBaseTest<LazyHeadArrayNode> 
 	protected IJsonNode higherNode() {
 		final HeadArraySchema schema = new HeadArraySchema(5);
 		final PactRecord record = schema.jsonToRecord(
-			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(3)), null, null);
+			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(3)), null);
 
 		return new LazyHeadArrayNode(record, schema);
 	}

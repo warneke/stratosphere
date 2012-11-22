@@ -14,6 +14,7 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.util.reflect.ReflectUtil;
@@ -40,14 +41,14 @@ public abstract class SopremoFunction1<Arg1 extends IJsonNode> extends SopremoFu
 	public IJsonNode call(IArrayNode params) {
 		return this.call((Arg1) params.get(0));
 	}
-	
+
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.Callable#clone()
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 	 */
 	@Override
-	public SopremoFunction clone() {
-		return ReflectUtil.newInstance(this.getClass(), getName());
+	protected AbstractSopremoType createCopy() {
+		return ReflectUtil.newInstance(this.getClass(), this.getName());
 	}
 
 	protected abstract IJsonNode call(Arg1 arg1);

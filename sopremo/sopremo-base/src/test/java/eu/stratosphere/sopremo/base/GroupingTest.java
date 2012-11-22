@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import eu.stratosphere.sopremo.CoreFunctions;
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.ArrayProjection;
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
@@ -17,7 +17,7 @@ import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.expressions.ObjectCreation;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class GroupingTest extends SopremoTest<Grouping> {
+public class GroupingTest extends EqualCloneTest<Grouping> {
 	@Override
 	protected Grouping createDefaultInstance(final int index) {
 		final Grouping aggregation = new Grouping().

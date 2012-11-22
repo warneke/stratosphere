@@ -4,6 +4,7 @@ import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.io.FileOutputFormat;
 import eu.stratosphere.pact.common.plan.PactModule;
 import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.operator.ElementarySopremoModule;
 import eu.stratosphere.sopremo.operator.InputCardinality;
@@ -55,6 +56,18 @@ public class Sink extends ElementaryOperator<Sink> {
 	 */
 	public Sink() {
 		this("");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.operator.Operator#copyPropertiesFrom(eu.stratosphere.sopremo.ISopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		Sink sink = (Sink) original;
+		this.outputPath = sink.outputPath;
+		this.outputFormat = sink.outputFormat;
 	}
 
 	/**
@@ -132,15 +145,13 @@ public class Sink extends ElementaryOperator<Sink> {
 	 * 
 	 * @param outputPath
 	 *        the outputPath to set
-	 * @return 
+	 * @return
 	 */
 	public Sink withOutputPath(String outputPath) {
-		setOutputPath(outputPath);
+		this.setOutputPath(outputPath);
 		return this;
 	}
 
-	
-	
 	@Override
 	public String toString() {
 		return "Sink [" + this.outputPath + "]";

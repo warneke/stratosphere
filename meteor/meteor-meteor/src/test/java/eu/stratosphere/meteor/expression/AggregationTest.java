@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import eu.stratosphere.meteor.MeteorTest;
 import eu.stratosphere.sopremo.CoreFunctions;
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.aggregation.ArrayAccessAsAggregation;
 import eu.stratosphere.sopremo.base.Grouping;
 import eu.stratosphere.sopremo.base.Selection;
@@ -70,7 +70,7 @@ public class AggregationTest extends MeteorTest {
 		final Sink sink = new Sink("file:///q1.result").withInputs(grouping);
 		final SopremoPlan expectedPlan = new SopremoPlan();
 		expectedPlan.setSinks(sink);
-		SopremoTest.assertPlanEquals(expectedPlan, actualPlan);
+		SopremoTestUtil.assertPlanEquals(expectedPlan, actualPlan);
 		
 //		final Iterable<? extends Operator<?>> containedOperators = actualPlan.getContainedOperators();
 //		final ArrayList<Operator> ops = new ArrayList<Operator>();

@@ -1,8 +1,7 @@
 package eu.stratosphere.sopremo.base;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
-
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import eu.stratosphere.pact.common.contract.Contract;
 import eu.stratosphere.pact.common.contract.ReduceContract;
 import eu.stratosphere.pact.common.contract.ReduceContract.Combinable;
@@ -43,8 +42,7 @@ public class Grouping extends CompositeOperator<Grouping> {
 
 	private EvaluationExpression resultProjection = EvaluationExpression.VALUE;
 
-	private final Map<Operator<?>.Output, EvaluationExpression> keyExpressions =
-		new IdentityHashMap<Operator<?>.Output, EvaluationExpression>();
+	private final Int2ObjectMap<EvaluationExpression> keyExpressions = new Int2ObjectArrayMap<EvaluationExpression>(1);
 
 	private EvaluationExpression defaultGroupingKey = GROUP_ALL;
 
@@ -126,14 +124,14 @@ public class Grouping extends CompositeOperator<Grouping> {
 	@Property(preferred = true, input = true)
 	@Name(preposition = "by")
 	public void setGroupingKey(final int inputIndex, final EvaluationExpression keyExpression) {
-		this.setGroupingKey(this.getSafeInput(inputIndex), keyExpression);
+		this.keyExpressions.put(inputIndex, keyExpression);
 	}
 
 	public void setGroupingKey(final JsonStream input, final EvaluationExpression keyExpression) {
 		if (keyExpression == null)
 			throw new NullPointerException("keyExpression must not be null");
 
-		this.keyExpressions.put(input.getSource(), keyExpression);
+		this.keyExpressions.put(getSafeInputIndex(input), keyExpression);
 	}
 
 	public Grouping withGroupingKey(int inputIndex, EvaluationExpression groupingKey) {
@@ -147,21 +145,21 @@ public class Grouping extends CompositeOperator<Grouping> {
 	}
 
 	public EvaluationExpression getGroupingKey(final int index) {
-		return this.getGroupingKey(this.getInput(index));
+		final EvaluationExpression keyExpression = this.keyExpressions.get(index);
+		if (keyExpression == null)
+			return this.getDefaultGroupingKey();
+		return keyExpression;
 	}
 
 	public EvaluationExpression getGroupingKey(final JsonStream input) {
-		final Operator<?>.Output source = input == null ? null : input.getSource();
-		EvaluationExpression keyExpression = this.keyExpressions.get(source);
-		if (keyExpression == null)
-			keyExpression = this.getDefaultGroupingKey();
-		return keyExpression;
+		return getGroupingKey(getSafeInputIndex(input));
 	}
 
 	public EvaluationExpression getDefaultGroupingKey() {
 		return this.defaultGroupingKey;
 	}
 
+	@Property(hidden = true)
 	public void setDefaultGroupingKey(EvaluationExpression defaultGroupingKey) {
 		if (defaultGroupingKey == null)
 			throw new NullPointerException("defaultGroupingKey must not be null");

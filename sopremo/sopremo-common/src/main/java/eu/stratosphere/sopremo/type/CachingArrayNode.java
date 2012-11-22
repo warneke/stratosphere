@@ -33,17 +33,18 @@ public class CachingArrayNode extends ArrayNode {
 	}
 
 	public IJsonNode reuseUnusedNode() {
-		return ((CachingList<IJsonNode>) getChildren()).reuseUnusedElement();
+		return ((CachingList<IJsonNode>) this.getChildren()).reuseUnusedElement();
 	}
 
 	public CachingArrayNode addClone(IJsonNode node) {
-		final IJsonNode unusedNode = reuseUnusedNode();
+		final IJsonNode unusedNode = this.reuseUnusedNode();
 		if (unusedNode == null)
-			add(node.clone());
-		else if (unusedNode.getType() == node.getType()) 
+			this.add(node.clone());
+		else if (unusedNode.getType() == node.getType())
 			unusedNode.copyValueFrom(node);
-		else // cannot reuse existing node
-			set(size() - 1, node.clone());
+		else
+			// cannot reuse existing node
+			this.set(this.size() - 1, node.clone());
 		return this;
 	}
 
@@ -59,9 +60,9 @@ public class CachingArrayNode extends ArrayNode {
 	}
 
 	public void setSize(int size) {
-		((CachingList<IJsonNode>) getChildren()).setSize(size);
+		((CachingList<IJsonNode>) this.getChildren()).setSize(size);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IArrayNode#setAll(eu.stratosphere.sopremo.type.IJsonNode[])
@@ -69,7 +70,7 @@ public class CachingArrayNode extends ArrayNode {
 	@Override
 	public void setAll(final IJsonNode[] nodes) {
 		for (int index = 0; index < nodes.length; index++)
-			set(index, nodes[index]);
-		setSize(nodes.length);
+			this.set(index, nodes[index]);
+		this.setSize(nodes.length);
 	}
 }

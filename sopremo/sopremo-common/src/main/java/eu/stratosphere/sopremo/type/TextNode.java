@@ -265,10 +265,10 @@ public class TextNode extends AbstractJsonNode implements IPrimitiveNode, CharSe
 	}
 
 	/**
-	 * @param incrementAndGet
+	 * @param number
 	 */
 	public void append(long number) {
-		this.formatter.format("%d", number);
+		asFormatter().format("%d", number);
 	}
 
 }

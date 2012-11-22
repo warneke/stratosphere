@@ -21,7 +21,8 @@ public class ComparativeExpressionTest extends EvaluableExpressionTest<Comparati
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.expressions.EvaluableExpressionTest#shouldComplyEqualsContract()
 	 */
 	@Override

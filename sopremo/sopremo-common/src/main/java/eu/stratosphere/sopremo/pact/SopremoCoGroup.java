@@ -46,10 +46,8 @@ public abstract class SopremoCoGroup extends CoGroupStub implements SopremoStub 
 				SopremoUtil.LOG.trace(String.format("%s %s/%s", this.getContext().operatorTrace(), leftArray,
 					rightArray));
 				this.coGroup(leftArray, rightArray, this.collector);
-			} else {
+			} else
 				this.coGroup(this.leftArray, this.rightArray, this.collector);
-
-			}
 		} catch (final RuntimeException e) {
 			SopremoUtil.LOG.error(String.format("Error occurred @ %s with %s/%s: %s", this.getContext()
 				.operatorTrace(), this.leftArray, this.rightArray, e));

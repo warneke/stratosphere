@@ -40,7 +40,7 @@ public class FunctionCacheCache implements ISopremoCache {
 		this.caches.get().put(function, newCache);
 		return newCache;
 	}
-	
+
 	@Override
 	public FunctionCacheCache clone() {
 		return new FunctionCacheCache();

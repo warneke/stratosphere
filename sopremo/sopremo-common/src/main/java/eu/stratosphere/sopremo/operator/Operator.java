@@ -24,12 +24,14 @@ import java.util.ListIterator;
 import java.util.Map;
 
 import javolution.text.TypeFormat;
-
 import eu.stratosphere.pact.common.plan.PactModule;
 import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.ICloneable;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.util.CollectionUtil;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
@@ -110,19 +112,57 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 	 */
 	public abstract PactModule asPactModule(EvaluationContext context);
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Operator<Self> clone() {
-		try {
-			@SuppressWarnings("unchecked")
-			final Operator<Self> clone = (Operator<Self>) super.clone();
-			clone.inputs = new ArrayList<JsonStream>(this.inputs);
-			clone.outputs = new ArrayList<JsonStream>(this.outputs);
-			Collections.fill(clone.outputs, null);
-			return clone;
-		} catch (final CloneNotSupportedException e) {
-			// cannot happen
-			return null;
-		}
+		return (Operator<Self>) super.clone();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return ReflectUtil.newInstance(this.getClass());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		@SuppressWarnings("unchecked")
+		Self op = (Self) original;
+		this.setNumberOfInputs(op.getMinInputs(), op.getMaxInputs());
+		this.setNumberOfOutputs(op.getMinOutputs(), op.getMaxOutputs());
+
+		final Info info = this.getBeanInfo();
+		for (PropertyDescriptor prop : info.getPropertyDescriptors())
+			try {
+				if (prop instanceof IndexedPropertyDescriptor) {
+					IndexedPropertyDescriptor indexedProp = (IndexedPropertyDescriptor) prop;
+					for (int index = 0; index < op.getNumInputs(); index++) {
+						Object originalValue = indexedProp.getIndexedReadMethod().invoke(this, index);
+						if (originalValue instanceof ICloneable)
+							originalValue = ((ICloneable) originalValue).clone();
+						indexedProp.getIndexedWriteMethod().invoke(this, index, originalValue);
+					}
+				} else {
+					Object originalValue = prop.getReadMethod().invoke(original);
+					if (originalValue instanceof ICloneable)
+						originalValue = ((ICloneable) originalValue).clone();
+					prop.getWriteMethod().invoke(this, originalValue);
+				}
+			} catch (Exception e) {
+				SopremoUtil.LOG.warn("Cannot clone property " + prop.getName(), e);
+			}
+		this.copyOperatorPropertiesFrom(op);
+	}
+
+	protected void copyOperatorPropertiesFrom(@SuppressWarnings("unused") Self original) {
 	}
 
 	@Override
@@ -227,8 +267,8 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 	 * @return the number of inputs
 	 */
 	public int getNumInputs() {
-		int numInputs = getMinInputs();
-		for (int index = numInputs; index < getMaxInputs() && index < this.inputs.size(); index++)
+		int numInputs = this.getMinInputs();
+		for (int index = numInputs; index < this.getMaxInputs() && index < this.inputs.size(); index++)
 			if (this.inputs.get(index) != null)
 				numInputs++;
 		return numInputs;
@@ -240,8 +280,8 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 	 * @return the number of outputs
 	 */
 	public int getNumOutputs() {
-		int numOutputs = getMinOutputs();
-		for (int index = numOutputs; index < getMaxOutputs() && index < this.outputs.size(); index++)
+		int numOutputs = this.getMinOutputs();
+		for (int index = numOutputs; index < this.getMaxOutputs() && index < this.outputs.size(); index++)
 			if (this.outputs.get(index) != null)
 				numOutputs++;
 		return numOutputs;
@@ -466,11 +506,11 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 			throw new IllegalArgumentException("Cyclic reference");
 	}
 
-	protected JsonStream getSafeInput(final int inputIndex) {
-		final JsonStream input = this.getInput(inputIndex);
-		if (input == null)
-			throw new IllegalStateException("inputs must be set first");
-		return input;
+	protected int getSafeInputIndex(final JsonStream input) {
+		final int index = this.inputs.indexOf(input);
+		if (index == -1)
+			throw new IllegalStateException("unknown input " + input);
+		return index;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -566,7 +606,7 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 		CollectionUtil.ensureSize(list, index + 1);
 	}
 
-	private BeanInfo getBeanInfo() {
+	private Info getBeanInfo() {
 		Info beanInfo = beanInfos.get(this.getClass());
 		if (beanInfo == null)
 			beanInfos.put(this.getClass(), beanInfo = new Info(this.getClass()));
@@ -668,7 +708,7 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 	 * 
 	 * @author Arvid Heise
 	 */
-	public class Output extends AbstractSopremoType implements JsonStream, Cloneable, ISerializableSopremoType {
+	public class Output extends AbstractSopremoType implements JsonStream {
 		/**
 		 * 
 		 */
@@ -700,6 +740,15 @@ public abstract class Operator<Self extends Operator<Self>> extends AbstractSopr
 		 */
 		public int getIndex() {
 			return this.index;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return this;
 		}
 
 		/**

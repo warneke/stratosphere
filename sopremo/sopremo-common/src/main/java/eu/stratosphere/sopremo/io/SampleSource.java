@@ -33,15 +33,16 @@ public class SampleSource extends Source {
 
 	public SampleSource(Class<? extends FileInputFormat> inputFormat, String inputPath) {
 		super(SampleFormat.class, inputPath);
-		getParameters().put(SampleFormat.SAMPLE_FORMAT, inputFormat);
+		this.getParameters().put(SampleFormat.SAMPLE_FORMAT, inputFormat);
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.io.Source#setInputFormat(java.lang.Class)
 	 */
 	@Override
 	public void setInputFormat(Class<? extends FileInputFormat> inputFormat) {
-		getParameters().put(SampleFormat.SAMPLE_FORMAT, inputFormat);
+		this.getParameters().put(SampleFormat.SAMPLE_FORMAT, inputFormat);
 	}
 
 	public SampleSource(EvaluationExpression adhocValue) {
@@ -54,17 +55,17 @@ public class SampleSource extends Source {
 
 	public SampleSource(Source normalSource) {
 		super(SampleFormat.class, normalSource.getInputPath());
-		getParameters().putAll(normalSource.getParameters());
-		getParameters().put(SampleFormat.SAMPLE_FORMAT, normalSource.getInputFormat());		
+		this.getParameters().putAll(normalSource.getParameters());
+		this.getParameters().put(SampleFormat.SAMPLE_FORMAT, normalSource.getInputFormat());
 	}
 
 	public long getSampleSize() {
-		final Long sampleSize = (Long) getParameters().get(SampleFormat.SAMPLE_SIZE);
+		final Long sampleSize = (Long) this.getParameters().get(SampleFormat.SAMPLE_SIZE);
 		return sampleSize == null ? SampleFormat.DEFAULT_SAMPLE_SIZE : sampleSize;
 	}
-	
+
 	public void setSampleSize(long sampleSize) {
-		getParameters().put(SampleFormat.SAMPLE_SIZE, sampleSize);
+		this.getParameters().put(SampleFormat.SAMPLE_SIZE, sampleSize);
 	}
-	
+
 }

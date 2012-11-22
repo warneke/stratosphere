@@ -17,6 +17,7 @@ package eu.stratosphere.sopremo.base.replace;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
+import eu.stratosphere.sopremo.operator.Property;
 
 public abstract class ReplaceBase<Self extends ReplaceBase<Self>> extends ElementaryOperator<Self> {
 
@@ -29,6 +30,7 @@ public abstract class ReplaceBase<Self extends ReplaceBase<Self>> extends Elemen
 
 	protected EvaluationExpression dictionaryValueExtraction = new ArrayAccess(1);
 
+	@Property
 	public void setReplaceExpression(EvaluationExpression inputKeyExtractor) {
 		if (inputKeyExtractor == null)
 			throw new NullPointerException("inputKeyExtractor must not be null");
@@ -45,6 +47,7 @@ public abstract class ReplaceBase<Self extends ReplaceBase<Self>> extends Elemen
 		return this.self();
 	}
 
+	@Property
 	public void setDictionaryValueExtraction(EvaluationExpression dictionaryValueExtraction) {
 		if (dictionaryValueExtraction == null)
 			throw new NullPointerException("dictionaryValueExtraction must not be null");

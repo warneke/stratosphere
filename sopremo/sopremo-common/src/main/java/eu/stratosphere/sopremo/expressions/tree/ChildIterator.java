@@ -23,6 +23,6 @@ import eu.stratosphere.sopremo.expressions.EvaluationExpression;
  */
 public interface ChildIterator extends ListIterator<EvaluationExpression> {
 	public boolean canChildrenBeRemoved();
-	
+
 	public String getChildName();
 }

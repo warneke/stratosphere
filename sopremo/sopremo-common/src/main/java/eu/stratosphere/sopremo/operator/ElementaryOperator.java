@@ -35,6 +35,7 @@ import eu.stratosphere.sopremo.DegreeOfParallelism;
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.InputSelection;
+import eu.stratosphere.sopremo.expressions.UnevaluableExpression;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.serialization.Schema;
 import eu.stratosphere.util.CollectionUtil;
@@ -84,8 +85,7 @@ import eu.stratosphere.util.reflect.ReflectUtil;
 @OutputCardinality(min = 1, max = 1)
 public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 		extends Operator<Self> {
-	private static final org.apache.commons.logging.Log LOG = LogFactory
-		.getLog(ElementaryOperator.class);
+	private static final org.apache.commons.logging.Log LOG = LogFactory.getLog(ElementaryOperator.class);
 
 	private final List<List<? extends EvaluationExpression>> keyExpressions =
 		new ArrayList<List<? extends EvaluationExpression>>();
@@ -96,13 +96,26 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 		return this.resultProjection;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.operator.Operator#copyOperatorPropertiesFrom(eu.stratosphere.sopremo.operator.Operator)
+	 */
+	@Override
+	protected void copyOperatorPropertiesFrom(Self original) {
+		super.copyOperatorPropertiesFrom(original);
+		for (int index = 0; index < original.keyExpressions.size(); index++)
+			this.keyExpressions.set(index, SopremoUtil.deepClone(original.keyExpressions.get(index)));
+		this.resultProjection = original.resultProjection.clone();
+	}
+
 	@Property
 	@Name(preposition = "into")
 	public void setResultProjection(final EvaluationExpression resultProjection) {
 		if (resultProjection == null)
 			throw new NullPointerException("resultProjection must not be null");
 
-		if (getMaxInputs() == 1)
+		if (this.getMaxInputs() == 1)
 			this.resultProjection = resultProjection.clone().remove(new InputSelection(0));
 		else
 			this.resultProjection = resultProjection;
@@ -181,7 +194,7 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 	 * @param inputIndex
 	 *        the index of the input
 	 */
-	@Property(hidden = true)
+	// @Property(hidden = true)
 	public void setKeyExpressions(final int inputIndex,
 			final List<? extends EvaluationExpression> keyExpressions) {
 		if (keyExpressions == null)
@@ -305,16 +318,23 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 					try {
 						thisField = clazz.getDeclaredField(stubField.getName());
 						thisField.setAccessible(true);
-						SopremoUtil.serialize(stubConfiguration,
-							stubField.getName(),
-							(Serializable) thisField.get(this));
+						final Object value = thisField.get(this);
+						if (SopremoUtil.DEBUG && value instanceof EvaluationExpression &&
+							((EvaluationExpression) value).findFirst(UnevaluableExpression.class) != null)
+							throw new IllegalStateException(String.format(
+								"Cannot serialize field %s with unevaluable expressions %s",
+								thisField.getName(), value));
+						SopremoUtil.serialize(stubConfiguration, stubField.getName(), (Serializable) value);
 					} catch (final NoSuchFieldException e) {
 						// ignore field of stub if the field does not exist in
 						// this operator
 					} catch (final Exception e) {
 						LOG.error(String.format(
 							"Could not serialize field %s of class %s: %s",
-							stubField.getName(), contract.getClass(), e));
+							stubField.getName(), getClass().getSimpleName(), e));
+						throw new RuntimeException(String.format(
+							"Could not serialize field %s of class %s: %s",
+							stubField.getName(), getClass().getSimpleName(), e));
 					}
 				} while ((clazz = clazz.getSuperclass()) != ElementaryOperator.class);
 			}
@@ -366,7 +386,7 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 				int[] keyIndices1 = this.getKeyIndices(globalSchema, this.getKeyExpressions(0));
 				int[] keyIndices2 = this.getKeyIndices(globalSchema, this.getKeyExpressions(1));
 				Class<? extends Key>[] keyTypes = this.getCommonKeyClasses(globalSchema, keyIndices1, keyIndices2);
-				
+
 				CoGroupContract.Builder builder = CoGroupContract.builder((Class<? extends CoGroupStub>) stubClass,
 					keyTypes[0], keyIndices1[0], keyIndices2[0]);
 				builder.name(this.toString());
@@ -377,20 +397,21 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 				int[] keyIndices1 = this.getKeyIndices(globalSchema, this.getKeyExpressions(0));
 				int[] keyIndices2 = this.getKeyIndices(globalSchema, this.getKeyExpressions(1));
 				Class<? extends Key>[] keyTypes = this.getCommonKeyClasses(globalSchema, keyIndices1, keyIndices2);
-				
+
 				MatchContract.Builder builder = MatchContract.builder((Class<? extends MatchStub>) stubClass,
 					keyTypes[0], keyIndices1[0], keyIndices2[0]);
 				builder.name(this.toString());
 				PactBuilderUtil.addKeysExceptFirst(builder, keyTypes, keyIndices1, keyIndices2);
 				return builder.build();
-			} else if(contractClass == MapContract.class) 
+			} else if (contractClass == MapContract.class)
 				return MapContract.builder((Class<? extends MapStub>) stubClass).
-						name(this.toString()).build();
-			else if(contractClass == CrossContract.class) 
+					name(this.toString()).build();
+			else if (contractClass == CrossContract.class)
 				return CrossContract.builder((Class<? extends CrossStub>) stubClass).
-						name(this.toString()).build();
-			else throw new UnsupportedOperationException("Unknown contract type");
-				
+					name(this.toString()).build();
+			else
+				throw new UnsupportedOperationException("Unknown contract type");
+
 		} catch (final Exception e) {
 			throw new IllegalStateException("Cannot create contract from stub "
 				+ stubClass, e);

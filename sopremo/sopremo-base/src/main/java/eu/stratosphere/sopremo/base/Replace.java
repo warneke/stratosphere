@@ -3,7 +3,6 @@ package eu.stratosphere.sopremo.base;
 import java.io.IOException;
 
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.base.replace.AssembleArray;
 import eu.stratosphere.sopremo.base.replace.ReplaceBase;
 import eu.stratosphere.sopremo.base.replace.ReplaceWithDefaultValue;
@@ -11,15 +10,14 @@ import eu.stratosphere.sopremo.base.replace.StrictReplace;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.JsonStreamExpression;
-import eu.stratosphere.sopremo.expressions.SingletonExpression;
 import eu.stratosphere.sopremo.expressions.UnaryExpression;
+import eu.stratosphere.sopremo.expressions.UnevaluableSingletonExpression;
 import eu.stratosphere.sopremo.operator.CompositeOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
 import eu.stratosphere.sopremo.operator.Name;
 import eu.stratosphere.sopremo.operator.OutputCardinality;
 import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.operator.SopremoModule;
-import eu.stratosphere.sopremo.type.IJsonNode;
 
 @InputCardinality(min = 2, max = 2)
 @OutputCardinality(1)
@@ -33,44 +31,21 @@ public class Replace extends CompositeOperator<Replace> {
 
 	private EvaluationExpression replaceExpression = EvaluationExpression.VALUE;
 
-	public final static EvaluationExpression FILTER_RECORDS = new SingletonExpression("<filter>") {
+	public final static EvaluationExpression FILTER_RECORDS = new UnevaluableSingletonExpression("<filter>") {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -8218311569919645735L;
 
 		@Override
-		public IJsonNode evaluate(IJsonNode node) {
-			throw new EvaluationException("Tag expression");
-		}
-
-		@Override
 		protected Object readResolve() {
 			return FILTER_RECORDS;
 		}
 	};
-
-	public final static EvaluationExpression KEEP_VALUE = new SingletonExpression("<keep>") {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1652841463219871730L;
-
-		@Override
-		public IJsonNode evaluate(IJsonNode node) {
-			throw new EvaluationException("Tag expression");
-		}
-
-		@Override
-		protected Object readResolve() {
-			return KEEP_VALUE;
-		}
-	};
-
+	
 	private EvaluationExpression dictionaryKeyExtraction = new ArrayAccess(0),
 			dictionaryValueExtraction = new ArrayAccess(1),
-			defaultExpression = KEEP_VALUE;
+			defaultExpression = EvaluationExpression.VALUE;
 
 	private boolean arrayElementsReplacement = false;
 
@@ -107,7 +82,7 @@ public class Replace extends CompositeOperator<Replace> {
 					withInputs(module.getInput(0));
 
 			EvaluationExpression defaultExpression;
-			if (this.defaultExpression == KEEP_VALUE)
+			if (this.defaultExpression == EvaluationExpression.VALUE)
 				defaultExpression = new ArrayAccess(0);
 			else if (this.defaultExpression == FILTER_RECORDS)
 				defaultExpression = this.defaultExpression;
@@ -142,7 +117,7 @@ public class Replace extends CompositeOperator<Replace> {
 			module.getOutput(0).setInput(0, new UnionAll().withInputs(arrayLookup, emptyArrays));
 		} else {
 			EvaluationExpression defaultExpression =
-				this.defaultExpression == KEEP_VALUE ? this.replaceExpression : this.defaultExpression;
+				this.defaultExpression == EvaluationExpression.VALUE ? this.replaceExpression : this.defaultExpression;
 			ReplaceBase<?> replaceAtom;
 			if (defaultExpression == FILTER_RECORDS)
 				replaceAtom = new StrictReplace();
@@ -240,6 +215,7 @@ public class Replace extends CompositeOperator<Replace> {
 		this.defaultExpression = defaultExpression;
 	}
 
+	@Property
 	public void setDictionaryKeyExtraction(EvaluationExpression dictionaryKeyExtraction) {
 		if (dictionaryKeyExtraction == null)
 			throw new NullPointerException("dictionaryKeyExtraction must not be null");
@@ -247,6 +223,7 @@ public class Replace extends CompositeOperator<Replace> {
 		this.dictionaryKeyExtraction = dictionaryKeyExtraction;
 	}
 
+	@Property
 	public void setDictionaryValueExtraction(EvaluationExpression dictionaryValueExtraction) {
 		if (dictionaryValueExtraction == null)
 			throw new NullPointerException("dictionaryValueExtraction must not be null");

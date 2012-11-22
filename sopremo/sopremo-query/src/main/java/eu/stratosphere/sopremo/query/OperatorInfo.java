@@ -67,6 +67,15 @@ public class OperatorInfo<Op extends Operator<Op>> extends AbstractSopremoType i
 			}
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return new InputPropertyInfo(getName(), getDescriptor());
+		}
+
 		public void setValue(final Operator<?> operator, final int index, final Object value) {
 			try {
 				this.getDescriptor().getIndexedWriteMethod().invoke(operator, index, value);
@@ -104,6 +113,15 @@ public class OperatorInfo<Op extends Operator<Op>> extends AbstractSopremoType i
 			}
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return new OperatorPropertyInfo(getName(), getDescriptor());
+		}
+
 		public void setValue(final Operator<?> operator, final Object value) {
 			try {
 				this.getDescriptor().getWriteMethod().invoke(operator, value);
@@ -115,7 +133,7 @@ public class OperatorInfo<Op extends Operator<Op>> extends AbstractSopremoType i
 
 	}
 
-	public static class PropertyInfo extends AbstractSopremoType implements ISerializableSopremoType {
+	public abstract static class PropertyInfo extends AbstractSopremoType implements ISerializableSopremoType {
 		/**
 		 * 
 		 */
@@ -228,6 +246,15 @@ public class OperatorInfo<Op extends Operator<Op>> extends AbstractSopremoType i
 
 	public String getName() {
 		return this.name;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new OperatorInfo<Op>(this.operatorClass, this.name, this.propertyNameChooser);
 	}
 
 	public IRegistry<OperatorPropertyInfo> getOperatorPropertyRegistry() {

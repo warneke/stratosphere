@@ -77,7 +77,8 @@ public class NullNode extends AbstractJsonNode implements IPrimitiveNode {
 		return Type.NullNode;
 	}
 
-	private Object readResolve() {
+	@Override
+	protected Object readResolve() {
 		return Instance;
 	}
 

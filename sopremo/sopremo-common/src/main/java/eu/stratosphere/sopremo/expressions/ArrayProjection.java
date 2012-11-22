@@ -2,6 +2,7 @@ package eu.stratosphere.sopremo.expressions;
 
 import java.io.IOException;
 
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.ConcatenatingChildIterator;
 import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
@@ -66,14 +67,11 @@ public class ArrayProjection extends PathSegmentExpression {
 		return new ArrayProjection();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#copyPropertiesFrom(eu.stratosphere.sopremo.expressions
-	 * .EvaluationExpression)
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#copyPropertiesFrom(eu.stratosphere.sopremo.ISopremoType)
 	 */
 	@Override
-	protected void copyPropertiesFrom(EvaluationExpression original) {
+	public void copyPropertiesFrom(ISopremoType original) {
 		super.copyPropertiesFrom(original);
 		this.projection = ((ArrayProjection) original).projection.clone();
 	}
@@ -82,24 +80,25 @@ public class ArrayProjection extends PathSegmentExpression {
 
 	private final transient PullingStreamArrayNode virtualResult = new PullingStreamArrayNode();
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.expressions.PathSegmentExpression#iterator()
 	 */
 	@Override
 	public ChildIterator iterator() {
-		return new ConcatenatingChildIterator(super.iterator(), new NamedChildIterator("projection") {			
+		return new ConcatenatingChildIterator(super.iterator(), new NamedChildIterator("projection") {
 			@Override
 			protected void set(int index, EvaluationExpression childExpression) {
 				ArrayProjection.this.projection = childExpression;
 			}
-			
+
 			@Override
 			protected EvaluationExpression get(int index) {
 				return ArrayProjection.this.projection;
 			}
 		});
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see
@@ -134,7 +133,7 @@ public class ArrayProjection extends PathSegmentExpression {
 	public void appendAsString(final Appendable appendable) throws IOException {
 		this.getInputExpression().appendAsString(appendable);
 		appendable.append("[*]");
-		if(this.projection != EvaluationExpression.VALUE)
+		if (this.projection != EvaluationExpression.VALUE)
 			this.projection.appendAsString(appendable);
 	}
 }

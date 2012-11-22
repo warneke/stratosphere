@@ -14,6 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.base.replace;
 
+import eu.stratosphere.sopremo.operator.Property;
+
 /**
  * @author arv
  */
@@ -27,6 +29,7 @@ public abstract class ArrayElementReplaceBase<Self extends ArrayElementReplaceBa
 		return this.index;
 	}
 
+	@Property
 	public void setIndex(int index) {
 		if (index < 0)
 			throw new NullPointerException("index must be > 0");

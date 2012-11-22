@@ -2,6 +2,7 @@ package eu.stratosphere.sopremo.function;
 
 import java.io.IOException;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -40,10 +41,10 @@ public class ExpressionFunction extends SopremoFunction implements Inlineable {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.Callable#clone()
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 	 */
 	@Override
-	public ExpressionFunction clone() {
+	protected AbstractSopremoType createCopy() {
 		return new ExpressionFunction(this.getMaximumNumberOfParameters(), this.definition.clone());
 	}
 
@@ -61,7 +62,7 @@ public class ExpressionFunction extends SopremoFunction implements Inlineable {
 			return true;
 		if (!super.equals(obj))
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		ExpressionFunction other = (ExpressionFunction) obj;
 		return this.definition.equals(other.definition);

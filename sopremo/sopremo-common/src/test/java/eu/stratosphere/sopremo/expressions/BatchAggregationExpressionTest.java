@@ -33,7 +33,7 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 			return new BatchAggregationExpression(CoreFunctions.ALL);
 		}
 	}
-	
+
 	@Before
 	public void setup() {
 		SopremoRuntime.getInstance().mockRuntime();
@@ -48,7 +48,7 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 
 	@Test
 	public void shouldPerformBatch() {
-		final BatchAggregationExpression batch = createBatchExpression();
+		final BatchAggregationExpression batch = this.createBatchExpression();
 		final IJsonNode result = batch.evaluate(createArrayNode(2, 3, 4, 5, 1));
 
 		Assert.assertTrue(result instanceof IArrayNode);
@@ -73,7 +73,7 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 
 	@Test
 	public void shouldReuseTarget() {
-		final BatchAggregationExpression batch = createBatchExpression();
+		final BatchAggregationExpression batch = this.createBatchExpression();
 		final IJsonNode result1 = batch.evaluate(createArrayNode(2, 3, 4, 5, 1));
 		final IJsonNode result2 = batch.evaluate(createArrayNode(2, 3));
 
@@ -82,40 +82,40 @@ public class BatchAggregationExpressionTest extends EvaluableExpressionTest<Batc
 
 	@Test
 	public void testPartialClone() throws IllegalAccessException {
-		final BatchAggregationExpression original = createBatchExpression();
+		final BatchAggregationExpression original = this.createBatchExpression();
 		final Partial partial1Clone = (Partial) original.getPartial(0).clone();
 		final Partial partial2Clone = (Partial) original.getPartial(1).clone();
 
-		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
+		this.testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
 		Assert.assertSame(partial1Clone.getBatch(), partial2Clone.getBatch());
 	}
 
 	@Test
 	public void testMultipleClones() throws IllegalAccessException {
-		final BatchAggregationExpression original = createBatchExpression();
+		final BatchAggregationExpression original = this.createBatchExpression();
 		final Partial partial1Clone = (Partial) original.getPartial(0).clone();
 		final Partial partial2Clone = (Partial) original.getPartial(1).clone();
 		final Partial partial1Clone2 = (Partial) original.getPartial(0).clone();
 		final Partial partial2Clone2 = (Partial) original.getPartial(1).clone();
 
-		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
-		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone2.getBatch());
-		testPropertyClone(BatchAggregationExpression.class, partial1Clone.getBatch(), partial1Clone2.getBatch());
+		this.testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
+		this.testPropertyClone(BatchAggregationExpression.class, original, partial1Clone2.getBatch());
+		this.testPropertyClone(BatchAggregationExpression.class, partial1Clone.getBatch(), partial1Clone2.getBatch());
 		Assert.assertSame(partial1Clone.getBatch(), partial2Clone.getBatch());
 		Assert.assertSame(partial1Clone2.getBatch(), partial2Clone2.getBatch());
 	}
 
 	@Test
 	public void testSuccessiveClones() throws IllegalAccessException {
-		final BatchAggregationExpression original = createBatchExpression();
+		final BatchAggregationExpression original = this.createBatchExpression();
 		final Partial partial1Clone = (Partial) original.getPartial(0).clone();
 		final Partial partial2Clone = (Partial) original.getPartial(1).clone();
 		final Partial partial1Clone2 = (Partial) partial1Clone.clone();
 		final Partial partial2Clone2 = (Partial) partial2Clone.clone();
 
-		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
-		testPropertyClone(BatchAggregationExpression.class, original, partial1Clone2.getBatch());
-		testPropertyClone(BatchAggregationExpression.class, partial1Clone.getBatch(), partial1Clone2.getBatch());
+		this.testPropertyClone(BatchAggregationExpression.class, original, partial1Clone.getBatch());
+		this.testPropertyClone(BatchAggregationExpression.class, original, partial1Clone2.getBatch());
+		this.testPropertyClone(BatchAggregationExpression.class, partial1Clone.getBatch(), partial1Clone2.getBatch());
 		Assert.assertSame(partial1Clone.getBatch(), partial2Clone.getBatch());
 		Assert.assertSame(partial1Clone2.getBatch(), partial2Clone2.getBatch());
 	}

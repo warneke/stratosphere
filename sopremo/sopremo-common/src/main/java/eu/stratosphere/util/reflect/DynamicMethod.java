@@ -92,7 +92,7 @@ public class DynamicMethod<ReturnType> extends DynamicInvokable<Method, Object, 
 			return true;
 		if (!super.equals(obj))
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		DynamicMethod<?> other = (DynamicMethod<?>) obj;
 		return this.returnType.equals(other.returnType);
@@ -104,6 +104,6 @@ public class DynamicMethod<ReturnType> extends DynamicInvokable<Method, Object, 
 	 */
 	@Override
 	public String toString() {
-		return getName();
+		return this.getName();
 	}
 }

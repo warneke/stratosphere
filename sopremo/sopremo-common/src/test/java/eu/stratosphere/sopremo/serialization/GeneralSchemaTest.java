@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.Value;
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
@@ -31,8 +30,6 @@ public class GeneralSchemaTest {
 
 	private List<EvaluationExpression> mappings;
 
-	private EvaluationContext context;
-
 	@Before
 	public void setUp() {
 		this.mappings = new LinkedList<EvaluationExpression>();
@@ -45,12 +42,11 @@ public class GeneralSchemaTest {
 
 		this.array = new ArrayNode(IntNode.valueOf(3), IntNode.valueOf(4));
 		this.schema = new GeneralSchema(this.mappings);
-		this.context = new EvaluationContext();
 	}
 
 	@Test
 	public void shouldCreateACorrectRecord() {
-		final PactRecord record = this.schema.jsonToRecord(this.array, null, this.context);
+		final PactRecord record = this.schema.jsonToRecord(this.array, null);
 
 		Assert.assertEquals(IntNode.valueOf(7), record.getField(0, JsonNodeWrapper.class).getValue());
 		Assert.assertEquals(IntNode.valueOf(12), record.getField(1, JsonNodeWrapper.class).getValue());
@@ -123,7 +119,7 @@ public class GeneralSchemaTest {
 	public void shouldUseTargetRecordIfProvided() {
 		final PactRecord target = new PactRecord(3);
 
-		final PactRecord record = this.schema.jsonToRecord(this.array, target, this.context);
+		final PactRecord record = this.schema.jsonToRecord(this.array, target);
 
 		Assert.assertSame(target, record);
 	}

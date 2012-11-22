@@ -14,6 +14,7 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -56,11 +57,11 @@ public class SopremoFunctionWithDefaultParameters extends SopremoFunction {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.Callable#clone()
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 	 */
 	@Override
-	public SopremoFunction clone() {
-		return new SopremoFunctionWithDefaultParameters(this.originalFunction, getMinimumNumberOfParameters());
+	protected AbstractSopremoType createCopy() {
+		return new SopremoFunctionWithDefaultParameters(this.originalFunction, this.getMinimumNumberOfParameters());
 	}
 
 	public IJsonNode getDefaultParameter(int index) {
