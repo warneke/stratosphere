@@ -28,6 +28,7 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
 import org.junit.Before;
+import org.junit.Ignore;
 
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
@@ -37,6 +38,7 @@ import eu.stratosphere.util.reflect.BoundTypeUtil;
  * @author arv
  * @param <T>
  */
+@Ignore
 public class EqualVerifyTest<T> {
 	protected T first, second;
 
