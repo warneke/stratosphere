@@ -39,9 +39,13 @@
 
 		<dependency>
 			<groupId>eu.stratosphere</groupId>
+			<artifactId>nephele-hdfs</artifactId>
+			<version>0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>eu.stratosphere</groupId>
 			<artifactId>pact-tests</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
+			<version>0.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

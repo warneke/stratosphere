@@ -65,9 +65,9 @@ public class DynamicMethod<ReturnType> extends DynamicInvokable<Method, Object, 
 	}
 
 	@Override
-	protected Method findMember(final java.lang.Class<Object> clazz, final java.lang.Class<?>[] parameterTypes)
+	protected Method findMember(final String name, final java.lang.Class<Object> clazz, final java.lang.Class<?>[] parameterTypes)
 			throws NoSuchMethodException {
-		return clazz.getDeclaredMethod(this.getName(), parameterTypes);
+		return clazz.getDeclaredMethod(name, parameterTypes);
 	}
 
 	public static DynamicMethod<?> valueOf(final Class<?> clazz, final String name) {

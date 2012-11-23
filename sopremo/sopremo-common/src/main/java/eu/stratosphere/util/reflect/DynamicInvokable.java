@@ -43,21 +43,24 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 		this.originalSignatures = new HashMap<Signature, MemberType>();
 		for (int index = 0; index < size; index++)
 			try {
-				this.originalSignatures.put((Signature) ois.readObject(),
-					this.findMember((Class<DeclaringType>) ois.readObject(), (Class<?>[]) ois.readObject()));
+				Signature signature = (Signature) ois.readObject();
+				String name = (String) ois.readObject();
+				Class<DeclaringType> clazz = (Class<DeclaringType>) ois.readObject();
+				Class<?>[] params = (Class<?>[]) ois.readObject();
+				this.originalSignatures.put(signature, this.findMember(name, clazz, params));
 			} catch (final NoSuchMethodException e) {
 				throw new EvaluationException("Cannot find registered java function " + this.getName(), e);
 			}
 	}
 
-	protected abstract MemberType findMember(Class<DeclaringType> clazz, Class<?>[] parameterTypes)
-			throws NoSuchMethodException;
+	protected abstract MemberType findMember(String name, Class<DeclaringType> clazz, Class<?>[] parameterTypes) throws NoSuchMethodException;
 
 	private void writeObject(final ObjectOutputStream oos) throws IOException {
 		oos.defaultWriteObject();
 		oos.writeInt(this.originalSignatures.size());
 		for (final Entry<Signature, MemberType> entry : this.originalSignatures.entrySet()) {
 			oos.writeObject(entry.getKey());
+			oos.writeObject(entry.getValue().getName());
 			oos.writeObject(entry.getValue().getDeclaringClass());
 			oos.writeObject(this.getParameterTypes(entry.getValue()));
 		}
@@ -83,7 +86,8 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 			signature = new Signature(parameterTypes);
 		this.originalSignatures.put(signature, member);
 		// Cache flushing might be more intelligent in the future.
-		// However, how often are method signatures actually added after first invocation?
+		// However, how often are method signatures actually added after first
+		// invocation?
 		this.cachedSignatures.clear();
 		this.cachedSignatures.putAll(this.originalSignatures);
 	}
@@ -139,16 +143,15 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 				ambigiousSignatures.add(originalSignature.getKey());
 		}
 
-		LOG.warn(String.format("multiple matching signatures found for the member %s and parameters types %s: %s",
-			this.getName(), Arrays.toString(signature.getParameterTypes()), ambigiousSignatures));
+		LOG.warn(String.format("multiple matching signatures found for the member %s and parameters types %s: %s", this.getName(),
+				Arrays.toString(signature.getParameterTypes()), ambigiousSignatures));
 	}
 
 	public ReturnType invoke(final Object context, final Object... params) throws Exception {
 		final Class<?>[] paramTypes = this.getActualParameterTypes(params);
 		final Signature signature = this.findBestSignature(new Signature(paramTypes));
 		if (signature == null)
-			throw new EvaluationException(String.format("No method %s found for parameter types %s",
-				this.getName(), Arrays.toString(paramTypes)));
+			throw new EvaluationException(String.format("No method %s found for parameter types %s", this.getName(), Arrays.toString(paramTypes)));
 		return this.invokeSignature(signature, context, params);
 	}
 
@@ -163,8 +166,7 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 		return this.findBestSignature(new Signature(paramTypes)) != null;
 	}
 
-	public ReturnType invokeSignature(final Signature signature, final Object context, final Object... params)
-			throws Exception {
+	public ReturnType invokeSignature(final Signature signature, final Object context, final Object... params) throws Exception {
 		try {
 			return this.invokeDirectly(this.getMember(signature), context, signature.adjustParameters(params));
 		} catch (final Error e) {
@@ -178,8 +180,8 @@ public abstract class DynamicInvokable<MemberType extends Member, DeclaringType,
 		return this.cachedSignatures.get(signature);
 	}
 
-	protected abstract ReturnType invokeDirectly(final MemberType member, final Object context, Object[] params)
-			throws IllegalAccessException, InvocationTargetException, IllegalArgumentException, InstantiationException;
+	protected abstract ReturnType invokeDirectly(final MemberType member, final Object context, Object[] params) throws IllegalAccessException,
+			InvocationTargetException, IllegalArgumentException, InstantiationException;
 
 	protected Class<?>[] getActualParameterTypes(final Object[] params) {
 		final Class<?>[] paramTypes = new Class<?>[params.length];
