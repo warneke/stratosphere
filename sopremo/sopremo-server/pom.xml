@@ -15,7 +15,7 @@
 
 	<packaging>jar</packaging>
 
-	<dependencies>		
+	<dependencies>
 		<dependency>
 			<groupId>eu.stratosphere</groupId>
 			<artifactId>sopremo-base</artifactId>
@@ -40,12 +40,14 @@
 		<dependency>
 			<groupId>eu.stratosphere</groupId>
 			<artifactId>nephele-hdfs</artifactId>
-			<version>0.2</version>
+			<version>${project.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>eu.stratosphere</groupId>
 			<artifactId>pact-tests</artifactId>
-			<version>0.2</version>
+			<type>test-jar</type>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
