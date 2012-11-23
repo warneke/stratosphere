@@ -104,9 +104,11 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 	@Override
 	protected void copyOperatorPropertiesFrom(Self original) {
 		super.copyOperatorPropertiesFrom(original);
-		for (int index = 0; index < original.keyExpressions.size(); index++)
-			this.keyExpressions.set(index, SopremoUtil.deepClone(original.keyExpressions.get(index)));
-		this.resultProjection = original.resultProjection.clone();
+		// OpenJDK compiler bug?
+		final ElementaryOperator<?> originalOp = original;
+		for (int index = 0; index < originalOp.keyExpressions.size(); index++)
+			this.keyExpressions.set(index, SopremoUtil.deepClone(originalOp.keyExpressions.get(index)));
+		this.resultProjection = originalOp.resultProjection.clone();
 	}
 
 	@Property
