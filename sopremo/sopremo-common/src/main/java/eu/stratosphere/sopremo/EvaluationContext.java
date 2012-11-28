@@ -43,36 +43,13 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 	// return this.operatorStack;
 	// }
 
-	public EvaluationExpression getResultProjection() {
-		return this.resultProjection;
-	}
+	private int taskId;
 
-	public void setResultProjection(final EvaluationExpression resultProjection) {
-		if (resultProjection == null)
-			throw new NullPointerException("resultProjection must not be null");
-
-		this.resultProjection = resultProjection;
-	}
-
-	public String operatorTrace() {
-		final Iterator<String> descendingIterator = this.operatorStack.descendingIterator();
-		final StringBuilder builder = new StringBuilder(descendingIterator.next());
-		while (descendingIterator.hasNext())
-			builder.append("->").append(descendingIterator.next());
-		return builder.toString();
-	}
-
-	public String getCurrentOperator() {
-		return this.operatorStack.peek();
-	}
-
-	public void pushOperator(final Operator<?> e) {
-		// reset inputs to avoid serialization
-		this.operatorStack.push(e.getName());
-	}
-
-	public String popOperator() {
-		return this.operatorStack.pop();
+	/**
+	 * Initializes EvaluationContext.
+	 */
+	public EvaluationContext() {
+		this(0, 0, new DefaultFunctionRegistry(), new DefaultConstantRegistry());
 	}
 
 	/**
@@ -85,90 +62,25 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 		this.setInputsAndOutputs(numInputs, numOutputs);
 	}
 
-	public void setInputsAndOutputs(final int numInputs, final int numOutputs) {
-		for (int index = 0; index < numInputs; index++)
-			this.inputSchemas.add(new GeneralSchema());
-		for (int index = 0; index < numOutputs; index++)
-			this.outputSchemas.add(new GeneralSchema());
-	}
-
 	/**
 	 * Initializes EvaluationContext.
 	 */
-	public EvaluationContext() {
-		this(0, 0, new DefaultFunctionRegistry(), new DefaultConstantRegistry());
-	}
-
-	/**
-	 * Returns the {@link FunctionRegistry} containing all registered function in the current evaluation context.
-	 * 
-	 * @return the FunctionRegistry
-	 */
-	@Override
-	public IFunctionRegistry getFunctionRegistry() {
-		return this.methodRegistry;
+	public EvaluationContext(EvaluationContext context) {
+		this(context.inputSchemas.size(), context.outputSchemas.size(), context.methodRegistry, context.constantRegistry);
+		copyPropertiesFrom(context);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.packages.RegistryScope#getConstantRegistry()
+	 * @see eu.stratosphere.sopremo.SopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public IConstantRegistry getConstantRegistry() {
-		return this.constantRegistry;
-	}
-
-	/**
-	 * Returns the inputSchemas.
-	 * 
-	 * @return the inputSchemas
-	 */
-	public Schema getInputSchema(@SuppressWarnings("unused") final int index) {
-		return this.schema;
-		// return this.inputSchemas[index];
-	}
-
-	/**
-	 * Returns the outputSchemas.
-	 * 
-	 * @return the outputSchemas
-	 */
-	public Schema getOutputSchema(@SuppressWarnings("unused") final int index) {
-		return this.schema;
-		// return this.outputSchemas[index];
-	}
-
-	private int taskId;
-
-	public int getTaskId() {
-		return this.taskId;
-	}
-
-	public void setTaskId(final int taskId) {
-		this.taskId = taskId;
-	}
-
-	/**
-	 * Returns the inputCount.
-	 * 
-	 * @return the inputCount
-	 */
-	public int getInputCount() {
-		return this.inputCount;
-	}
-
-	public void incrementInputCount() {
-		this.inputCount++;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
-	 */
-	@Override
-	protected AbstractSopremoType createCopy() {
-		return new EvaluationContext(this.inputSchemas.size(), this.outputSchemas.size(),
-			(IFunctionRegistry) this.methodRegistry.clone(), (IConstantRegistry) this.constantRegistry.clone());
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("Context @ ").append(this.operatorStack.toString()).append("\n").
+			append("Methods: ");
+		this.methodRegistry.appendAsString(appendable);
+		appendable.append("\nConstants: ");
+		this.constantRegistry.appendAsString(appendable);
 	}
 
 	/*
@@ -196,15 +108,97 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.SopremoType#toString(java.lang.StringBuilder)
+	 * @see eu.stratosphere.sopremo.packages.RegistryScope#getConstantRegistry()
 	 */
 	@Override
-	public void appendAsString(final Appendable appendable) throws IOException {
-		appendable.append("Context @ ").append(this.operatorStack.toString()).append("\n").
-			append("Methods: ");
-		this.methodRegistry.appendAsString(appendable);
-		appendable.append("\nConstants: ");
-		this.constantRegistry.appendAsString(appendable);
+	public IConstantRegistry getConstantRegistry() {
+		return this.constantRegistry;
+	}
+
+	public String getCurrentOperator() {
+		return this.operatorStack.peek();
+	}
+
+	/**
+	 * Returns the {@link FunctionRegistry} containing all registered function in the current evaluation context.
+	 * 
+	 * @return the FunctionRegistry
+	 */
+	@Override
+	public IFunctionRegistry getFunctionRegistry() {
+		return this.methodRegistry;
+	}
+
+	/**
+	 * Returns the inputCount.
+	 * 
+	 * @return the inputCount
+	 */
+	public int getInputCount() {
+		return this.inputCount;
+	}
+
+	/**
+	 * Returns the inputSchemas.
+	 * 
+	 * @return the inputSchemas
+	 */
+	public Schema getInputSchema(@SuppressWarnings("unused") final int index) {
+		return this.schema;
+		// return this.inputSchemas[index];
+	}
+
+	/**
+	 * Returns the outputSchemas.
+	 * 
+	 * @return the outputSchemas
+	 */
+	public Schema getOutputSchema(@SuppressWarnings("unused") final int index) {
+		return this.schema;
+		// return this.outputSchemas[index];
+	}
+
+	public EvaluationExpression getResultProjection() {
+		return this.resultProjection;
+	}
+
+	public int getTaskId() {
+		return this.taskId;
+	}
+
+	public void incrementInputCount() {
+		this.inputCount++;
+	}
+
+	public String operatorTrace() {
+		final Iterator<String> descendingIterator = this.operatorStack.descendingIterator();
+		final StringBuilder builder = new StringBuilder(descendingIterator.next());
+		while (descendingIterator.hasNext())
+			builder.append("->").append(descendingIterator.next());
+		return builder.toString();
+	}
+
+	public String popOperator() {
+		return this.operatorStack.pop();
+	}
+
+	public void pushOperator(final Operator<?> e) {
+		// reset inputs to avoid serialization
+		this.operatorStack.push(e.getName());
+	}
+
+	public void setInputsAndOutputs(final int numInputs, final int numOutputs) {
+		for (int index = 0; index < numInputs; index++)
+			this.inputSchemas.add(new GeneralSchema());
+		for (int index = 0; index < numOutputs; index++)
+			this.outputSchemas.add(new GeneralSchema());
+	}
+
+	public void setResultProjection(final EvaluationExpression resultProjection) {
+		if (resultProjection == null)
+			throw new NullPointerException("resultProjection must not be null");
+
+		this.resultProjection = resultProjection;
 	}
 
 	/**
@@ -212,5 +206,19 @@ public class EvaluationContext extends AbstractSopremoType implements ISerializa
 	 */
 	public void setSchema(final Schema schema) {
 		this.schema = schema;
+	}
+
+	public void setTaskId(final int taskId) {
+		this.taskId = taskId;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new EvaluationContext(this.inputSchemas.size(), this.outputSchemas.size(),
+			(IFunctionRegistry) this.methodRegistry.clone(), (IConstantRegistry) this.constantRegistry.clone());
 	}
 }

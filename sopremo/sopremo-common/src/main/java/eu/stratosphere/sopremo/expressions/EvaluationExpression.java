@@ -69,7 +69,7 @@ public abstract class EvaluationExpression extends AbstractSopremoType implement
 	 * @see java.lang.Object#clone()
 	 */
 	@Override
-	public final EvaluationExpression clone() {
+	public EvaluationExpression clone() {
 		return (EvaluationExpression) super.clone();
 	}
 

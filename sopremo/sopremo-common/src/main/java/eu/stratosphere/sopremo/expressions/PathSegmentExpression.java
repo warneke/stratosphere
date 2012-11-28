@@ -71,6 +71,19 @@ public abstract class PathSegmentExpression extends EvaluationExpression {
 		return this;
 	}
 
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#clone()
+	 */
+	@Override
+	public PathSegmentExpression clone() {
+		return (PathSegmentExpression) super.clone();
+	}
+
+	public PathSegmentExpression withTail(EvaluationExpression tail) {
+		getLast().setInputExpression(tail);
+		return this;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#evaluate(eu.stratosphere.sopremo.type.IJsonNode)

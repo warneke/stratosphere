@@ -50,7 +50,7 @@ public class ExpressionUtil {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * Wraps the given {@link EvaluationExpression}s in a single {@link PathExpression}
 	 * 

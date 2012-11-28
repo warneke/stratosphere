@@ -114,4 +114,8 @@ public class UnaryExpression extends BooleanExpression {
 			appendable.append("!");
 		this.expr.appendAsString(appendable);
 	}
+
+	public static BooleanExpression not(EvaluationExpression expression) {
+		return new UnaryExpression(expression, true);
+	}
 }

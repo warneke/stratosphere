@@ -211,8 +211,7 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 	 * @param keyExpressions
 	 *        the keyExpressions to set
 	 */
-	public void setKeyExpressions(final int index,
-			final EvaluationExpression... keyExpressions) {
+	public void setKeyExpressions(final int index, final EvaluationExpression... keyExpressions) {
 		if (keyExpressions.length == 0)
 			throw new IllegalArgumentException(
 				"keyExpressions must not be null");
@@ -229,8 +228,7 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 	 *        the index of the input
 	 * @return this
 	 */
-	public Self withKeyExpression(final int index,
-			final EvaluationExpression... keyExpressions) {
+	public Self withKeyExpression(final int index, final EvaluationExpression... keyExpressions) {
 		this.setKeyExpressions(index, keyExpressions);
 		return this.self();
 	}
@@ -244,8 +242,7 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 	 *        the index of the input
 	 * @return this
 	 */
-	public Self withKeyExpressions(final int index,
-			final List<? extends EvaluationExpression> keyExpressions) {
+	public Self withKeyExpressions(final int index, final List<? extends EvaluationExpression> keyExpressions) {
 		this.setKeyExpressions(index, keyExpressions);
 		return this.self();
 	}
@@ -371,8 +368,7 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 		final Class<? extends Stub> stubClass = this.getStubClass();
 		if (stubClass == null)
 			throw new IllegalStateException("no implementing stub found");
-		final Class<? extends Contract> contractClass = ContractUtil
-			.getContractClass(stubClass);
+		final Class<? extends Contract> contractClass = ContractUtil.getContractClass(stubClass);
 		if (contractClass == null)
 			throw new IllegalStateException("no associated contract found");
 
@@ -461,10 +457,8 @@ public abstract class ElementaryOperator<Self extends ElementaryOperator<Self>>
 	}
 
 	@SuppressWarnings("unchecked")
-	protected Class<? extends Key>[] getKeyClasses(final Schema globalSchema,
-			final int[] keyIndices) {
-		final Class<? extends Value>[] pactSchema = globalSchema
-			.getPactSchema();
+	protected Class<? extends Key>[] getKeyClasses(final Schema globalSchema, final int[] keyIndices) {
+		final Class<? extends Value>[] pactSchema = globalSchema.getPactSchema();
 		final Class<? extends Key>[] keyClasses = new Class[keyIndices.length];
 		for (int index = 0; index < keyIndices.length; index++) {
 			final Class<? extends Value> schemaClass = pactSchema[keyIndices[index]];
