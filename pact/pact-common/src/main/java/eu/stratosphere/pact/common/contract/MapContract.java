@@ -37,6 +37,8 @@ public class MapContract extends SingleInputContract<MapStub>
 {	
 	private static String DEFAULT_NAME = "<Unnamed Mapper>";
 	
+	private final DataDistribution dataDistribution;
+	
 	// --------------------------------------------------------------------------------------------
 	
 	/**
@@ -53,10 +55,15 @@ public class MapContract extends SingleInputContract<MapStub>
 	 * @param builder
 	 */
 	private MapContract(Builder builder) {
-		super(builder.udf, builder.name, builder.partitioner);
+		super(builder.udf, builder.name);
 		setInputs(builder.inputs);
+		this.dataDistribution = builder.dataDistribution;
 	}
 
+	public DataDistribution getDataDistribution() {
+		return this.dataDistribution;
+	}
+	
 	// --------------------------------------------------------------------------------------------
 	
 	/**
@@ -73,7 +80,7 @@ public class MapContract extends SingleInputContract<MapStub>
 		private List<Contract> inputs;
 		private String name = DEFAULT_NAME;
 		
-		private Partitioner partitioner = null;
+		private DataDistribution dataDistribution = null;
 		
 		/**
 		 * Creates a Builder with the provided {@link MapStub} implementation.
@@ -98,8 +105,8 @@ public class MapContract extends SingleInputContract<MapStub>
 			return this;
 		}
 		
-		public Builder partitioner(Partitioner partitioner) {
-			this.partitioner = partitioner;
+		public Builder dataDistribution(DataDistribution dataDistribution) {
+			this.dataDistribution = dataDistribution;
 			
 			return this;
 		}

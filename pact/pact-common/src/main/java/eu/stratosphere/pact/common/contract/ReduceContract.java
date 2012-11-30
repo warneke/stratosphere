@@ -72,7 +72,7 @@ public class ReduceContract extends SingleInputContract<ReduceStub>
 	 * @param builder
 	 */
 	private ReduceContract(Builder builder) {
-		super(builder.udf, builder.getKeyClassesArray(), builder.getKeyColumnsArray(), builder.name, null);
+		super(builder.udf, builder.getKeyClassesArray(), builder.getKeyColumnsArray(), builder.name);
 		setInputs(builder.inputs);
 		setGroupOrder(builder.secondaryOrder);
 	}

@@ -15,7 +15,6 @@
 
 package eu.stratosphere.pact.runtime.shipping;
 
-import eu.stratosphere.pact.common.contract.Partitioner;
 import eu.stratosphere.pact.common.util.FieldList;
 
 /**
@@ -30,7 +29,6 @@ public abstract class ShipStrategy {
 		PARTITION_LOCAL_HASH,
 		PARTITION_RANGE,
 		PARTITION_LOCAL_RANGE,
-		PARTITION_CUSTOM,
 		BROADCAST,
 		SFR,
 		NONE
@@ -85,20 +83,6 @@ public abstract class ShipStrategy {
 			return this.partitionFields;
 		}
 		
-	}
-	
-	public static class PartitionCustomSS extends PartitionShipStrategy {
-		
-		private final Partitioner partitioner;
-		
-		public PartitionCustomSS(FieldList partitionFields, Partitioner partitioner) {
-			super(ShipStrategyType.PARTITION_CUSTOM, partitionFields);
-			this.partitioner = partitioner;
-		}
-		
-		public Partitioner getPartitioner() {
-			return this.partitioner;
-		}
 	}
 	
 	public static class PartitionHashSS extends PartitionShipStrategy {

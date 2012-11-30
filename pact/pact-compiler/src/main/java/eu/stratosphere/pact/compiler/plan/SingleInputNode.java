@@ -23,8 +23,8 @@ import java.util.Map;
 import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.pact.common.contract.CompilerHints;
 import eu.stratosphere.pact.common.contract.Contract;
+import eu.stratosphere.pact.common.contract.DataDistribution;
 import eu.stratosphere.pact.common.contract.MapContract;
-import eu.stratosphere.pact.common.contract.Partitioner;
 import eu.stratosphere.pact.common.contract.SingleInputContract;
 import eu.stratosphere.pact.common.plan.Visitor;
 import eu.stratosphere.pact.common.stubs.StubAnnotation.ConstantFields;
@@ -39,7 +39,7 @@ import eu.stratosphere.pact.compiler.PactCompiler;
 import eu.stratosphere.pact.compiler.costs.CostEstimator;
 import eu.stratosphere.pact.runtime.shipping.ShipStrategy.ForwardSS;
 import eu.stratosphere.pact.runtime.shipping.ShipStrategy.PartitionHashSS;
-import eu.stratosphere.pact.runtime.shipping.ShipStrategy.PartitionCustomSS;
+import eu.stratosphere.pact.runtime.shipping.ShipStrategy.PartitionRangeSS;
 
 /**
  * A node in the optimizer plan that represents a PACT with a single input.
@@ -181,9 +181,9 @@ public abstract class SingleInputNode extends OptimizerNode {
 		if(pred instanceof MapNode) {
 			
 			final MapContract mapContract = (MapContract) pred.getPactContract();
-			final Partitioner partitioner = mapContract.getPartitioner();
-			if(partitioner != null) {
-				conn.setShipStrategy(new PartitionCustomSS(this.keyList, partitioner));
+			final DataDistribution dataDistribution = mapContract.getDataDistribution();
+			if(dataDistribution != null) {
+				conn.setShipStrategy(new PartitionRangeSS(this.keyList));
 			}
 		}
 		

@@ -102,7 +102,6 @@ public abstract class CostEstimator {
 				tempGlobalCost.setSecondaryStorageCost(0);
 				break;
 			case PARTITION_HASH:
-			case PARTITION_CUSTOM:
 				getHashPartitioningCost(connection, tempGlobalCost);
 				break;
 			case PARTITION_RANGE:
