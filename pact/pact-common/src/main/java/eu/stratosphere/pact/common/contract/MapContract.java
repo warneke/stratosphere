@@ -53,7 +53,7 @@ public class MapContract extends SingleInputContract<MapStub>
 	 * @param builder
 	 */
 	private MapContract(Builder builder) {
-		super(builder.udf, builder.name);
+		super(builder.udf, builder.name, builder.partitioner);
 		setInputs(builder.inputs);
 	}
 
@@ -72,6 +72,8 @@ public class MapContract extends SingleInputContract<MapStub>
 		/* The optional parameters */
 		private List<Contract> inputs;
 		private String name = DEFAULT_NAME;
+		
+		private Partitioner partitioner = null;
 		
 		/**
 		 * Creates a Builder with the provided {@link MapStub} implementation.
@@ -93,6 +95,12 @@ public class MapContract extends SingleInputContract<MapStub>
 			for (Contract c : inputs) {
 				this.inputs.add(c);
 			}
+			return this;
+		}
+		
+		public Builder partitioner(Partitioner partitioner) {
+			this.partitioner = partitioner;
+			
 			return this;
 		}
 		

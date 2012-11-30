@@ -365,6 +365,9 @@ public class JobGraphGenerator implements Visitor<OptimizerNode> {
 					case PARTITION_RANGE:
 						connectWithPartitionStrategy(inConn, inputIndex, outputVertex, outputVertexConfig, inputVertex, inputVertexConfig);
 						break;
+					case PARTITION_CUSTOM:
+						connectWithCustomPartitionStrategy(inConn, inputIndex, outputVertex, outputVertexConfig, inputVertex, inputVertexConfig);
+						break;
 					case BROADCAST:
 						connectWithBroadcastStrategy(inConn, inputIndex, outputVertex, outputVertexConfig, inputVertex, inputVertexConfig);
 						break;
@@ -939,6 +942,35 @@ public class JobGraphGenerator implements Visitor<OptimizerNode> {
 		}
 		connectJobVertices(connection, inputNumber, outputVertex, outputConfig, inputVertex, inputConfig);
 	}
+	
+	/**
+	 * @param connection
+	 * @param outputVertex
+	 * @param inputVertex
+	 * @throws CompilerException
+	 * @throws JobGraphDefinitionException
+	 */
+	private void connectWithCustomPartitionStrategy(PactConnection connection, int inputNumber,
+			final AbstractJobVertex outputVertex, final TaskConfig outputConfig,
+			final AbstractJobVertex inputVertex, final TaskConfig inputConfig)
+	throws CompilerException, JobGraphDefinitionException
+	{
+		// check if shipStrategy suits child
+		switch (connection.getTargetPact().getPactType())
+		{
+		case Map:		// ok (Partitioning before map increases data volume)
+		case Reduce:	// ok (Default)
+		case Match:		// ok (Partitioning exist already or forward for broadcast)
+		case Cross:		// ok (Partitioning with broadcast before cross increases data volume)
+		case Cogroup:	// ok (Default)
+		case DataSink:	// ok (Range partitioning for Global Sort)
+			break;
+		default:
+			throw new CompilerException("ShipStrategy " + connection.getShipStrategy().name() + " does not suit PACT "
+				+ connection.getTargetPact().getPactType().name());
+		}
+		connectJobVertices(connection, inputNumber, outputVertex, outputConfig, inputVertex, inputConfig);
+	}
 
 	/**
 	 * @param connection
@@ -1223,6 +1255,7 @@ public class JobGraphGenerator implements Visitor<OptimizerNode> {
 			break;
 		case PARTITION_RANGE:
 		case PARTITION_HASH:
+		case PARTITION_CUSTOM:
 		case BROADCAST:
 			channelType = ChannelType.NETWORK;
 			distributionPattern = DistributionPattern.BIPARTITE;

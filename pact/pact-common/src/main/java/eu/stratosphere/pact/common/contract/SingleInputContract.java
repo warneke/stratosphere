@@ -37,6 +37,8 @@ public abstract class SingleInputContract<T extends Stub> extends AbstractPact<T
 	 */
 	private final int[] keyFields;
 	
+	private final Partitioner partitioner;
+	
 	// --------------------------------------------------------------------------------------------
 
 	/**
@@ -46,10 +48,11 @@ public abstract class SingleInputContract<T extends Stub> extends AbstractPact<T
 	 * @param keyTypes The classes of the data types that act as keys in this stub.
 	 * @param name The given name for the Pact, used in plans, logs and progress messages.
 	 */
-	protected SingleInputContract(Class<? extends T> stubClass, Class<? extends Key>[] keyTypes, int[] keyPositions, String name)
+	protected SingleInputContract(Class<? extends T> stubClass, Class<? extends Key>[] keyTypes, int[] keyPositions, String name, Partitioner partitioner)
 	{
 		super(stubClass, keyTypes, name);
 		this.keyFields = keyPositions;
+		this.partitioner = partitioner;
 	}
 	
 	/**
@@ -59,10 +62,11 @@ public abstract class SingleInputContract<T extends Stub> extends AbstractPact<T
 	 * @param stubClass The class containing the user function.
 	 * @param name The given name for the Pact, used in plans, logs and progress messages.
 	 */
-	protected SingleInputContract(Class<? extends T> stubClass, String name)
+	protected SingleInputContract(Class<? extends T> stubClass, String name, Partitioner partitioner)
 	{
 		super(stubClass, name);
 		this.keyFields = new int[0];
+		this.partitioner = partitioner;
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -76,6 +80,10 @@ public abstract class SingleInputContract<T extends Stub> extends AbstractPact<T
 		return this.input;
 	}
 
+	public Partitioner getPartitioner() {
+		return this.partitioner;
+	}
+	
 	/**
 	 * Connects the input to the task wrapped in this contract
 	 * 

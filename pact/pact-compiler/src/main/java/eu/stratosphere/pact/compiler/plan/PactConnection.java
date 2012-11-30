@@ -377,6 +377,10 @@ public class PactConnection {
 			gp.setPartitioning(PartitionProperty.HASH_PARTITIONED, ((PartitionShipStrategy)shipMode).getPartitionFields());
 			gp.setOrdering(null);
 			break;
+		case PARTITION_CUSTOM:
+			gp.setPartitioning(PartitionProperty.ANY, ((PartitionShipStrategy)shipMode).getPartitionFields());
+			gp.setOrdering(null);
+			break;
 		case FORWARD:
 			if (source.getDegreeOfParallelism() > target.getDegreeOfParallelism()) {
 				gp.setOrdering(null);
