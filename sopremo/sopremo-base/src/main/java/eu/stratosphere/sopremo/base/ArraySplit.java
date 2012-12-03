@@ -1,12 +1,11 @@
 package eu.stratosphere.sopremo.base;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoMap;
 import eu.stratosphere.sopremo.type.IArrayNode;
@@ -48,6 +47,20 @@ public class ArraySplit extends ElementaryOperator<ArraySplit> {
 	}
 
 	/**
+	 * Sets the arrayPath to the specified value.
+	 * 
+	 * @param arrayPath
+	 *        the arrayPath to set
+	 */
+	@Property
+	public void setArrayPath(EvaluationExpression arrayPath) {
+		if (arrayPath == null)
+			throw new NullPointerException("arrayPath must not be null");
+
+		this.arrayPath = arrayPath;
+	}
+
+	/**
 	 * (element, index, array, node) -&gt; value
 	 * 
 	 * @param valueProjection
@@ -63,6 +76,7 @@ public class ArraySplit extends ElementaryOperator<ArraySplit> {
 	 * 
 	 * @param elementProjection
 	 */
+	@Property
 	public void setSplitProjection(EvaluationExpression elementProjection) {
 		if (elementProjection == null)
 			throw new NullPointerException("elementProjection must not be null");
@@ -87,30 +101,30 @@ public class ArraySplit extends ElementaryOperator<ArraySplit> {
 	 */
 	public void setSplitProjection(ResultField... fields) {
 		int[] indices = new int[fields.length];
-		for (int index = 0; index < indices.length; index++) 
+		for (int index = 0; index < indices.length; index++)
 			indices[index] = fields[index].ordinal();
 		this.setSplitProjection(ArrayAccess.arrayWithIndices(indices));
 	}
 
 	public static class Implementation extends SopremoMap {
-		private CachingExpression<IArrayNode> arrayPath;
+		private EvaluationExpression arrayPath;
 
 		private EvaluationExpression splitProjection;
 
 		@Override
 		protected void map(final IJsonNode value, JsonCollector out) {
-			final IArrayNode array = this.arrayPath.evaluate(value, null, this.getContext());
-			if (!array.isArray())
+			final IJsonNode target = this.arrayPath.evaluate(value);
+			if (!target.isArray())
 				throw new EvaluationException("Cannot split non-array");
+			final IArrayNode array = (IArrayNode) target;
 
 			int index = 0;
-			final EvaluationContext context = this.getContext();
 			IntNode indexNode = IntNode.valueOf(0);
 			IArrayNode contextNode = JsonUtil.asArray(NullNode.getInstance(), indexNode, array, value);
 			for (IJsonNode element : array) {
 				contextNode.set(0, element);
 				indexNode.setValue(index);
-				out.collect(this.splitProjection.evaluate(contextNode, null, context));
+				out.collect(this.splitProjection.evaluate(contextNode));
 				index++;
 			}
 		}

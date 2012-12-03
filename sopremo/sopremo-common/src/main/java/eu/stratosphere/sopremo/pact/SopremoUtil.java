@@ -16,9 +16,12 @@ import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
@@ -28,8 +31,10 @@ import org.apache.commons.logging.impl.SimpleLog;
 import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.nephele.util.StringUtils;
 import eu.stratosphere.pact.common.stubs.Stub;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
-import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.ICloneable;
+import eu.stratosphere.sopremo.ISopremoType;
+import eu.stratosphere.sopremo.SopremoRuntime;
+import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.type.BigIntegerNode;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.DecimalNode;
@@ -38,7 +43,6 @@ import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IPrimitiveNode;
 import eu.stratosphere.sopremo.type.IntNode;
 import eu.stratosphere.sopremo.type.LongNode;
-import eu.stratosphere.util.reflect.BoundType;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
 /**
@@ -75,11 +79,9 @@ public class SopremoUtil {
 				if (parameters.getString(stubField.getName(), null) != null)
 					try {
 						stubField.setAccessible(true);
-						stubField.set(stub, SopremoUtil
-							.deserializeCachingAware(parameters,
-								stubField.getName(),
-								stubField.getType(),
-								stubField.getGenericType(),
+						stubField.set(
+							stub,
+							SopremoUtil.deserialize(parameters, stubField.getName(), Serializable.class,
 								stubClass.getClassLoader()));
 					} catch (final Exception e) {
 						LOG.error(String.format(
@@ -87,52 +89,30 @@ public class SopremoUtil {
 							stubField.getName(), stubClass,
 							StringUtils.stringifyException(e)));
 					}
-	}
-
-	/**
-	 * Deserializes the value that is stored for the given key in the configuration
-	 * 
-	 * @param config
-	 *        the {@link Configuration} that holds the serialized values
-	 * @param key
-	 *        the key
-	 * @param objectClass
-	 *        the class of the value which is expected
-	 * @return the deserialized value of the given key
-	 */
-	@SuppressWarnings("unchecked")
-	public static Object deserializeCachingAware(final Configuration config, final String key,
-			final Class<?> targetRawType, final java.lang.reflect.Type targetType, final ClassLoader classLoader) {
-
-		final Object object = deserialize(config, key, Serializable.class, classLoader);
-		if (CachingExpression.class.isAssignableFrom(targetRawType)
-			&& !(object instanceof CachingExpression)) {
-			final Class<IJsonNode> cachingType;
-			if (targetType instanceof ParameterizedType)
-				cachingType = (Class<IJsonNode>) BoundType.of(
-					(ParameterizedType) targetType).getParameters()[0]
-					.getType();
-			else
-				cachingType = IJsonNode.class;
-			return CachingExpression.of((EvaluationExpression) object,
-				cachingType);
-		}
-		return object;
+		SopremoRuntime.getInstance().setCurrentEvaluationContext(((SopremoStub) stub).getContext());
 	}
 
 	public static <T extends Serializable> T deserialize(final Configuration config, final String key,
 			final Class<T> objectClass) {
+		return deserialize(config, key, objectClass, null, ClassLoader.getSystemClassLoader());
+	}
 
-		return deserialize(config, key, objectClass, ClassLoader.getSystemClassLoader());
+	public static <T extends Serializable> T deserialize(final Configuration config, final String key,
+			final Class<T> objectClass, final ClassLoader classLoader) {
+		return deserialize(config, key, objectClass, null, classLoader);
+	}
 
+	public static <T extends Serializable> T deserialize(final Configuration config, final String key,
+			final Class<T> objectClass, final T defaultValue) {
+		return deserialize(config, key, objectClass, defaultValue, ClassLoader.getSystemClassLoader());
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <T extends Serializable> T deserialize(final Configuration config, final String key,
-			@SuppressWarnings("unused") final Class<T> objectClass, final ClassLoader classLoader) {
+			@SuppressWarnings("unused") final Class<T> objectClass, final T defaultValue, final ClassLoader classLoader) {
 		final String string = config.getString(key, null);
 		if (string == null)
-			return null;
+			return defaultValue;
 		return (T) stringToObject(string, classLoader);
 	}
 
@@ -497,8 +477,9 @@ public class SopremoUtil {
 		return byteArrayToSerializable(buffer, clazz, clazz.getClassLoader());
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <T extends Serializable> T byteArrayToSerializable(byte[] buffer, Class<T> clazz, final ClassLoader classLoader)
+	@SuppressWarnings({ "unchecked", "unused" })
+	public static <T extends Serializable> T byteArrayToSerializable(byte[] buffer, Class<T> clazz,
+			final ClassLoader classLoader)
 			throws IOException {
 		final ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(buffer)) {
 			/*
@@ -544,4 +525,92 @@ public class SopremoUtil {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T extends ICloneable> List<T> deepClone(List<T> originals) {
+		final ArrayList<T> clones = new ArrayList<T>(originals.size());
+		for (T t : originals)
+			clones.add((T) t.clone());
+		return clones;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <K, V extends ICloneable> Map<K, V> deepClone(Map<K, V> originals) {
+		final Map<K, V> clones = new HashMap<K, V>(originals.size());
+		for (Entry<K, V> original : originals.entrySet())
+			clones.put(original.getKey(), (V) original.getValue().clone());
+		return clones;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> deepCloneIfPossible(Map<K, V> originals) {
+		final Map<K, V> clones = new HashMap<K, V>(originals.size());
+		for (Entry<K, V> original : originals.entrySet()) {
+			V value = original.getValue();
+			if (value instanceof ICloneable)
+				value = (V) ((ICloneable) value).clone();
+			clones.put(original.getKey(), value);
+		}
+		return clones;
+	}
+
+	public static void assertArguments(SopremoFunction function, int numberOfArguments) {
+		if (!function.accepts(numberOfArguments))
+			throw new IllegalArgumentException(
+				String.format("Cannot use the given function as it does not accept %d arguments", numberOfArguments));
+	}
+
+	private static final Map<Class<?>, Object> DefaultInitializations = new IdentityHashMap<Class<?>, Object>();
+
+	private static synchronized Object getDefault(Class<?> clazz, ICloneable uninitialized) {
+		final Object object = DefaultInitializations.get(clazz);
+		if (object != null)
+			return object;
+		final Object clone = uninitialized.clone();
+		DefaultInitializations.put(clazz, clone);
+		return clone;
+	}
+
+	/**
+	 * @param evaluationExpression
+	 */
+	public static void initTransientFields(ICloneable object) {
+		for (Class<?> clazz = object.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
+			final Field[] fields = clazz.getDeclaredFields();
+			for (Field field : fields)
+				try {
+					if ((field.getModifiers() & Modifier.TRANSIENT) > 0) {
+						final Class<?> type = field.getType();
+						field.setAccessible(true);
+
+						// already initialized
+						if (field.get(object) != null)
+							continue;
+
+						if (ICloneable.class.isAssignableFrom(type)) { // make copy of one default instantiation
+							final Object defaultObject = getDefault(object.getClass(), object);
+							field.set(object, ((ICloneable) field.get(defaultObject)).clone());
+						} else
+							// try to create new object
+							field.set(object, type.newInstance());
+					}
+				} catch (Exception e) {
+					LOG.error("Cannot initialize transient field " + field, e);
+				}
+		}
+	}
+
+	/**
+	 * Appends the textual representation of the given objects to the appendable.
+	 */
+	public static void append(Appendable appendable, Object... objects) throws IOException {
+		for (Object object : objects)
+			if (object instanceof CharSequence)
+				appendable.append((CharSequence) object);
+			else if (object instanceof ISopremoType)
+				((ISopremoType) object).appendAsString(appendable);
+			else if (object instanceof Character)
+				appendable.append((Character) object);
+			else
+				appendable.append(object.toString());
+	}
 }

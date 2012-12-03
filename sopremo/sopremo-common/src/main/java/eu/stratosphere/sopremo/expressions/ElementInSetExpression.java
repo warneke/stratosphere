@@ -1,9 +1,11 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -20,7 +22,7 @@ public class ElementInSetExpression extends BinaryBooleanExpression {
 
 	private EvaluationExpression elementExpr;
 
-	private EvaluationExpression setExpr;;
+	private EvaluationExpression setExpr;
 
 	private final Quantor quantor;
 
@@ -42,23 +44,44 @@ public class ElementInSetExpression extends BinaryBooleanExpression {
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public BooleanNode evaluate(final IJsonNode node) {
 		// we can ignore 'target' because no new Object is created
-		return this.quantor.evaluate(this.elementExpr.evaluate(node, null, context),
-			ElementInSetExpression.asIterator(this.setExpr.evaluate(node, null, context)));
+		return this.quantor.evaluate(this.elementExpr.evaluate(node),
+			ElementInSetExpression.asIterator(this.setExpr.evaluate(node)));
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#transformRecursively(eu.stratosphere.sopremo.expressions
-	 * .TransformFunction)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
 	@Override
-	public EvaluationExpression transformRecursively(final TransformFunction function) {
-		this.elementExpr = this.elementExpr.transformRecursively(function);
-		this.setExpr = this.setExpr.transformRecursively(function);
-		return function.call(this);
+	protected EvaluationExpression createCopy() {
+		return new ElementInSetExpression(this.elementExpr.clone(), this.quantor, this.setExpr.clone());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
+	 */
+	@Override
+	public ChildIterator iterator() {
+		return new NamedChildIterator("elementExpr", "setExpr") {
+
+			@Override
+			protected void set(int index, EvaluationExpression childExpression) {
+				if (index == 0)
+					ElementInSetExpression.this.elementExpr = childExpression;
+				else
+					ElementInSetExpression.this.setExpr = childExpression;
+			}
+
+			@Override
+			protected EvaluationExpression get(int index) {
+				if (index == 0)
+					return ElementInSetExpression.this.elementExpr;
+				return ElementInSetExpression.this.setExpr;
+			}
+		};
 	}
 
 	// @Override
@@ -107,9 +130,10 @@ public class ElementInSetExpression extends BinaryBooleanExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.elementExpr).append(this.quantor == Quantor.EXISTS_NOT_IN ? " \u2209 " : " \u2208 ")
-			.append(this.setExpr);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.elementExpr.appendAsString(appendable);
+		appendable.append(this.quantor == Quantor.EXISTS_NOT_IN ? " \u2209 " : " \u2208 ");
+		this.setExpr.appendAsString(appendable);
 	}
 
 	//

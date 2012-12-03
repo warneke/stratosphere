@@ -33,6 +33,29 @@ public abstract class AbstractNumericNode extends AbstractJsonNode implements IN
 		return false;
 	}
 
+	public static void checkNumber(IJsonNode node) {
+		if (!(node instanceof INumericNode))
+			throw new IllegalArgumentException("Not a number " + node);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
+	 */
+	@Override
+	public AbstractNumericNode clone() {
+		return (AbstractNumericNode) super.clone();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#isCopyable(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public boolean isCopyable(IJsonNode otherNode) {
+		return otherNode instanceof INumericNode;
+	}
+
 	@Override
 	public int compareTo(final Key other) {
 		if (((IJsonNode) other).getType().isNumeric())

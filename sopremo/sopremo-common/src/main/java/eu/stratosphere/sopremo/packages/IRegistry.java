@@ -13,7 +13,7 @@ import eu.stratosphere.sopremo.ISerializableSopremoType;
  */
 // Implementation note: for now, it does not seem necessary to implement Map
 // However, all signatures are at least as strict as the corresponding Map methods to ease future change
-public interface IRegistry<T> extends ISerializableSopremoType /* , Map<String, T> */{
+public interface IRegistry<T extends ISerializableSopremoType> extends ISerializableSopremoType /* , Map<String, T> */{
 
 	/**
 	 * Returns the elements which is registered with the given name or {@code null}.

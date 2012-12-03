@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,7 @@ package eu.stratosphere.sopremo.type;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -68,7 +69,7 @@ public abstract class AbstractObjectNode extends AbstractJsonNode implements IOb
 	public int hashCode() {
 		final int prime = 47;
 		int result = 1;
-		for(Entry<String, IJsonNode> entry : this)
+		for (Entry<String, IJsonNode> entry : this)
 			result = prime * result + entry.hashCode();
 		return result;
 	}
@@ -92,11 +93,39 @@ public abstract class AbstractObjectNode extends AbstractJsonNode implements IOb
 	}
 
 	@Override
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("{");
+		boolean first = true;
+		final Iterator<Entry<String, IJsonNode>> iterator = this.iterator();
+		while (iterator.hasNext()) {
+			if (first)
+				first = false;
+			else
+				appendable.append(", ");
+			final Entry<String, IJsonNode> child = iterator.next();
+			appendable.append(child.getKey()).append(": ");
+			child.getValue().appendAsString(appendable);
+		}
+		appendable.append("}");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
+	 */
+	@Override
+	public AbstractObjectNode clone() {
+		return (AbstractObjectNode) super.clone();
+	}
+
+	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
 		this.checkForSameType(otherNode);
+		final IObjectNode objectNode = (IObjectNode) otherNode;
 		this.clear();
-		for (final Entry<String, IJsonNode> child : (IObjectNode) otherNode)
-			this.put(child.getKey(), child.getValue());
+
+		for (final Entry<String, IJsonNode> child : objectNode)
+			this.put(child.getKey(), child.getValue().clone());
 	}
 
 }

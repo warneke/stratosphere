@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import eu.stratosphere.pact.common.type.PactRecord;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.pact.JsonNodeWrapper;
@@ -42,6 +42,15 @@ public class ObjectSchema extends AbstractSchema {
 		super(mappings.length + 1, CollectionUtil.setRangeFrom(0, mappings.length));
 		for (final String mapping : mappings)
 			this.mappings.add(mapping);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new ObjectSchema(this.mappings.toArray(new String[this.mappings.size()]));
 	}
 
 	@Override
@@ -91,7 +100,7 @@ public class ObjectSchema extends AbstractSchema {
 	}
 
 	@Override
-	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target, final EvaluationContext context) {
+	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target) {
 		IObjectNode others;
 		if (target == null || target.getNumFields() < this.mappings.size() + 1) {
 			// the last element is the field "others"

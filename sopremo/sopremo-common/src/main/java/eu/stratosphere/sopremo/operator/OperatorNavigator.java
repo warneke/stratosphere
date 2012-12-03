@@ -14,6 +14,7 @@ public final class OperatorNavigator implements ConnectionNavigator<Operator<?>>
 	 * 
 	 */
 	private static final long serialVersionUID = -3349639886612100433L;
+
 	/**
 	 * The default, stateless instance.
 	 */

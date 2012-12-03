@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -37,6 +37,8 @@ public class MapContract extends SingleInputContract<MapStub>
 {	
 	private static String DEFAULT_NAME = "<Unnamed Mapper>";
 	
+	private final DataDistribution dataDistribution;
+	
 	// --------------------------------------------------------------------------------------------
 	
 	/**
@@ -55,8 +57,13 @@ public class MapContract extends SingleInputContract<MapStub>
 	private MapContract(Builder builder) {
 		super(builder.udf, builder.name);
 		setInputs(builder.inputs);
+		this.dataDistribution = builder.dataDistribution;
 	}
 
+	public DataDistribution getDataDistribution() {
+		return this.dataDistribution;
+	}
+	
 	// --------------------------------------------------------------------------------------------
 	
 	/**
@@ -72,6 +79,8 @@ public class MapContract extends SingleInputContract<MapStub>
 		/* The optional parameters */
 		private List<Contract> inputs;
 		private String name = DEFAULT_NAME;
+		
+		private DataDistribution dataDistribution = null;
 		
 		/**
 		 * Creates a Builder with the provided {@link MapStub} implementation.
@@ -93,6 +102,12 @@ public class MapContract extends SingleInputContract<MapStub>
 			for (Contract c : inputs) {
 				this.inputs.add(c);
 			}
+			return this;
+		}
+		
+		public Builder dataDistribution(DataDistribution dataDistribution) {
+			this.dataDistribution = dataDistribution;
+			
 			return this;
 		}
 		

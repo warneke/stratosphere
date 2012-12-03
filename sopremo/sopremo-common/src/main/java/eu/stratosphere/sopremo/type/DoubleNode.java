@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import javolution.text.TypeFormat;
 import eu.stratosphere.pact.common.type.base.PactDouble;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 
@@ -75,11 +76,6 @@ public class DoubleNode extends AbstractNumericNode implements INumericNode {
 
 	public void setValue(final double value) {
 		this.value.setValue(value);
-	}
-
-	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return sb.append(this.value);
 	}
 
 	@Override
@@ -166,21 +162,14 @@ public class DoubleNode extends AbstractNumericNode implements INumericNode {
 	}
 
 	@Override
-	public DoubleNode clone() {
-		final DoubleNode clone = (DoubleNode) super.clone();
-		clone.value = new PactDouble(this.value.getValue());
-		return clone;
-	}
-
-	@Override
 	public int compareToSameType(final IJsonNode other) {
 		return Double.compare(this.value.getValue(), ((DoubleNode) other).value.getValue());
 	}
 
 	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
-		this.checkForSameType(otherNode);
-		this.value = ((DoubleNode) otherNode).value;
+		checkNumber(otherNode);
+		this.value.setValue(((INumericNode) otherNode).getDoubleValue());
 	}
 
 	@Override
@@ -197,5 +186,14 @@ public class DoubleNode extends AbstractNumericNode implements INumericNode {
 	@Override
 	public void copyNormalizedKey(final byte[] target, final int offset, final int len) {
 		this.fillWithZero(target, offset, offset + len);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		TypeFormat.format(this.value.getValue(), appendable);
 	}
 }

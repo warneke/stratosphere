@@ -1,12 +1,18 @@
 package eu.stratosphere.sopremo.query;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
+import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.packages.IRegistry;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 
-public class StackedRegistry<T, R extends IRegistry<T>> implements IRegistry<T> {
+public class StackedRegistry<T extends ISerializableSopremoType, R extends IRegistry<T>> extends AbstractSopremoType
+		implements IRegistry<T> {
 	/**
 	 * 
 	 */
@@ -53,6 +59,26 @@ public class StackedRegistry<T, R extends IRegistry<T>> implements IRegistry<T> 
 		return keys;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		final LinkedList<R> stack = ((StackedRegistry<T, R>) original).registryStack;
+		this.registryStack.addAll(SopremoUtil.deepClone(stack.subList(1, stack.size())));
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new StackedRegistry<T, R>(this.registryStack.peekFirst());
+	}
+
 	@Override
 	public void put(String name, T element) {
 		this.getTopRegistry().put(name, element);
@@ -63,22 +89,11 @@ public class StackedRegistry<T, R extends IRegistry<T>> implements IRegistry<T> 
 	}
 
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("Registry with ");
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("Registry with ");
 		for (R registry : this.registryStack) {
-			builder.append("\n ");
-			registry.toString(builder);
+			appendable.append("\n ");
+			registry.appendAsString(appendable);
 		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		this.toString(builder);
-		return builder.toString();
 	}
 }

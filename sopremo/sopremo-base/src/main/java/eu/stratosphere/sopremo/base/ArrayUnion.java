@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,12 +14,13 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.base;
 
-import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.function.TransitiveAggregationFunction;
+import eu.stratosphere.sopremo.aggregation.Aggregation;
+import eu.stratosphere.sopremo.aggregation.FixedTypeTransitiveAggregation;
 import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
+import eu.stratosphere.sopremo.type.IJsonNode;
 
-final class ArrayUnion extends TransitiveAggregationFunction<IArrayNode, ArrayNode> {
+public final class ArrayUnion extends FixedTypeTransitiveAggregation<ArrayNode> {
 	/**
 	 * 
 	 */
@@ -31,14 +32,23 @@ final class ArrayUnion extends TransitiveAggregationFunction<IArrayNode, ArrayNo
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.function.Aggregation#aggregate(eu.stratosphere.sopremo.type.IJsonNode,
-	 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
+	 * @see
+	 * eu.stratosphere.sopremo.aggregation.FixedTypeTransitiveAggregation#aggregateInto(eu.stratosphere.sopremo.type
+	 * .IJsonNode, eu.stratosphere.sopremo.type.IJsonNode)
 	 */
 	@Override
-	public ArrayNode aggregate(IArrayNode node, ArrayNode aggregationTarget, EvaluationContext context) {
+	protected void aggregateInto(final ArrayNode aggregator, IJsonNode element) {
+		final IArrayNode node = (IArrayNode) element;
 		for (int index = 0; index < node.size(); index++)
-			if (aggregationTarget.get(index).isMissing() && !node.get(index).isMissing())
-				aggregationTarget.set(index, node.get(index));
-		return aggregationTarget;
+			if (aggregator.get(index).isMissing() && !node.get(index).isMissing())
+				aggregator.set(index, node.get(index));
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.aggregation.TransitiveAggregation#clone()
+	 */
+	@Override
+	public Aggregation clone() {
+		return new ArrayUnion();
 	}
 }

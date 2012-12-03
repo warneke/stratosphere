@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,14 +16,13 @@ package eu.stratosphere.sopremo.base.replace;
 
 import java.util.Iterator;
 
-import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.base.Replace;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoCoGroup;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
+import eu.stratosphere.sopremo.type.IStreamArrayNode;
 
 /**
  * @author Arvid Heise
@@ -35,8 +34,9 @@ public class ArrayElementReplaceWithDefaultValue extends ArrayElementReplaceBase
 	 */
 	private static final long serialVersionUID = -4501510761639457262L;
 
-	private EvaluationExpression defaultExpression = Replace.KEEP_VALUE;
+	private EvaluationExpression defaultExpression = EvaluationExpression.VALUE;
 
+	@Property
 	public void setDefaultExpression(EvaluationExpression defaultExpression) {
 		if (defaultExpression == null)
 			throw new NullPointerException("defaultExpression must not be null");
@@ -55,7 +55,7 @@ public class ArrayElementReplaceWithDefaultValue extends ArrayElementReplaceBase
 
 	public static class Implementation extends SopremoCoGroup {
 
-		private CachingExpression<IJsonNode> dictionaryValueExtraction, defaultExpression;
+		private EvaluationExpression dictionaryValueExtraction, defaultExpression;
 
 		private int index = 0;
 
@@ -65,20 +65,19 @@ public class ArrayElementReplaceWithDefaultValue extends ArrayElementReplaceBase
 		 * eu.stratosphere.sopremo.type.IArrayNode, eu.stratosphere.sopremo.pact.JsonCollector)
 		 */
 		@Override
-		protected void coGroup(IArrayNode values1, IArrayNode values2, JsonCollector out) {
+		protected void coGroup(IStreamArrayNode values1, IStreamArrayNode values2, JsonCollector out) {
 			final Iterator<IJsonNode> replaceValueIterator = values2.iterator();
 			IJsonNode replaceValue = replaceValueIterator.hasNext() ?
-				this.dictionaryValueExtraction.evaluate(replaceValueIterator.next(), getContext()) : null;
+				this.dictionaryValueExtraction.evaluate(replaceValueIterator.next()) : null;
 
 			final Iterator<IJsonNode> valueIterator = values1.iterator();
-			final EvaluationContext context = this.getContext();
 			while (valueIterator.hasNext()) {
 				final IJsonNode value = valueIterator.next();
 				final IJsonNode replacement;
 				if (replaceValue != null)
 					replacement = replaceValue;
 				else
-					replacement = this.defaultExpression.evaluate(value, context);
+					replacement = this.defaultExpression.evaluate(value);
 				((IArrayNode) value).set(this.index, replacement);
 				out.collect(value);
 			}

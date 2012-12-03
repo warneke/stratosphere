@@ -2,6 +2,7 @@ package eu.stratosphere.sopremo.type;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,12 +21,32 @@ public class ArrayNode extends AbstractArrayNode {
 	 */
 	private static final long serialVersionUID = 898220542834090837L;
 
-	private final List<IJsonNode> children = new ArrayList<IJsonNode>();
+	private final List<IJsonNode> children;
+
+	@SuppressWarnings("unchecked")
+	public final static IArrayNode EMPTY = new ArrayNode(Collections.EMPTY_LIST);
 
 	/**
 	 * Initializes an empty ArrayNode.
 	 */
 	public ArrayNode() {
+		this(new ArrayList<IJsonNode>());
+	}
+
+	/**
+	 * Initializes an empty ArrayNode.
+	 */
+	public ArrayNode(int size) {
+		this(new ArrayList<IJsonNode>(size));
+		for (int index = 0; index < size; index++)
+			this.add(MissingNode.getInstance());
+	}
+
+	/**
+	 * Initializes an empty ArrayNode directly with the given list.
+	 */
+	protected ArrayNode(List<IJsonNode> children) {
+		this.children = children;
 	}
 
 	/**
@@ -35,19 +56,39 @@ public class ArrayNode extends AbstractArrayNode {
 	 *        the nodes that should be added to this ArrayNode
 	 */
 	public ArrayNode(final IJsonNode... nodes) {
+		this();
 		for (final IJsonNode node : nodes)
 			this.children.add(node);
 	}
 
 	/**
-	 * Initializes an ArrayNode which cointains all {@link IJsonNode}s from the given Collection in proper sequence.
+	 * Initializes an ArrayNode which cointains all {@link IJsonNode}s from the given Iterable in proper sequence.
 	 * 
 	 * @param nodes
 	 *        a Collection of nodes that should be added to this ArrayNode
 	 */
-	public ArrayNode(final Collection<? extends IJsonNode> nodes) {
+	public ArrayNode(final Iterable<? extends IJsonNode> nodes) {
+		this();
 		for (final IJsonNode node : nodes)
 			this.children.add(node);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
+	 */
+	@Override
+	public ArrayNode clone() {
+		return (ArrayNode) super.clone();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IArrayNode#asCollection()
+	 */
+	@Override
+	public Collection<IJsonNode> asCollection() {
+		return this.children;
 	}
 
 	/*
@@ -76,6 +117,15 @@ public class ArrayNode extends AbstractArrayNode {
 		return this;
 	}
 
+	/**
+	 * Returns the children.
+	 * 
+	 * @return the children
+	 */
+	protected List<IJsonNode> getChildren() {
+		return this.children;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.JsonArray#add(int, eu.stratosphere.sopremo.type.IJsonNode)
@@ -88,6 +138,15 @@ public class ArrayNode extends AbstractArrayNode {
 		this.children.add(index, element);
 
 		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractArrayNode#contains(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public boolean contains(IJsonNode node) {
+		return this.children.contains(node);
 	}
 
 	/*
@@ -113,10 +172,6 @@ public class ArrayNode extends AbstractArrayNode {
 		return this.children.set(index, node);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.JsonArray#remove(int)
-	 */
 	@Override
 	public IJsonNode remove(final int index) {
 		if (0 <= index && index < this.children.size())
@@ -135,20 +190,6 @@ public class ArrayNode extends AbstractArrayNode {
 	}
 
 	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		sb.append('[');
-
-		for (int i = 0; i < this.children.size(); i++) {
-			if (i > 0)
-				sb.append(',');
-			this.children.get(i).toString(sb);
-		}
-
-		sb.append(']');
-		return sb;
-	}
-
-	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -162,18 +203,13 @@ public class ArrayNode extends AbstractArrayNode {
 			return true;
 		if (obj == null)
 			return false;
-		if (this.getClass() != obj.getClass())
+		if (!(obj instanceof ArrayNode))
 			return false;
 
 		final ArrayNode other = (ArrayNode) obj;
 		if (!this.children.equals(other.children))
 			return false;
 		return true;
-	}
-
-	@Override
-	public List<IJsonNode> getJavaValue() {
-		return this.children;
 	}
 
 	@Override
@@ -210,9 +246,8 @@ public class ArrayNode extends AbstractArrayNode {
 	@Override
 	protected void fillArray(IJsonNode[] result) {
 		IJsonNode[] array = this.children.toArray(new IJsonNode[this.children.size()]);
-		for (int i = 0; i < this.children.size(); i++) {
+		for (int i = 0; i < this.children.size(); i++)
 			result[i] = array[i];
-		}
 	}
 
 	@Override

@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -78,7 +78,7 @@ public interface IObjectNode extends IJsonNode, Iterable<Entry<String, IJsonNode
 	 * 
 	 * @return iterator over all Strings
 	 */
-	public abstract Iterator<String> getFieldNames();
+	public abstract Iterable<String> getFieldNames();
 
 	/**
 	 * Returns an Iterator over all Bindings within this node.
@@ -95,4 +95,10 @@ public interface IObjectNode extends IJsonNode, Iterable<Entry<String, IJsonNode
 	 */
 	public abstract int size();
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IJsonNode#clone()
+	 */
+	@Override
+	public IObjectNode clone();
 }

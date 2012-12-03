@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -30,10 +30,11 @@ import eu.stratosphere.nephele.configuration.ConfigConstants;
 import eu.stratosphere.nephele.configuration.GlobalConfiguration;
 import eu.stratosphere.nephele.execution.RuntimeEnvironment;
 import eu.stratosphere.nephele.executiongraph.ExecutionVertexID;
-import eu.stratosphere.nephele.io.InputGate;
-import eu.stratosphere.nephele.io.channels.bytebuffered.AbstractByteBufferedInputChannel;
+import eu.stratosphere.nephele.io.RuntimeInputGate;
+import eu.stratosphere.nephele.io.channels.AbstractInputChannel;
 import eu.stratosphere.nephele.types.Record;
 import eu.stratosphere.nephele.util.AtomicEnumerator;
+import eu.stratosphere.nephele.util.FileUtils;
 import eu.stratosphere.nephele.util.StringUtils;
 
 public final class EnvelopeConsumptionLog {
@@ -85,7 +86,7 @@ public final class EnvelopeConsumptionLog {
 			final long length = this.logFile.length();
 			if (length % SIZE_OF_INTEGER != 0) {
 				LOG.error("Channel consumption log " + fileName + " appears to be corrupt, discarding it...");
-				this.logFile.delete();
+				FileUtils.deleteSilently(this.logFile);
 				this.numberOfInitialLogEntries = 0L;
 			} else {
 				this.numberOfInitialLogEntries = length / SIZE_OF_INTEGER;
@@ -115,7 +116,7 @@ public final class EnvelopeConsumptionLog {
 		return TEMP_PATHS.getNext() + File.separator + ENVELOPE_CONSUMPTION_LOG_PREFIX + vertexID;
 	}
 
-	void reportEnvelopeAvailability(final AbstractByteBufferedInputChannel<? extends Record> inputChannel) {
+	void reportEnvelopeAvailability(final AbstractInputChannel<? extends Record> inputChannel) {
 
 		synchronized (this) {
 
@@ -178,12 +179,12 @@ public final class EnvelopeConsumptionLog {
 		}
 	}
 
-	void reportEnvelopeConsumed(final AbstractByteBufferedInputChannel<? extends Record> inputChannel) {
+	void reportEnvelopeConsumed(final AbstractInputChannel<? extends Record> inputChannel) {
 
 		inputChannel.notifyDataUnitConsumed();
 	}
 
-	private void addOutstandingEnvelope(final AbstractByteBufferedInputChannel<? extends Record> inputChannel) {
+	private void addOutstandingEnvelope(final AbstractInputChannel<? extends Record> inputChannel) {
 
 		final int entryToTest = toEntry(inputChannel.getInputGate().getIndex(), inputChannel.getChannelIndex(), false);
 
@@ -394,15 +395,15 @@ public final class EnvelopeConsumptionLog {
 
 	}
 
-	private AbstractByteBufferedInputChannel<? extends Record> toInputChannel(final int gateIndex,
+	private AbstractInputChannel<? extends Record> toInputChannel(final int gateIndex,
 			final int channelIndex) {
 
-		final InputGate<? extends Record> inputGate = this.environment.getInputGate(gateIndex);
+		final RuntimeInputGate<? extends Record> inputGate = this.environment.getInputGate(gateIndex);
 
-		return (AbstractByteBufferedInputChannel<? extends Record>) inputGate.getInputChannel(channelIndex);
+		return (AbstractInputChannel<? extends Record>) inputGate.getInputChannel(channelIndex);
 	}
 
-	private void announce(final AbstractByteBufferedInputChannel<? extends Record> inputChannel) {
+	private void announce(final AbstractInputChannel<? extends Record> inputChannel) {
 
 		inputChannel.checkForNetworkEvents();
 
@@ -472,6 +473,6 @@ public final class EnvelopeConsumptionLog {
 			throw new IllegalArgumentException("Argument vertexID must not be null");
 		}
 
-		new File(constructFileName(vertexID)).delete();
+		FileUtils.deleteSilently(new File(constructFileName(vertexID)));
 	}
 }

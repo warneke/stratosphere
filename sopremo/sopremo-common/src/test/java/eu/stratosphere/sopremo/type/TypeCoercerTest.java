@@ -12,6 +12,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import eu.stratosphere.sopremo.cache.NodeCache;
+
 @RunWith(Parameterized.class)
 public class TypeCoercerTest {
 	private static final Object CONVERSION_ERROR = "Error";
@@ -32,7 +34,8 @@ public class TypeCoercerTest {
 	@Test
 	public void shouldPerformTheCoercionAsExpected() {
 		try {
-			final IJsonNode result = TypeCoercer.INSTANCE.coerce(this.value, null, this.targetType);
+			final NodeCache nodeCache = new NodeCache();
+			final IJsonNode result = TypeCoercer.INSTANCE.coerce(this.value, nodeCache, this.targetType);
 			Assert.assertTrue(String.format("%s->%s=%s", this.value.getClass(), this.targetType, result.getClass()),
 				this.targetType.isInstance(result));
 			Assert.assertEquals(String.format("%s->%s=%s", this.value, this.targetType, result), this.expectedResult,
@@ -61,6 +64,7 @@ public class TypeCoercerTest {
 			{ BooleanNode.TRUE, ArrayNode.class, createArray(BooleanNode.TRUE) },
 			{ BooleanNode.TRUE, ObjectNode.class, CONVERSION_ERROR },
 
+			{ TextNode.valueOf("12.34"), IJsonNode.class, TextNode.valueOf("12.34") },
 			{ TextNode.valueOf("true"), BooleanNode.class, BooleanNode.TRUE },
 			// paradox but we do not parse the string but check if it is empty
 			{ TextNode.valueOf("false"), BooleanNode.class, BooleanNode.TRUE },

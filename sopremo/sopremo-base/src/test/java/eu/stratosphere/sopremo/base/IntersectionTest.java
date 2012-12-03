@@ -3,10 +3,10 @@ package eu.stratosphere.sopremo.base;
 import org.junit.Test;
 
 import eu.stratosphere.sopremo.CoreFunctions;
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class IntersectionTest extends SopremoTest<Intersection> {
+public class IntersectionTest extends EqualCloneTest<Intersection> {
 	@Test
 	public void shouldSupportArraysOfPrimitives() {
 		final SopremoTestPlan sopremoPlan = new SopremoTestPlan(2, 1);

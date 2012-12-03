@@ -33,6 +33,15 @@ public class DynamicConstructor<DeclaringClass> extends
 		return member.isVarArgs();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.util.reflect.DynamicInvokable#getName()
+	 */
+	@Override
+	public String getName() {
+		return String.format("%s#init()", this.declaringClass);
+	}
+
 	@Override
 	protected Class<?>[] getParameterTypes(final Constructor<DeclaringClass> member) {
 		return member.getParameterTypes();
@@ -45,7 +54,7 @@ public class DynamicConstructor<DeclaringClass> extends
 		return member.newInstance(params);
 	}
 
-	public DeclaringClass invoke(final Object... params) {
+	public DeclaringClass invoke(final Object... params) throws Exception {
 		return super.invoke(null, params);
 	}
 
@@ -59,7 +68,7 @@ public class DynamicConstructor<DeclaringClass> extends
 	}
 
 	@Override
-	protected Constructor<DeclaringClass> findMember(final Class<DeclaringClass> clazz, final Class<?>[] parameterTypes)
+	protected Constructor<DeclaringClass> findMember(String name, final Class<DeclaringClass> clazz, final Class<?>[] parameterTypes)
 			throws NoSuchMethodException {
 		return clazz.getDeclaredConstructor(parameterTypes);
 	}
@@ -73,6 +82,7 @@ public class DynamicConstructor<DeclaringClass> extends
 	@SuppressWarnings("unchecked")
 	public static <C> DynamicConstructor<C> valueOf(final Class<C> clazz) {
 		final DynamicConstructor<C> ctor = new DynamicConstructor<C>();
+		ctor.declaringClass = clazz;
 		for (final Constructor<?> constructor : clazz.getDeclaredConstructors())
 			ctor.addSignature((Constructor<C>) constructor);
 		return ctor;

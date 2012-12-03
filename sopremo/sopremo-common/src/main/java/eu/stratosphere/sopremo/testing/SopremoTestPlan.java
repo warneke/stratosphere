@@ -25,6 +25,7 @@ import eu.stratosphere.pact.common.plan.PactModule;
 import eu.stratosphere.pact.testing.AssertUtil;
 import eu.stratosphere.pact.testing.TestPlan;
 import eu.stratosphere.pact.testing.TestRecords;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.io.JsonParser;
 import eu.stratosphere.sopremo.io.Sink;
@@ -93,6 +94,8 @@ public class SopremoTestPlan {
 
 	private boolean trace;
 
+	private int dop = -1;
+
 	/**
 	 * Initializes a SopremoTestPlan with the given number of in/outputs. All inputs are initialized with {@link Input}s
 	 * and all expected/actual outputs are initialized with {@link ExpectedOutput}s/{@link ActualOutput}s.
@@ -114,11 +117,22 @@ public class SopremoTestPlan {
 	 *        the Operators that should be executed
 	 */
 	public SopremoTestPlan(final Operator<?>... sinks) {
+		this(Arrays.asList(sinks));
+	}
+
+	/**
+	 * Initializes a SopremoTestPlan with the given {@link Operator}s. For each Operator that has no source or no sink,
+	 * {@link MockupSource}s and {@link MockupSink}s are automatically set.
+	 * 
+	 * @param sinks
+	 *        the Operators that should be executed
+	 */
+	public SopremoTestPlan(final List<Operator<?>> sinks) {
 		final List<JsonStream> unconnectedOutputs = new ArrayList<JsonStream>();
 		final List<Operator<?>> unconnectedInputs = new ArrayList<Operator<?>>();
 		for (final Operator<?> operator : sinks) {
 			unconnectedOutputs.addAll(operator.getOutputs());
-			if (operator instanceof Sink)
+			if (operator.getNumOutputs() == 0)
 				unconnectedOutputs.add(operator);
 		}
 
@@ -362,6 +376,8 @@ public class SopremoTestPlan {
 			input.prepare(this.testPlan, schema);
 		for (final ExpectedOutput output : this.expectedOutputs)
 			output.prepare(this.testPlan, schema);
+		if (this.dop > 0)
+			this.testPlan.setDegreeOfParallelism(this.dop);
 		if (this.trace)
 			SopremoUtil.trace();
 		this.testPlan.run();
@@ -396,15 +412,6 @@ public class SopremoTestPlan {
 	public void setOutputOperator(final int index, final Sink operator) {
 		this.actualOutputs[index].setOperator(operator);
 	}
-	
-
-	/**
-	 * Returns the degree of parallelism of the
-	 * test plan.
-	 */
-	public int getDegreeOfParallelism() {
-		return this.testPlan.getDegreeOfParallelism();
-	}
 
 	/**
 	 * Returns the degree of parallelism of the
@@ -413,7 +420,7 @@ public class SopremoTestPlan {
 	public void setDegreeOfParallelism(final int dop) {
 		if (dop < 1)
 			throw new IllegalArgumentException("Degree of parallelism must be greater than 0!");
-		this.testPlan.setDegreeOfParallelism(dop);
+		this.dop = dop;
 	}
 
 	@Override
@@ -470,7 +477,7 @@ public class SopremoTestPlan {
 
 		private boolean empty = false;
 
-		private SopremoTestPlan testPlan;
+		private final SopremoTestPlan testPlan;
 
 		public ModifiableChannel(final SopremoTestPlan testPlan, final O operator, final int index) {
 			super(operator, index);
@@ -524,12 +531,12 @@ public class SopremoTestPlan {
 					testRecords.setEmpty();
 				else if (this.file != null) {
 					Configuration configuration = new Configuration();
-					SopremoUtil.serialize(configuration, SopremoUtil.CONTEXT, getContext());
+					SopremoUtil.serialize(configuration, SopremoUtil.CONTEXT, this.getContext());
 					testRecords.fromFile(JsonInputFormat.class, this.file, configuration);
 				}
 				else
 					for (final IJsonNode node : this.values)
-						testRecords.add(schema.jsonToRecord(node, null, null));
+						testRecords.add(schema.jsonToRecord(node, null));
 			}
 		}
 
@@ -647,13 +654,21 @@ public class SopremoTestPlan {
 		public String toString() {
 			return IteratorUtil.toString(this.iterator(), 10);
 		}
+
+		public List<IJsonNode> getAllNodes() {
+			final ArrayList<IJsonNode> list = new ArrayList<IJsonNode>();
+			final Iterator<IJsonNode> iterator = this.iterator();
+			while (iterator.hasNext())
+				list.add(iterator.next().clone());
+			return list;
+		}
 	}
 
 	/**
 	 * Represents the expected output of a {@link SopremotestPlan}.
 	 */
 	public static class ExpectedOutput extends ModifiableChannel<Source, ExpectedOutput> {
-		
+
 		/**
 		 * Initializes an ExpectedOutput with the given index.
 		 * 
@@ -718,7 +733,7 @@ public class SopremoTestPlan {
 	 * Represents the input of a {@link SopremoTestPlan}.
 	 */
 	public static class Input extends ModifiableChannel<Source, Input> {
-		
+
 		/**
 		 * Initializes an Input with the given index.
 		 * 
@@ -755,7 +770,7 @@ public class SopremoTestPlan {
 		public Iterator<IJsonNode> iterator() {
 			if (this.operator != null && !(this.operator instanceof MockupSource)) {
 				if (this.operator.isAdhoc())
-					return JsonUtil.asArray(this.operator.getAdhocValues(getContext())).iterator();
+					return JsonUtil.asArray(this.operator.getAdhocValues()).iterator();
 				return this.iteratorFromFile(this.operator.getInputPath());
 			}
 			return super.iterator();
@@ -792,6 +807,14 @@ public class SopremoTestPlan {
 			pactModule.addInternalOutput(contract);
 			SopremoUtil.serialize(contract.getParameters(), SopremoUtil.CONTEXT, context);
 			return pactModule;
+		}
+		
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.operator.Operator#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return new MockupSink(this.index);
 		}
 
 		@Override
@@ -851,6 +874,14 @@ public class SopremoTestPlan {
 			pactModule.getOutput(0).setInput(contract);
 			SopremoUtil.serialize(contract.getParameters(), SopremoUtil.CONTEXT, context);
 			return pactModule;
+		}
+		
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.io.Source#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return new MockupSource(this.index);
 		}
 
 		@Override

@@ -12,7 +12,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * An abstract implementation of the {@link MapStub}. SopremoMap provides the functionality to convert the
  * standard input of the MapStub to a more manageable representation (the input is converted to an {@link IJsonNode}).
  */
-public abstract class SopremoMap extends MapStub {
+public abstract class SopremoMap extends MapStub implements SopremoStub {
 	private EvaluationContext context;
 
 	private Schema inputSchema;
@@ -40,7 +40,8 @@ public abstract class SopremoMap extends MapStub {
 		SopremoUtil.configureStub(this, parameters);
 	}
 
-	protected final EvaluationContext getContext() {
+	@Override
+	public final EvaluationContext getContext() {
 		return this.context;
 	}
 
@@ -61,9 +62,8 @@ public abstract class SopremoMap extends MapStub {
 	 * .type.PactRecord, eu.stratosphere.pact.common.stubs.Collector)
 	 */
 	@Override
-	public void map(final PactRecord record, final Collector<PactRecord> out)
-			throws Exception {
-		this.context.increaseInputCounter();
+	public void map(final PactRecord record, final Collector<PactRecord> out) {
+		this.context.incrementInputCount();
 		this.collector.configure(out, this.context);
 		final IJsonNode input = this.inputSchema.recordToJson(record,
 			this.cachedInput);

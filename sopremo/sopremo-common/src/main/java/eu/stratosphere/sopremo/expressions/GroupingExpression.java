@@ -1,16 +1,16 @@
 package eu.stratosphere.sopremo.expressions;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.io.IOException;
 
-import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.pact.SopremoUtil;
+import javolution.util.FastMap;
+import javolution.util.FastMap.Entry;
+import eu.stratosphere.sopremo.cache.ExpressionCache;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.ArrayNode;
+import eu.stratosphere.sopremo.type.CachingArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
-import eu.stratosphere.sopremo.type.JsonUtil;
 
 /**
  * Returns a grouped representation of the elements of the given {@link IArrayNode}.
@@ -23,8 +23,6 @@ public class GroupingExpression extends EvaluationExpression {
 
 	private EvaluationExpression groupingExpression;
 
-	private EvaluationExpression resultExpression;
-
 	/**
 	 * Initializes a GroupingExpression with the given expressions.
 	 * 
@@ -35,65 +33,83 @@ public class GroupingExpression extends EvaluationExpression {
 	 */
 	public GroupingExpression(final EvaluationExpression groupingExpression, final EvaluationExpression resultExpression) {
 		this.groupingExpression = groupingExpression;
-		this.resultExpression = resultExpression;
+		this.resultExpressions = new ExpressionCache<EvaluationExpression>(resultExpression);
 	}
 
+	private final transient IArrayNode result = new ArrayNode();
+
+	private transient ExpressionCache<EvaluationExpression> resultExpressions =
+		new ExpressionCache<EvaluationExpression>(null);
+
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		final ArrayNode targetArray = SopremoUtil.reinitializeTarget(target, ArrayNode.class);
+	public IJsonNode evaluate(final IJsonNode node) {
+		this.result.clear();
 
-		if (((IArrayNode) node).size() == 0) 
-			return targetArray;
+		if (((IArrayNode) node).size() == 0)
+			return this.result;
 
-		final List<IArrayNode> nodes = this.sortNodesWithKey(node, context);
+		this.fillGroups((IArrayNode) node);
 
-		// final ArrayNode resultNode = new ArrayNode();
+		final ExpressionCache<EvaluationExpression> resultExpressions = this.resultExpressions;
 
-		int groupStart = 0;
-		IJsonNode groupKey = nodes.get(0).get(0);
-		for (int index = 1; index < nodes.size(); index++)
-			if (!nodes.get(index).get(0).equals(groupKey)) {
-				targetArray.add(this.evaluateGroup(nodes.subList(groupStart, index), context));
-				groupKey = nodes.get(index).get(0);
-				groupStart = index;
-			}
+		int index = 0;
+		for (FastMap.Entry<IJsonNode, CachingArrayNode> e = this.groups.head(), end = this.groups.tail(); (e =
+			e.getNext()) != end;) {
+			final CachingArrayNode group = e.getValue();
+			if (!group.isEmpty())
+				this.result.add(resultExpressions.get(index++).evaluate(group));
+		}
 
-		targetArray.add(this.evaluateGroup(nodes.subList(groupStart, nodes.size()), context));
+		this.emptyGroups();
 
-		return targetArray;
+		return this.result;
+	}
+
+	private void emptyGroups() {
+		for (FastMap.Entry<IJsonNode, CachingArrayNode> e = this.groups.head(), end = this.groups.tail(); (e =
+			e.getNext()) != end;)
+			e.getValue().clear();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#transformRecursively(eu.stratosphere.sopremo.expressions
-	 * .TransformFunction)
+	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
 	 */
 	@Override
-	public EvaluationExpression transformRecursively(final TransformFunction function) {
-		this.groupingExpression = this.groupingExpression.transformRecursively(function);
-		this.resultExpression = this.resultExpression.transformRecursively(function);
-		return function.call(this);
-	}
+	public ChildIterator iterator() {
+		return new NamedChildIterator("groupingExpression", "second") {
 
-	protected List<IArrayNode> sortNodesWithKey(final IJsonNode node, final EvaluationContext context) {
-		final List<IArrayNode> nodes = new ArrayList<IArrayNode>();
-		for (final IJsonNode jsonNode : (IArrayNode) node)
-			nodes.add(JsonUtil.asArray(this.groupingExpression.evaluate(jsonNode, null, context), jsonNode));
-		Collections.sort(nodes, new Comparator<IArrayNode>() {
 			@Override
-			public int compare(final IArrayNode o1, final IArrayNode o2) {
-				return o1.get(0).compareTo(o2.get(0));
+			protected void set(int index, EvaluationExpression childExpression) {
+				if (index == 0)
+					GroupingExpression.this.groupingExpression = childExpression;
+				else
+					GroupingExpression.this.resultExpressions =
+						new ExpressionCache<EvaluationExpression>(childExpression);
 			}
-		});
-		return nodes;
+
+			@Override
+			protected EvaluationExpression get(int index) {
+				if (index == 0)
+					return GroupingExpression.this.groupingExpression;
+				return GroupingExpression.this.resultExpressions.getTemplate();
+			}
+		};
 	}
 
-	protected IJsonNode evaluateGroup(final List<IArrayNode> group, final EvaluationContext context) {
-		final ArrayNode values = new ArrayNode();
-		for (final IArrayNode compactArrayNode : group)
-			values.add(compactArrayNode.get(1));
-		return this.resultExpression.evaluate(values, null, context);
+	private final transient FastMap<IJsonNode, CachingArrayNode> groups = new FastMap<IJsonNode, CachingArrayNode>();
+
+	private void fillGroups(final IArrayNode array) {
+		for (final IJsonNode node : array) {
+			final IJsonNode key = this.groupingExpression.evaluate(node);
+			final Entry<IJsonNode, CachingArrayNode> entry = this.groups.getEntry(key);
+			CachingArrayNode group;
+			if (entry == null)
+				this.groups.put(key.clone(), group = new CachingArrayNode());
+			else
+				group = entry.getValue();
+			group.addClone(node);
+		}
 	}
 
 	@Override
@@ -101,8 +117,17 @@ public class GroupingExpression extends EvaluationExpression {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + this.groupingExpression.hashCode();
-		result = prime * result + this.resultExpression.hashCode();
+		result = prime * result + this.getResultExpression().hashCode();
 		return result;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new GroupingExpression(this.groupingExpression.clone(), this.getResultExpression().clone());
 	}
 
 	@Override
@@ -111,12 +136,19 @@ public class GroupingExpression extends EvaluationExpression {
 			return false;
 		final GroupingExpression other = (GroupingExpression) obj;
 		return this.groupingExpression.equals(other.groupingExpression)
-			&& this.resultExpression.equals(other.resultExpression);
+			&& this.getResultExpression().equals(other.resultExpressions.getTemplate());
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("g(").append(this.groupingExpression).append(") -> ").append(this.resultExpression);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("g(");
+		this.groupingExpression.appendAsString(appendable);
+		appendable.append(") -> ");
+		this.getResultExpression().appendAsString(appendable);
+	}
+
+	private EvaluationExpression getResultExpression() {
+		return this.resultExpressions.getTemplate();
 	}
 
 }

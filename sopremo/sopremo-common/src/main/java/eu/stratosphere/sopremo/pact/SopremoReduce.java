@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.pact;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import eu.stratosphere.nephele.configuration.Configuration;
@@ -9,21 +8,22 @@ import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.type.ArrayNode;
-import eu.stratosphere.sopremo.type.IArrayNode;
-import eu.stratosphere.sopremo.type.IJsonNode;
-import eu.stratosphere.sopremo.type.JsonUtil;
+import eu.stratosphere.sopremo.type.IStreamArrayNode;
+import eu.stratosphere.sopremo.type.StreamArrayNode;
 
 /**
  * An abstract implementation of the {@link ReduceStub}. SopremoReduce provides the functionality to convert the
  * standard input of the ReduceStub to a more manageable representation (the input is converted to an {@link IArrayNode}
  * ).
  */
-public abstract class SopremoReduce extends ReduceStub {
+public abstract class SopremoReduce extends ReduceStub implements SopremoStub {
 	private EvaluationContext context;
 
 	private JsonCollector collector;
 
 	private RecordToJsonIterator cachedIterator;
+
+	private final StreamArrayNode array = new StreamArrayNode(this.cachedIterator);
 
 	/*
 	 * (non-Javadoc)
@@ -38,15 +38,12 @@ public abstract class SopremoReduce extends ReduceStub {
 		this.cachedIterator = new RecordToJsonIterator(this.context.getInputSchema(0));
 		this.collector = new JsonCollector(this.context.getOutputSchema(0));
 		SopremoUtil.configureStub(this, parameters);
+		this.array.setNodeIterator(this.cachedIterator);
 	}
 
-	protected final EvaluationContext getContext() {
+	@Override
+	public final EvaluationContext getContext() {
 		return this.context;
-	}
-
-	@SuppressWarnings("unused")
-	protected boolean needsResettableIterator(final Iterator<IJsonNode> values) {
-		return false;
 	}
 
 	/**
@@ -57,7 +54,7 @@ public abstract class SopremoReduce extends ReduceStub {
 	 * @param out
 	 *        a collector that collects all output nodes
 	 */
-	protected abstract void reduce(IArrayNode values, JsonCollector out);
+	protected abstract void reduce(IStreamArrayNode values, JsonCollector out);
 
 	/*
 	 * (non-Javadoc)
@@ -65,25 +62,21 @@ public abstract class SopremoReduce extends ReduceStub {
 	 * eu.stratosphere.pact.common.stubs.Collector)
 	 */
 	@Override
-	public void reduce(final Iterator<PactRecord> records, final Collector<PactRecord> out) throws Exception {
-		this.context.increaseInputCounter();
+	public void reduce(final Iterator<PactRecord> records, final Collector<PactRecord> out) {
+		this.context.incrementInputCount();
 		this.collector.configure(out, this.context);
 		this.cachedIterator.setIterator(records);
-		Iterator<IJsonNode> values = this.cachedIterator;
-		if (SopremoUtil.LOG.isTraceEnabled()) {
-			final ArrayList<IJsonNode> cached = new ArrayList<IJsonNode>();
-			while (this.cachedIterator.hasNext())
-				cached.add(this.cachedIterator.next());
-			values = cached.iterator();
-			SopremoUtil.LOG.trace(String.format("%s %s", this.getContext().operatorTrace(), cached));
-		}
 
-		final ArrayNode array = JsonUtil.wrapWithNode(this.needsResettableIterator(values), values);
 		try {
-			this.reduce(array, this.collector);
+			if (SopremoUtil.DEBUG && SopremoUtil.LOG.isTraceEnabled()) {
+				ArrayNode array = new ArrayNode(this.array);
+				SopremoUtil.LOG.trace(String.format("%s %s", this.getContext().operatorTrace(), array));
+				this.reduce(array, this.collector);
+			} else
+				this.reduce(this.array, this.collector);
 		} catch (final RuntimeException e) {
 			SopremoUtil.LOG.error(String.format("Error occurred @ %s with %s: %s", this.getContext().operatorTrace(),
-				array, e));
+				this.array, e));
 			throw e;
 		}
 	}

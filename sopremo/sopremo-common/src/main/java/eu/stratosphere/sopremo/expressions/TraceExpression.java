@@ -1,11 +1,12 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
 /**
- * This expression logs the evaluation of an {@link EvaluationExpression} with the help of {@link SopremoUtil.LOG}.
+ * This traceExpression logs the evaluation of an {@link EvaluationExpression} with the help of {@link SopremoUtil.LOG}.
  */
 public class TraceExpression extends EvaluationExpression {
 	/**
@@ -13,16 +14,16 @@ public class TraceExpression extends EvaluationExpression {
 	 */
 	private static final long serialVersionUID = -3935412444889830869L;
 
-	private EvaluationExpression expression;
+	private EvaluationExpression traceExpression;
 
 	/**
 	 * Initializes a TraceExpression with the given {@link EvaluationExpression}.
 	 * 
-	 * @param expression
-	 *        the expression where the evauation should be logged
+	 * @param traceExpression
+	 *        the traceExpression where the evauation should be logged
 	 */
 	public TraceExpression(final EvaluationExpression expression) {
-		this.expression = expression;
+		this.traceExpression = expression;
 	}
 
 	/**
@@ -33,20 +34,37 @@ public class TraceExpression extends EvaluationExpression {
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		SopremoUtil.LOG.info(this.expression.evaluate(node, target, context));
+	public IJsonNode evaluate(final IJsonNode node) {
+		SopremoUtil.LOG.trace(this.traceExpression.evaluate(node));
 		return node;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#transformRecursively(eu.stratosphere.sopremo.expressions
-	 * .TransformFunction)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
 	@Override
-	public EvaluationExpression transformRecursively(final TransformFunction function) {
-		this.expression = this.expression.transformRecursively(function);
-		return function.call(this);
+	protected EvaluationExpression createCopy() {
+		return new TraceExpression(this.traceExpression.clone());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
+	 */
+	@Override
+	public ChildIterator iterator() {
+		return new NamedChildIterator("traceExpression") {
+
+			@Override
+			protected void set(int index, EvaluationExpression e) {
+				TraceExpression.this.traceExpression = e;
+			}
+
+			@Override
+			protected EvaluationExpression get(int index) {
+				return TraceExpression.this.traceExpression;
+			}
+		};
 	}
 }

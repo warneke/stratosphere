@@ -26,9 +26,9 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 	 */
 	private static final long serialVersionUID = -363746608697276853L;
 
-	protected PactRecord record;
+	private final PactRecord record;
 
-	protected HeadArraySchema schema;
+	private final HeadArraySchema schema;
 
 	/**
 	 * Initializes a LazyHeadArrayNode with the given {@link PactRecord} and the given {@link HeadArraySchema}.
@@ -41,6 +41,15 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 	public LazyHeadArrayNode(final PactRecord record, final HeadArraySchema schema) {
 		this.record = record;
 		this.schema = schema;
+	}
+
+	/**
+	 * Returns the record.
+	 * 
+	 * @return the record
+	 */
+	PactRecord getRecord() {
+		return this.record;
 	}
 
 	@Override
@@ -100,25 +109,6 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 	}
 
 	@Override
-	public int compareToSameType(final IJsonNode other) {
-		final LazyHeadArrayNode node = (LazyHeadArrayNode) other;
-		final Iterator<IJsonNode> entries1 = this.iterator(), entries2 = node.iterator();
-
-		while (entries1.hasNext() && entries2.hasNext()) {
-			final IJsonNode entry1 = entries1.next(), entry2 = entries2.next();
-			final int comparison = entry1.compareTo(entry2);
-			if (comparison != 0)
-				return comparison;
-		}
-
-		if (!entries1.hasNext())
-			return entries2.hasNext() ? -1 : 0;
-		if (!entries2.hasNext())
-			return 1;
-		return 0;
-	}
-
-	@Override
 	public IJsonNode get(final int index) {
 		if (index < 0 || index >= this.size())
 			return MissingNode.getInstance();
@@ -126,11 +116,6 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 		if (index < this.schema.getHeadSize())
 			return SopremoUtil.unwrap(this.record.getField(index, JsonNodeWrapper.class));
 		return this.getOtherField().get(index - this.schema.getHeadSize());
-	}
-
-	@Override
-	public PactRecord getJavaValue() {
-		return this.record;
 	}
 
 	/**
@@ -243,7 +228,7 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 	}
 
 	@Override
-	public StringBuilder toString(final StringBuilder sb) {
+	public void appendAsString(final Appendable sb) throws IOException {
 		sb.append('[');
 
 		int count = 0;
@@ -252,11 +237,10 @@ public class LazyHeadArrayNode extends AbstractArrayNode {
 				sb.append(',');
 			++count;
 
-			node.toString(sb);
+			node.appendAsString(sb);
 		}
 
 		sb.append(']');
-		return sb;
 	}
 
 	@Override

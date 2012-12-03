@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -44,7 +44,7 @@ public class LazyTailArrayNodeTest extends ArrayNodeBaseTest<LazyTailArrayNode> 
 	public void initArrayNode() {
 		final TailArraySchema schema = new TailArraySchema(5);
 		final PactRecord record = schema.jsonToRecord(
-			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null, null);
+			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null);
 
 		this.node = new LazyTailArrayNode(record, schema);
 	}
@@ -57,7 +57,7 @@ public class LazyTailArrayNodeTest extends ArrayNodeBaseTest<LazyTailArrayNode> 
 	protected IJsonNode lowerNode() {
 		final TailArraySchema schema = new TailArraySchema(5);
 		final PactRecord record = schema.jsonToRecord(
-			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null, null);
+			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null);
 
 		return new LazyTailArrayNode(record, schema);
 	}
@@ -66,7 +66,7 @@ public class LazyTailArrayNodeTest extends ArrayNodeBaseTest<LazyTailArrayNode> 
 	protected IJsonNode higherNode() {
 		final TailArraySchema schema = new TailArraySchema(5);
 		final PactRecord record = schema.jsonToRecord(
-			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(3)), null, null);
+			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(3)), null);
 
 		return new LazyTailArrayNode(record, schema);
 	}
@@ -80,7 +80,7 @@ public class LazyTailArrayNodeTest extends ArrayNodeBaseTest<LazyTailArrayNode> 
 	public LazyTailArrayNodeTest(final int tailSize) {
 		final TailArraySchema schema = new TailArraySchema(tailSize);
 		final PactRecord record = schema.jsonToRecord(
-			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null, null);
+			new ArrayNode(IntNode.valueOf(0), IntNode.valueOf(1), IntNode.valueOf(2)), null);
 
 		this.node = new LazyTailArrayNode(record, schema);
 

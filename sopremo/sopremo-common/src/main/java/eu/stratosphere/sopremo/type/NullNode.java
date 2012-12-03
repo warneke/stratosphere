@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import eu.stratosphere.pact.common.type.base.PactNull;
+import eu.stratosphere.sopremo.Singleton;
 
 /**
  * This node represents the value 'null'.
@@ -14,6 +15,7 @@ import eu.stratosphere.pact.common.type.base.PactNull;
  * @author Michael Hopstock
  * @author Tommy Neubert
  */
+@Singleton
 public class NullNode extends AbstractJsonNode implements IPrimitiveNode {
 
 	/**
@@ -40,8 +42,8 @@ public class NullNode extends AbstractJsonNode implements IPrimitiveNode {
 	}
 
 	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return sb.append("null");
+	public void appendAsString(final Appendable sb) throws IOException {
+		sb.append("null");
 	}
 
 	@Override
@@ -75,18 +77,14 @@ public class NullNode extends AbstractJsonNode implements IPrimitiveNode {
 		return Type.NullNode;
 	}
 
-	private Object readResolve() {
+	@Override
+	protected Object readResolve() {
 		return Instance;
 	}
 
 	@Override
-	public IJsonNode clone() {
+	public NullNode clone() {
 		return this;
-	}
-
-	@Override
-	public Object getJavaValue() {
-		return null;
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package eu.stratosphere.sopremo;
 
 /**
- * Runtime exception that is thrown when an error during evaluation occurred.
+ * SopremoRuntime exception that is thrown when an error during evaluation occurred.
  * 
  * @author Arvid Heise
  */

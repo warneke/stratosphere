@@ -1,5 +1,7 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+
 import junit.framework.Assert;
 
 import org.junit.Ignore;
@@ -16,9 +18,9 @@ public abstract class BooleanExpressionTest<T extends BooleanExpression> extends
 
 	@Override
 	@Test
-	public void testToString() {
+	public void testToString() throws IOException {
 		final StringBuilder builder = new StringBuilder();
-		this.first.toString(builder);
+		this.first.appendAsString(builder);
 		Assert.assertNotSame(
 			"builder did not write anything - override this test if it is indeed the desired behavior", "", builder
 				.toString().intern());

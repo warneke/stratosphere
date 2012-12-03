@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -65,12 +65,12 @@ public class GeneratorInputFormat extends GenericInputFormat {
 	@Override
 	public void configure(final Configuration parameters) {
 		super.configure(parameters);
-		
+
 		this.context = SopremoUtil.deserialize(parameters, SopremoUtil.CONTEXT, EvaluationContext.class);
 		this.schema = this.context.getOutputSchema(0);
 		final EvaluationExpression expression =
 			SopremoUtil.deserialize(parameters, ADHOC_EXPRESSION_PARAMETER_KEY, EvaluationExpression.class);
-		final IJsonNode value = expression.evaluate(NullNode.getInstance(), null, this.context);
+		final IJsonNode value = expression.evaluate(NullNode.getInstance());
 
 		if (value.isArray()) {
 			this.numValues = ((ArrayNode) value).size();
@@ -137,7 +137,7 @@ public class GeneratorInputFormat extends GenericInputFormat {
 			throw new IOException("End of input split is reached");
 
 		final IJsonNode value = this.valueIterator.next();
-		final PactRecord result = this.schema.jsonToRecord(value, record, this.context);
+		final PactRecord result = this.schema.jsonToRecord(value, record);
 		if (result != record)
 			result.copyTo(record);
 		return true;

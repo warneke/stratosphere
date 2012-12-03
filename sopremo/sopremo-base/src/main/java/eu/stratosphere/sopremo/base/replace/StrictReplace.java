@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,6 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.base.replace;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.InputCardinality;
 import eu.stratosphere.sopremo.pact.JsonCollector;
@@ -33,7 +32,7 @@ public class StrictReplace extends ReplaceBase<StrictReplace> {
 	public static class Implementation extends SopremoMatch {
 		private EvaluationExpression replaceExpression;
 
-		private CachingExpression<IJsonNode> dictionaryValueExtraction;
+		private EvaluationExpression dictionaryValueExtraction;
 
 		/*
 		 * (non-Javadoc)
@@ -43,8 +42,7 @@ public class StrictReplace extends ReplaceBase<StrictReplace> {
 		@Override
 		protected void match(IJsonNode value1, IJsonNode value2, JsonCollector out) {
 			out.collect(this.replaceExpression.set(value1,
-				this.dictionaryValueExtraction.evaluate(value2, getContext()),
-				this.getContext()));
+				this.dictionaryValueExtraction.evaluate(value2)));
 		}
 	}
 }

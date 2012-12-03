@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import javolution.text.TypeFormat;
 import eu.stratosphere.pact.common.type.base.PactLong;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 
@@ -136,11 +137,6 @@ public class LongNode extends AbstractNumericNode implements INumericNode {
 		return this.value.toString();
 	}
 
-	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return sb.append(this.value);
-	}
-
 	private void writeObject(final ObjectOutputStream out) throws IOException {
 		out.writeLong(this.value.getValue());
 	}
@@ -151,8 +147,8 @@ public class LongNode extends AbstractNumericNode implements INumericNode {
 
 	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
-		this.checkForSameType(otherNode);
-		this.value.setValue(((LongNode) otherNode).getLongValue());
+		checkNumber(otherNode);
+		this.value.setValue(((INumericNode) otherNode).getLongValue());
 	}
 
 	@Override
@@ -174,5 +170,14 @@ public class LongNode extends AbstractNumericNode implements INumericNode {
 	@Override
 	public void copyNormalizedKey(final byte[] target, final int offset, final int len) {
 		this.value.copyNormalizedKey(target, offset, len);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		TypeFormat.format(this.value.getValue(), appendable);
 	}
 }

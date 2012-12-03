@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,7 +17,7 @@ package eu.stratosphere.sopremo.serialization;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import eu.stratosphere.pact.common.type.PactRecord;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.pact.JsonNodeWrapper;
@@ -60,6 +60,15 @@ public class TailArraySchema extends AbstractSchema {
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new TailArraySchema(this.tailSize);
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see
 	 * eu.stratosphere.sopremo.serialization.Schema#indicesOf(eu.stratosphere.sopremo.expressions.EvaluationExpression)
 	 */
@@ -98,7 +107,7 @@ public class TailArraySchema extends AbstractSchema {
 	 * eu.stratosphere.pact.common.type.PactRecord)
 	 */
 	@Override
-	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target, final EvaluationContext context) {
+	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target) {
 		IArrayNode others;
 		if (target == null || target.getNumFields() != 1) {
 

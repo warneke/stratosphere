@@ -1,6 +1,7 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
@@ -13,7 +14,7 @@ import eu.stratosphere.sopremo.type.NullNode;
  * @author Arvid Heise
  */
 @OptimizerHints(scope = Scope.OBJECT)
-public class ObjectAccess extends EvaluationExpression {
+public class ObjectAccess extends PathSegmentExpression {
 
 	/**
 	 * 
@@ -70,8 +71,13 @@ public class ObjectAccess extends EvaluationExpression {
 	 * cases, the return value is the node associated with the field name of this FieldAccess instance or
 	 * {@link NullNode} if no such value exists.
 	 */
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * eu.stratosphere.sopremo.expressions.PathSegmentExpression#evaluateSegment(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	protected IJsonNode evaluateSegment(final IJsonNode node) {
 		if (!node.isObject()) {
 			if (node.isNull() && this.safeDereference)
 				return node;
@@ -89,8 +95,17 @@ public class ObjectAccess extends EvaluationExpression {
 		return 43 * super.hashCode() + this.field.hashCode();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
 	@Override
-	public IJsonNode set(final IJsonNode node, final IJsonNode value, final EvaluationContext context) {
+	protected EvaluationExpression createCopy() {
+		return new ObjectAccess(this.field, this.safeDereference);
+	}
+
+	@Override
+	public IJsonNode set(final IJsonNode node, final IJsonNode value) {
 		if (!node.isObject())
 			throw new EvaluationException("Cannot access field of non-object " + node.getClass().getSimpleName());
 		((IObjectNode) node).put(this.field, value);
@@ -98,7 +113,8 @@ public class ObjectAccess extends EvaluationExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append('.').append(this.field);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.appendInputAsString(appendable);
+		appendable.append('.').append(this.field);
 	}
 }

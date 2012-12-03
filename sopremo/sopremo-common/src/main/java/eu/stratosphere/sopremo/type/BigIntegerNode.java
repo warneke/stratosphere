@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import javolution.text.TextFormat;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 
 /**
@@ -142,14 +143,9 @@ public class BigIntegerNode extends AbstractNumericNode implements INumericNode 
 	}
 
 	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return sb.append(this.value);
-	}
-
-	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
-		this.checkForSameType(otherNode);
-		this.value = ((BigIntegerNode) otherNode).value;
+		checkNumber(otherNode);
+		this.value = ((INumericNode) otherNode).getBigIntegerValue();
 	}
 
 	@Override
@@ -163,4 +159,12 @@ public class BigIntegerNode extends AbstractNumericNode implements INumericNode 
 			this.value = BigInteger.ZERO;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		TextFormat.getInstance(BigInteger.class).format(this.value, appendable);
+	}
 }

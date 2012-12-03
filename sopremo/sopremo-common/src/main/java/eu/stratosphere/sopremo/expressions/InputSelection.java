@@ -1,6 +1,8 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import java.io.IOException;
+
+import javolution.text.TypeFormat;
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -9,7 +11,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * Returns the element of an array which is saved at the specified index.
  */
 @OptimizerHints(scope = Scope.ANY, minNodes = 1, maxNodes = OptimizerHints.UNBOUND)
-public class InputSelection extends EvaluationExpression {
+public class InputSelection extends PathSegmentExpression {
 	private static final long serialVersionUID = -3767687525625180324L;
 
 	private final int index;
@@ -33,28 +35,20 @@ public class InputSelection extends EvaluationExpression {
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		// TODO Reuse target (problem: result could be any kind of JsonNode)
+	protected IJsonNode evaluateSegment(final IJsonNode node) {
 		if (!node.isArray())
-			throw new EvaluationException("Cannot access index of non-array " + node.getClass().getSimpleName());
+			throw new EvaluationException("Cannot select input " + node.getClass().getSimpleName());
 		return ((IArrayNode) node).get(this.index);
 	}
 
-	//
-	// @Override
-	// public Iterator<JsonNode> evaluateStreams(Iterator<JsonNode> input) {
-	// return input;
-	// }
-	//
-	// @Override
-	// public Iterator<JsonNode> evaluateStreams(Iterator<JsonNode>... inputs) {
-	// return inputs[index];
-	// }
-	//
-	// @Override
-	// public JsonNode evaluate(JsonNode... nodes) {
-	// return nodes[index];
-	// }
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new InputSelection(this.index);
+	}
 
 	/**
 	 * Returns the index
@@ -71,8 +65,9 @@ public class InputSelection extends EvaluationExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		super.toString(builder);
-		builder.append("in").append(this.index);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.appendInputAsString(appendable);
+		appendable.append("in");
+		TypeFormat.format(this.index, appendable);
 	}
 }

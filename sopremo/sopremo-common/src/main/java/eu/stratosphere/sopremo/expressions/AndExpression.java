@@ -1,10 +1,13 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
@@ -40,6 +43,11 @@ public class AndExpression extends BooleanExpression {
 		this.expressions = new ArrayList<BooleanExpression>(expressions);
 	}
 
+	public AndExpression addExpression(final BooleanExpression expression) {
+		this.expressions.add(expression);
+		return this;
+	}
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (!super.equals(obj))
@@ -49,13 +57,22 @@ public class AndExpression extends BooleanExpression {
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public BooleanNode evaluate(final IJsonNode node) {
 		// we can ignore 'target' because no new Object is created
 		for (final EvaluationExpression booleanExpression : this.expressions)
-			if (booleanExpression.evaluate(node, null, context) == BooleanNode.FALSE)
+			if (booleanExpression.evaluate(node) == BooleanNode.FALSE)
 				return BooleanNode.FALSE;
 
 		return BooleanNode.TRUE;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
+	@Override
+	protected EvaluationExpression createCopy() {
+		return new AndExpression(SopremoUtil.deepClone(this.expressions));
 	}
 
 	/**
@@ -76,25 +93,30 @@ public class AndExpression extends BooleanExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append("(");
-		this.appendChildExpressions(builder, this.expressions, " AND ");
-		builder.append(")");
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append("(");
+		this.appendChildExpressions(appendable, this.expressions, " AND ");
+		appendable.append(")");
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#transformRecursively(eu.stratosphere.sopremo.expressions
-	 * .TransformFunction)
+	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
 	 */
 	@Override
-	public EvaluationExpression transformRecursively(final TransformFunction function) {
-		final List<BooleanExpression> booleans =
-			BooleanExpression.ensureBooleanExpressions(this.transformChildExpressions(function, this.expressions));
-		this.expressions.clear();
-		this.expressions.addAll(booleans);
-		return function.call(this);
+	public ChildIterator iterator() {
+		return new GenericListChildIterator<BooleanExpression>(this.expressions.listIterator()) {
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions
+			 * .EvaluationExpression)
+			 */
+			@Override
+			protected BooleanExpression convert(EvaluationExpression childExpression) {
+				return BooleanExpression.ensureBooleanExpression(childExpression);
+			}
+		};
 	}
 
 	/**

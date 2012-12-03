@@ -4,7 +4,7 @@ import static eu.stratosphere.sopremo.type.JsonUtil.createPath;
 
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.expressions.ArrayCreation;
 import eu.stratosphere.sopremo.expressions.BinaryBooleanExpression;
 import eu.stratosphere.sopremo.expressions.ComparativeExpression;
@@ -15,7 +15,7 @@ import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class TwoSourceJoinTest extends SopremoTest<TwoSourceJoin> {
+public class TwoSourceJoinTest extends EqualCloneTest<TwoSourceJoin> {
 	@Test
 	public void shouldPerformAntiTwoSourceJoin() {
 		final SopremoTestPlan sopremoPlan = new SopremoTestPlan(2, 1);

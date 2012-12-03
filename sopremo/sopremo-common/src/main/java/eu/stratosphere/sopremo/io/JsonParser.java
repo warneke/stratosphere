@@ -40,7 +40,7 @@ import eu.stratosphere.sopremo.type.TextNode;
  * Creates a JsonNode-representation of the provided data. The input-data must be provided in a valid json-format.
  */
 public class JsonParser {
-	// TODO: rewrite to a state-based parser, that supports escaping	
+	// TODO: rewrite to a state-based parser, that supports escaping
 
 	private final BufferedReader reader;
 
@@ -400,11 +400,6 @@ public class JsonParser {
 		}
 
 		@Override
-		public Object getJavaValue() {
-			return null;
-		}
-
-		@Override
 		public Type getType() {
 			return null;
 		}
@@ -418,8 +413,7 @@ public class JsonParser {
 		}
 
 		@Override
-		public StringBuilder toString(final StringBuilder sb) {
-			return sb;
+		public void appendAsString(final Appendable sb) throws IOException {
 		}
 
 		@Override
@@ -449,8 +443,9 @@ public class JsonParser {
 		public void copyValueFrom(final IJsonNode otherNode) {
 
 		}
-		
-		/* (non-Javadoc)
+
+		/*
+		 * (non-Javadoc)
 		 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#hashCode()
 		 */
 		@Override

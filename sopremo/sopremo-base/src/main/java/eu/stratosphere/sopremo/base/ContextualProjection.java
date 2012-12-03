@@ -1,10 +1,10 @@
 package eu.stratosphere.sopremo.base;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
 import eu.stratosphere.sopremo.operator.InputCardinality;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoCross;
 import eu.stratosphere.sopremo.type.IJsonNode;
@@ -29,6 +29,7 @@ public class ContextualProjection extends ElementaryOperator<ContextualProjectio
 		return this.contextPath;
 	}
 
+	@Property
 	public void setContextPath(final EvaluationExpression contextPath) {
 		if (contextPath == null)
 			throw new NullPointerException("contextPath must not be null");
@@ -42,11 +43,11 @@ public class ContextualProjection extends ElementaryOperator<ContextualProjectio
 	}
 
 	public static class Implementation extends SopremoCross {
-		private CachingExpression<IJsonNode> contextPath;
+		private EvaluationExpression contextPath;
 
 		@Override
 		protected void cross(final IJsonNode value, final IJsonNode context, final JsonCollector out) {
-			this.contextPath.set(value, context, this.getContext());
+			this.contextPath.set(value, context);
 			out.collect(value);
 		}
 	}

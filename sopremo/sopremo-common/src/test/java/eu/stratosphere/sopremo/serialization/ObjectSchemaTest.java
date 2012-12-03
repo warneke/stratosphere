@@ -21,7 +21,7 @@ public class ObjectSchemaTest {
 		object.put("firstname", TextNode.valueOf("testfn"))
 			.put("lastnameasdf", TextNode.valueOf("testln123"));
 
-		final PactRecord record = schema.jsonToRecord(object, null, null);
+		final PactRecord record = schema.jsonToRecord(object, null);
 
 		final IJsonNode object2 = schema.recordToJson(record, null);
 
@@ -36,7 +36,7 @@ public class ObjectSchemaTest {
 		object.put("firstname", TextNode.valueOf("testfn"))
 			.put("lastname", TextNode.valueOf("testln"));
 
-		final PactRecord result = schema.jsonToRecord(object, null, null);
+		final PactRecord result = schema.jsonToRecord(object, null);
 		final PactRecord expected = new PactRecord();
 		expected.setField(0, new JsonNodeWrapper(TextNode.valueOf("testfn")));
 		expected.setField(1, new JsonNodeWrapper(TextNode.valueOf("testln")));
@@ -68,7 +68,7 @@ public class ObjectSchemaTest {
 		final ObjectNode object = new ObjectNode().put("firstname", TextNode.valueOf("testfn"))
 			.put("lastname", TextNode.valueOf("testln"));
 
-		final PactRecord result = schema.jsonToRecord(object, null, null);
+		final PactRecord result = schema.jsonToRecord(object, null);
 
 		final PactRecord expected = new PactRecord();
 		expected.setField(0, new JsonNodeWrapper(object));
@@ -118,8 +118,8 @@ public class ObjectSchemaTest {
 		final ObjectNode object = new ObjectNode().put("firstname", TextNode.valueOf("testfn"))
 			.put("lastname", TextNode.valueOf("testln"));
 
-		final PactRecord target = schema.jsonToRecord(object, null, null);
-		final PactRecord result = schema.jsonToRecord(object, target, null);
+		final PactRecord target = schema.jsonToRecord(object, null);
+		final PactRecord result = schema.jsonToRecord(object, target);
 
 		Assert.assertSame(target, result);
 	}

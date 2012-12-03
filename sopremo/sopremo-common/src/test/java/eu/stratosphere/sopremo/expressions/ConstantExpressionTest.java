@@ -25,8 +25,8 @@ public class ConstantExpressionTest extends EvaluableExpressionTest<ConstantExpr
 
 	@Test
 	public void shouldCastNumericNodeCorrectly() {
-		final Object result = new ConstantExpression(IntNode.valueOf(42)).getConstant().getJavaValue();
+		final Object result = new ConstantExpression(IntNode.valueOf(42)).getConstant();
 
-		Assert.assertEquals(42, result);
+		Assert.assertEquals(IntNode.valueOf(42), result);
 	}
 }

@@ -78,7 +78,7 @@ public class JsonNodeWrapper extends AbstractJsonNode implements IJsonNode {
 	 * @return the wrapped node after casting
 	 */
 	@SuppressWarnings({ "unchecked", "unused" })
-	public <T extends IJsonNode> T getValue( final Class<T> klass) {
+	public <T extends IJsonNode> T getValue(final Class<T> klass) {
 		return (T) this.value;
 	}
 
@@ -100,11 +100,6 @@ public class JsonNodeWrapper extends AbstractJsonNode implements IJsonNode {
 		return this.value.compareTo(((JsonNodeWrapper) other).getValue());
 	}
 
-	@Override
-	public Object getJavaValue() {
-		return this.value.getJavaValue();
-	}
-
 	// @Override
 	// public int hashCode() {
 	// return this.value.hashCode();
@@ -119,18 +114,17 @@ public class JsonNodeWrapper extends AbstractJsonNode implements IJsonNode {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((this.value == null) ? 0 : this.value.hashCode());
+		result = prime * result + (this.value == null ? 0 : this.value.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (obj == null)
 			return false;
-		}
 		if (this == obj)
 			return true;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		JsonNodeWrapper other = (JsonNodeWrapper) obj;
 		if (this.value == null) {
@@ -147,8 +141,8 @@ public class JsonNodeWrapper extends AbstractJsonNode implements IJsonNode {
 	}
 
 	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return this.value.toString(sb);
+	public void appendAsString(final Appendable sb) throws IOException {
+		this.value.appendAsString(sb);
 	}
 
 	@Override

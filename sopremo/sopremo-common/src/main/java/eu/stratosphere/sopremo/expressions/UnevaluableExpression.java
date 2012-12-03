@@ -1,6 +1,7 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.EvaluationException;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
@@ -34,20 +35,18 @@ public class UnevaluableExpression extends EvaluationExpression {
 		return this.message.equals(other.message);
 	}
 
-	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
-		throw new EvaluationException(this.message);
-	}
-
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#transformRecursively(eu.stratosphere.sopremo.expressions
-	 * .TransformFunction)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
 	@Override
-	public EvaluationExpression transformRecursively(final TransformFunction function) {
-		return function.call(this);
+	protected EvaluationExpression createCopy() {
+		return new UnevaluableExpression(this.message);
+	}
+
+	@Override
+	public IJsonNode evaluate(final IJsonNode node) {
+		throw new EvaluationException(this.message);
 	}
 
 	@Override
@@ -56,8 +55,8 @@ public class UnevaluableExpression extends EvaluationExpression {
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.message);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append(this.message);
 	}
 
 }

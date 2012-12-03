@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,16 +18,30 @@ import java.beans.IndexedPropertyDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
+import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.operator.Operator;
 import eu.stratosphere.sopremo.packages.DefaultRegistry;
 import eu.stratosphere.sopremo.packages.IRegistry;
 import eu.stratosphere.sopremo.packages.NameChooser;
 import eu.stratosphere.util.reflect.ReflectUtil;
 
-public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
+public class OperatorInfo<Op extends Operator<Op>> extends AbstractSopremoType implements ISerializableSopremoType {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4513611163697385746L;
 
 	public static class InputPropertyInfo extends PropertyInfo {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 5380394239325476067L;
 
 		/**
 		 * Initializes OperatorPropertyInfo.
@@ -53,6 +67,15 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 			}
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return new InputPropertyInfo(getName(), getDescriptor());
+		}
+
 		public void setValue(final Operator<?> operator, final int index, final Object value) {
 			try {
 				this.getDescriptor().getIndexedWriteMethod().invoke(operator, index, value);
@@ -65,6 +88,11 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 	}
 
 	public static class OperatorPropertyInfo extends PropertyInfo {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1973407943532893076L;
 
 		/**
 		 * Initializes OperatorPropertyInfo.
@@ -85,6 +113,15 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 			}
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+		 */
+		@Override
+		protected AbstractSopremoType createCopy() {
+			return new OperatorPropertyInfo(getName(), getDescriptor());
+		}
+
 		public void setValue(final Operator<?> operator, final Object value) {
 			try {
 				this.getDescriptor().getWriteMethod().invoke(operator, value);
@@ -96,7 +133,12 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 
 	}
 
-	public static class PropertyInfo {
+	public abstract static class PropertyInfo extends AbstractSopremoType implements ISerializableSopremoType {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4684255642695196446L;
+
 		private final String name;
 
 		private final PropertyDescriptor descriptor;
@@ -135,9 +177,13 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 			return this.descriptor.getPropertyType();
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.ISopremoType#appendAsString(java.lang.Appendable)
+		 */
 		@Override
-		public String toString() {
-			return this.name;
+		public void appendAsString(Appendable appendable) throws IOException {
+			appendable.append(this.name);
 		}
 	}
 
@@ -186,6 +232,12 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 		}
 	}
 
+	private AtomicBoolean needsInitialization = new AtomicBoolean(true);
+
+	protected boolean needsInitialization() {
+		return this.needsInitialization.getAndSet(false);
+	}
+
 	public IRegistry<InputPropertyInfo> getInputPropertyRegistry() {
 		if (this.needsInitialization())
 			this.initProperties();
@@ -194,6 +246,15 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 
 	public String getName() {
 		return this.name;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new OperatorInfo<Op>(this.operatorClass, this.name, this.propertyNameChooser);
 	}
 
 	public IRegistry<OperatorPropertyInfo> getOperatorPropertyRegistry() {
@@ -206,8 +267,12 @@ public class OperatorInfo<Op extends Operator<Op>> extends InfoBase<Op> {
 		return ReflectUtil.newInstance(this.operatorClass);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#appendAsString(java.lang.Appendable)
+	 */
 	@Override
-	public String toString() {
-		return this.name;
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append(this.name);
 	}
 }

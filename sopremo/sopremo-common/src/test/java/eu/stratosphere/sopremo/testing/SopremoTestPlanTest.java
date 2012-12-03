@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -33,7 +33,8 @@ import org.junit.internal.ArrayComparisonFailure;
 
 import eu.stratosphere.pact.common.contract.ReduceContract.Combinable;
 import eu.stratosphere.pact.testing.TestRecords;
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualVerifyTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
@@ -45,9 +46,9 @@ import eu.stratosphere.sopremo.pact.SopremoMap;
 import eu.stratosphere.sopremo.pact.SopremoReduce;
 import eu.stratosphere.sopremo.serialization.ObjectSchema;
 import eu.stratosphere.sopremo.serialization.Schema;
-import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
+import eu.stratosphere.sopremo.type.IStreamArrayNode;
 import eu.stratosphere.sopremo.type.IntNode;
 import eu.stratosphere.sopremo.type.JsonUtil;
 import eu.stratosphere.sopremo.type.TextNode;
@@ -58,7 +59,7 @@ import eu.stratosphere.sopremo.type.TextNode;
  * @author Arvid Heise
  */
 
-public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
+public class SopremoTestPlanTest extends EqualVerifyTest<SopremoTestPlan> {
 	/**
 	 * Tests if a {@link SopremoTestPlan} without explicit data sources and sinks can be executed.
 	 */
@@ -96,7 +97,7 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 	 */
 	@Test
 	public void completeTestPasses() throws IOException {
-		final Source source = new Source(getResourcePath("SopremoTestPlan/test.json"));
+		final Source source = new Source(SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json"));
 
 		final Identity projection = new Identity();
 		projection.setInputs(source);
@@ -116,9 +117,9 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 	@Test
 	public void completeTestPassesWithExpectedValues() {
 		final SopremoTestPlan testPlan = new SopremoTestPlan(new Identity().
-			withInputs(new Source(getResourcePath("SopremoTestPlan/test.json"))));
+			withInputs(new Source(SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json"))));
 
-		testPlan.getExpectedOutput(0).setOperator(new Source(getResourcePath("SopremoTestPlan/test.json")));
+		testPlan.getExpectedOutput(0).setOperator(new Source(SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json")));
 		testPlan.run();
 	}
 
@@ -142,6 +143,7 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 		testPlan.run();
 	}
 
+	@SuppressWarnings("resource")
 	@Override
 	protected void initVerifier(final EqualsVerifier<SopremoTestPlan> equalVerifier) {
 		super.initVerifier(equalVerifier);
@@ -150,9 +152,9 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 			withPrefabValues(
 				TestRecords.class,
 				new TestRecords(redSchema.getPactSchema()).add(
-					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "red"), null, null)),
+					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "red"), null)),
 				new TestRecords(redSchema.getPactSchema()).add(
-					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "black"), null, null))).
+					redSchema.jsonToRecord(JsonUtil.createObjectNode("color", "black"), null))).
 			withPrefabValues(Schema.class,
 				redSchema,
 				new ObjectSchema("blackField")).
@@ -286,7 +288,7 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 			@Override
 			protected void map(final IJsonNode value, final JsonCollector out) {
 				final Matcher matcher = WORD_PATTERN.matcher(((TextNode) ((IObjectNode) value).get("line"))
-					.getJavaValue());
+					.getTextValue());
 				while (matcher.find())
 					out.collect(JsonUtil.createObjectNode("word", TextNode.valueOf(matcher.group())));
 			}
@@ -322,14 +324,13 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 			 * eu.stratosphere.sopremo.pact.JsonCollector)
 			 */
 			@Override
-			protected void reduce(final IArrayNode values, final JsonCollector out) {
+			protected void reduce(final IStreamArrayNode values, final JsonCollector out) {
 				final Iterator<IJsonNode> valueIterator = values.iterator();
 				final IObjectNode firstEntry = (IObjectNode) valueIterator.next();
-				final String word = ((TextNode) firstEntry.get("word")).getTextValue();
 				int sum = this.getCount(firstEntry);
 				while (valueIterator.hasNext())
 					sum += this.getCount((IObjectNode) valueIterator.next());
-				out.collect(JsonUtil.createObjectNode("word", TextNode.valueOf(word), "count", sum));
+				out.collect(JsonUtil.createObjectNode("word", firstEntry.get("word"), "count", sum));
 			}
 
 			protected int getCount(final IObjectNode entry) {
@@ -351,12 +352,12 @@ public class SopremoTestPlanTest extends SopremoTest<SopremoTestPlan> {
 
 		final SopremoTestPlan testPlan = new SopremoTestPlan(countWords);
 		final String[] lines =
-		{
-			"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-			"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-			"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-			"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-		};
+			{
+				"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+				"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+				"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+				"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+			};
 		for (final String line : lines)
 			testPlan.getInput(0).add(JsonUtil.createObjectNode("line", TextNode.valueOf(line.toLowerCase())));
 

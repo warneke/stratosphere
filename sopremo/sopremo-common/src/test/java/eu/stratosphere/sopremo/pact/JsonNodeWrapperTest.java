@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.io.JsonGenerator;
 import eu.stratosphere.sopremo.io.JsonParser;
 import eu.stratosphere.sopremo.type.ArrayNode;
@@ -65,7 +65,7 @@ public class JsonNodeWrapperTest extends JsonNodeTest<JsonNodeWrapper> {
 
 			final ArrayNode array = new ArrayNode();
 			final JsonParser parser = new JsonParser(new URL(
-				SopremoTest.getResourcePath("SopremoTestPlan/test.json")));
+				SopremoTestUtil.getResourcePath("SopremoTestPlan/test.json")));
 			final File file = File.createTempFile("test", "json");
 
 			while (!parser.checkEnd())

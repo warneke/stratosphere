@@ -1,20 +1,25 @@
 package eu.stratosphere.sopremo.expressions;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.EvaluationException;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.ConcatenatingChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.ListChildIterator;
 import eu.stratosphere.sopremo.function.SopremoFunction;
 import eu.stratosphere.sopremo.packages.EvaluationScope;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
+import eu.stratosphere.sopremo.type.ArrayNode;
+import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
-import eu.stratosphere.sopremo.type.JsonUtil;
 
 /**
  * Calls the specified function with the provided parameters and returns the result.
  */
 @OptimizerHints(scope = Scope.ANY, minNodes = 0, maxNodes = OptimizerHints.UNBOUND)
-public class FunctionCall extends ContainerExpression {
+public class FunctionCall extends EvaluationExpression {
 
 	/**
 	 * 
@@ -25,7 +30,7 @@ public class FunctionCall extends ContainerExpression {
 
 	private final SopremoFunction function;
 
-	private List<CachingExpression<IJsonNode>> paramExprs;
+	private List<EvaluationExpression> paramExprs;
 
 	/**
 	 * Initializes a MethodCall with the given function name and expressions which evaluate to the method parameters.
@@ -57,9 +62,12 @@ public class FunctionCall extends ContainerExpression {
 			throw new NullPointerException("Function name must not be null");
 		if (function == null)
 			throw new NullPointerException("Function must not be null");
+		for (EvaluationExpression param : params)
+			if (param == null)
+				throw new NullPointerException("Params must not be null " + params);
 		this.functionName = functionName;
 		this.function = function;
-		this.paramExprs = CachingExpression.listOfAny(params);
+		this.paramExprs = params;
 	}
 
 	/**
@@ -76,7 +84,14 @@ public class FunctionCall extends ContainerExpression {
 	 */
 	public FunctionCall(final String functionName, final EvaluationScope scope,
 			final EvaluationExpression... params) {
-		this(functionName, (SopremoFunction) scope.getFunctionRegistry().get(functionName), Arrays.asList(params));
+		this(functionName, checkIfMethodExists(functionName, scope), Arrays.asList(params));
+	}
+
+	private static SopremoFunction checkIfMethodExists(final String functionName, final EvaluationScope scope) {
+		final SopremoFunction function = (SopremoFunction) scope.getFunctionRegistry().get(functionName);
+		if (function == null)
+			throw new IllegalArgumentException(String.format("No method %s found", functionName));
+		return function;
 	}
 
 	/**
@@ -93,19 +108,16 @@ public class FunctionCall extends ContainerExpression {
 	 */
 	public FunctionCall(final String functionName, final EvaluationScope scope,
 			final List<EvaluationExpression> params) {
-		this(functionName, (SopremoFunction) scope.getFunctionRegistry().get(functionName), params);
+		this(functionName, checkIfMethodExists(functionName, scope), params);
 	}
-	
-	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#clone()
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
 	@Override
-	public FunctionCall clone() {
-		final FunctionCall clone = (FunctionCall) super.clone();
-		clone.paramExprs = new ArrayList<CachingExpression<IJsonNode>>(this.paramExprs.size());
-		for (CachingExpression<IJsonNode> paramExpr : this.paramExprs) 
-			clone.paramExprs.add(paramExpr.clone());
-		return clone;
+	protected EvaluationExpression createCopy() {
+		return new FunctionCall(this.functionName, this.function.clone(), SopremoUtil.deepClone(this.paramExprs));
 	}
 
 	@Override
@@ -134,6 +146,15 @@ public class FunctionCall extends ContainerExpression {
 		return this.functionName;
 	}
 
+	/**
+	 * Returns the paramExprs.
+	 * 
+	 * @return the paramExprs
+	 */
+	public List<EvaluationExpression> getParameters() {
+		return this.paramExprs;
+	}
+
 	@Override
 	public int hashCode() {
 		int hash = super.hashCode();
@@ -142,39 +163,41 @@ public class FunctionCall extends ContainerExpression {
 		return hash;
 	}
 
-	@Override
-	public IJsonNode evaluate(final IJsonNode node, IJsonNode target, final EvaluationContext context) {
-		final IJsonNode[] params = new IJsonNode[this.paramExprs.size()];
-		for (int index = 0; index < params.length; index++)
-			params[index] = this.paramExprs.get(index).evaluate(node, context);
+	private transient final IArrayNode params = new ArrayNode();
 
-		return this.function.call(JsonUtil.asArray(params), target, context);
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#evaluate(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public IJsonNode evaluate(IJsonNode node) {
+		final List<EvaluationExpression> paramExprs = this.paramExprs;
+		this.params.clear();
+		for (int index = 0; index < paramExprs.size(); index++)
+			this.params.add(paramExprs.get(index).evaluate(node));
+
+		try {
+			return this.function.call(this.params);
+		} catch (Exception e) {
+			throw new EvaluationException(e);
+		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.ContainerExpression#getChildren()
+	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
 	 */
 	@Override
-	public List<? extends EvaluationExpression> getChildren() {
-		return this.paramExprs;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.expressions.ContainerExpression#setChildren(java.util.List)
-	 */
-	@Override
-	public void setChildren(final List<? extends EvaluationExpression> children) {
-		this.paramExprs = CachingExpression.listOfAny(children);
+	public ChildIterator iterator() {
+		return new ConcatenatingChildIterator(super.iterator(), new ListChildIterator(this.paramExprs.listIterator()));
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		builder.append(this.functionName);
-		builder.append('(');
-		appendChildExpressions(builder, this.getChildren(), ", ");
-		builder.append(')');
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.function.appendAsString(appendable);
+		appendable.append('(');
+		this.appendChildExpressions(appendable, this.paramExprs, ", ");
+		appendable.append(')');
 	}
 
 }

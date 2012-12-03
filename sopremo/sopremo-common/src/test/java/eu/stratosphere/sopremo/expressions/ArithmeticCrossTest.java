@@ -12,7 +12,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperator;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression.DivisionEvaluator;
 import eu.stratosphere.sopremo.type.BigIntegerNode;
@@ -41,8 +40,7 @@ public class ArithmeticCrossTest {
 			new InputSelection(1));
 		final IJsonNode result = arithmetic.evaluate(
 			JsonUtil.asArray(JsonUtil.OBJECT_MAPPER.valueToTree(this.left),
-				JsonUtil.OBJECT_MAPPER.valueToTree(this.right)),
-			null, new EvaluationContext());
+				JsonUtil.OBJECT_MAPPER.valueToTree(this.right)));
 
 		final IJsonNode expectedNode = JsonUtil.OBJECT_MAPPER.valueToTree(this.expected);
 		Assert.assertEquals(

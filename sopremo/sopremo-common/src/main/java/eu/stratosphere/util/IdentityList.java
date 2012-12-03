@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * Provides a {@link List} that uses reference-equality and thus intentionally violates the general List contract.
+ * Provides a {@link List} that uses reference-equality and thus intentionally
+ * violates the general List contract.
  * 
  * @author Arvid Heise
  * @param <E>
@@ -18,6 +19,22 @@ import java.util.ListIterator;
  */
 public class IdentityList<E> extends AbstractList<E> {
 	private final List<E> backing = new ArrayList<E>();
+
+	/**
+	 * Initializes IdentityList.
+	 */
+	public IdentityList() {
+	}
+
+	/**
+	 * Initializes IdentityList with the given list of elements.
+	 * 
+	 * @param elements
+	 *        the list of elements
+	 */
+	public IdentityList(Collection<? extends E> elements) {
+		this.addAll(elements);
+	}
 
 	@Override
 	public boolean add(final E e) {

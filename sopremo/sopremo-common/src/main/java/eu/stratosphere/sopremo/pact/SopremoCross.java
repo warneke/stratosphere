@@ -13,7 +13,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * standard input of the CrossStub to a more manageable representation (both inputs are converted to an
  * {@link IJsonNode}).
  */
-public abstract class SopremoCross extends CrossStub {
+public abstract class SopremoCross extends CrossStub implements SopremoStub {
 	private EvaluationContext context;
 
 	private Schema inputSchema1, inputSchema2;
@@ -57,7 +57,7 @@ public abstract class SopremoCross extends CrossStub {
 	 */
 	@Override
 	public void cross(final PactRecord record1, final PactRecord record2, final Collector<PactRecord> out) {
-		this.context.increaseInputCounter();
+		this.context.incrementInputCount();
 		this.collector.configure(out, this.context);
 		final IJsonNode input1 = this.inputSchema1.recordToJson(record1, this.cachedInput1);
 		final IJsonNode input2 = this.inputSchema2.recordToJson(record2, this.cachedInput2);
@@ -72,7 +72,8 @@ public abstract class SopremoCross extends CrossStub {
 		}
 	}
 
-	protected final EvaluationContext getContext() {
+	@Override
+	public final EvaluationContext getContext() {
 		return this.context;
 	}
 }

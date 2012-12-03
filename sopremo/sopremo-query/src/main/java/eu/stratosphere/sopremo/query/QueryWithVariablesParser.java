@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,13 +17,14 @@ package eu.stratosphere.sopremo.query;
 import org.antlr.runtime.RecognizerSharedState;
 import org.antlr.runtime.TokenStream;
 
+import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.packages.DefaultRegistry;
 import eu.stratosphere.sopremo.packages.IRegistry;
 
 /**
  * @author Arvid Heise
  */
-public abstract class QueryWithVariablesParser<VarType> extends AbstractQueryParser {
+public abstract class QueryWithVariablesParser<VarType extends ISerializableSopremoType> extends AbstractQueryParser {
 	private StackedRegistry<VarType, IRegistry<VarType>> variableRegistry =
 		new StackedRegistry<VarType, IRegistry<VarType>>(new DefaultRegistry<VarType>());
 

@@ -1,5 +1,7 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
+
 import junit.framework.Assert;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
@@ -8,16 +10,16 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.SopremoTest;
 
 @Ignore
-public abstract class EvaluableExpressionTest<T extends EvaluationExpression> extends SopremoTest<T> {
+public abstract class EvaluableExpressionTest<T extends EvaluationExpression> extends EqualCloneTest<T> {
 	protected EvaluationContext context;
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.SopremoTest#shouldComplyEqualsContract()
+	 * @see eu.stratosphere.sopremo.EqualCloneTest#shouldComplyEqualsContract()
 	 */
 	@Override
 	@Test
@@ -37,11 +39,12 @@ public abstract class EvaluableExpressionTest<T extends EvaluationExpression> ex
 	}
 
 	@Test
-	public void testToString() {
+	public void testToString() throws IOException {
 		final StringBuilder builder = new StringBuilder();
-		this.first.toString(builder);
+		this.first.appendAsString(builder);
 		Assert.assertFalse(
 			"builder did not write anything - override this test if it is indeed the desired behavior",
 			builder.length() == 0);
 	}
+
 }

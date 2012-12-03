@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,17 +15,18 @@
 package eu.stratosphere.sopremo.function;
 
 import eu.stratosphere.sopremo.AbstractSopremoType;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.ICloneable;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
 
 /**
  * @author Arvid Heise
  */
-public abstract class Callable<Result, InputType> extends AbstractSopremoType implements ISerializableSopremoType {
+public abstract class Callable<Result, InputType> extends AbstractSopremoType implements ISerializableSopremoType,
+		ICloneable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 7623937906556576557L;
 
-	public abstract Result call(InputType params, Result target, EvaluationContext context);
+	public abstract Result call(InputType params);
 }

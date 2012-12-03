@@ -1,5 +1,6 @@
 package eu.stratosphere.sopremo.operator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,6 +11,7 @@ import java.util.Map.Entry;
 
 import eu.stratosphere.sopremo.EvaluationContext;
 import eu.stratosphere.sopremo.ISerializableSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
 import eu.stratosphere.util.dag.GraphModule;
@@ -40,11 +42,11 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	 *        the number of outputs.
 	 */
 	public SopremoModule(final String name, final int numberOfInputs, final int numberOfOutputs) {
-		super(name, new Source[numberOfInputs], new Sink[numberOfOutputs], OperatorNavigator.INSTANCE);
-		for (int index = 0; index < this.outputNodes.length; index++)
-			this.outputNodes[index] = new Sink(String.format("%s %d", name, index));
-		for (int index = 0; index < this.inputNodes.length; index++)
-			this.inputNodes[index] = new Source(String.format("%s %d", name, index));
+		super(name, numberOfInputs, numberOfOutputs, OperatorNavigator.INSTANCE);
+		for (int index = 0; index < numberOfInputs; index++)
+			this.setInput(index, new Source(String.format("%s %d", name, index)));
+		for (int index = 0; index < numberOfOutputs; index++)
+			this.setOutput(index, new Sink(String.format("%s %d", name, index)));
 	}
 
 	/**
@@ -54,6 +56,31 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	 */
 	public Operator<?> asOperator() {
 		return new ModuleOperator(this.getInputs(), this.getOutputs());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	public SopremoModule clone() {
+		final SopremoModule module = new SopremoModule(this.getName(), this.getNumInputs(), this.getNumOutputs());
+		module.copyPropertiesFrom(this);
+		return module;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.ISopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		SopremoModule sopremoModule = (SopremoModule) original;
+		// this is currently not a deep clone
+		for (int index = 0; index < this.getNumInputs(); index++)
+			this.setInput(index, sopremoModule.getInput(index));
+		for (int index = 0; index < this.getNumOutputs(); index++)
+			this.setOutput(index, sopremoModule.getOutput(index));
 	}
 
 	@Override
@@ -68,8 +95,10 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append(toString());
+	public void appendAsString(Appendable appendable) throws IOException {
+		final GraphPrinter<Operator<?>> graphPrinter = new GraphPrinter<Operator<?>>();
+		graphPrinter.setWidth(40);
+		graphPrinter.print(appendable, this.getAllOutputs(), OperatorNavigator.INSTANCE);
 	}
 
 	/**
@@ -89,6 +118,19 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 		return module;
 	}
 
+	public void embed(final Operator<?>... sinks) {
+		this.embed(Arrays.asList(sinks));
+	}
+
+	public void embed(final Collection<? extends Operator<?>> sinks) {
+		final List<Operator<?>> inputs = findInputs(sinks);
+		if (inputs.size() != this.getNumInputs())
+			throw new IllegalArgumentException(String.format("Expected %d instead of %d inputs", this.getNumInputs(),
+				inputs.size()));
+		connectOutputs(this, sinks);
+		connectInputs(this, inputs);
+	}
+
 	protected static void connectInputs(final SopremoModule module, final List<Operator<?>> inputs) {
 		for (int operatorIndex = 0, moduleIndex = 0; operatorIndex < inputs.size(); operatorIndex++) {
 			final Operator<?> operator = inputs.get(operatorIndex);
@@ -104,7 +146,7 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 		int sinkIndex = 0;
 		for (final Operator<?> sink : sinks) {
 			if (sink instanceof Sink)
-				module.outputNodes[sinkIndex] = (Sink) sink;
+				module.setOutput(sinkIndex, (Sink) sink);
 			else
 				module.getOutput(sinkIndex).setInput(0, sink);
 			sinkIndex++;
@@ -154,19 +196,17 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 		 * @param inputs
 		 * @param outputs
 		 */
-		public ModuleOperator(final Source[] inputs, final Sink[] outputs) {
-			super(inputs.length, outputs.length);
+		public ModuleOperator(final List<Source> inputs, final List<Sink> outputs) {
+			super(inputs.size(), outputs.size());
 			this.setInputs(inputs);
 			this.setOutputs(outputs);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see eu.stratosphere.sopremo.Operator#toElementaryOperators()
-		 */
 		@Override
-		public ElementarySopremoModule asElementaryOperators(final EvaluationContext context) {
-			return SopremoModule.this.asElementary(context);
+		public void addImplementation(SopremoModule module, EvaluationContext context) {
+			module.inputNodes.addAll(SopremoModule.this.inputNodes);
+			module.outputNodes.addAll(SopremoModule.this.outputNodes);
+			module.internalOutputNodes.addAll(SopremoModule.this.internalOutputNodes);
 		}
 	}
 
@@ -187,8 +227,8 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 		public ElementarySopremoModule assemble(final SopremoModule sopremoModule) {
 			this.convertDAGToModules(sopremoModule);
 
-			final int sinkCount = sopremoModule.getOutputs().length;
-			final int sourceCount = sopremoModule.getInputs().length;
+			final int sinkCount = sopremoModule.getNumOutputs();
+			final int sourceCount = sopremoModule.getNumInputs();
 			final ElementarySopremoModule elementarySopremoModule =
 				new ElementarySopremoModule(sopremoModule.getName(), sourceCount, sinkCount);
 			// replace sources
@@ -260,9 +300,9 @@ public class SopremoModule extends GraphModule<Operator<?>, Source, Sink> implem
 			final Operator<?> inputOperator = input.getSource().getOperator();
 			// check if the given output is directly connected to an input of the module
 			if (inputOperator instanceof Source) {
-				final Source[] inputs = inputModule.getInputs();
-				for (int i = 0; i < inputs.length; i++)
-					if (inputOperator == inputs[i]) {
+				final List<Source> inputs = inputModule.getInputs();
+				for (int i = 0; i < inputs.size(); i++)
+					if (inputOperator == inputs.get(i)) {
 						final JsonStream inputStream = operator.getInput(index);
 						return this.traceInput(inputStream.getSource().getOperator(),
 							inputStream.getSource().getIndex());

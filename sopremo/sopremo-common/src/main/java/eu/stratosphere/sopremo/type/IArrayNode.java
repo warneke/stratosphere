@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,13 +16,15 @@ package eu.stratosphere.sopremo.type;
 
 import java.util.Collection;
 
+import eu.stratosphere.sopremo.cache.ArrayCache;
+
 /**
  * Interface for all array type nodes.
  * 
  * @author Michael Hopstock
  * @author Tommy Neubert
  */
-public interface IArrayNode extends Iterable<IJsonNode>, IJsonNode {
+public interface IArrayNode extends IStreamArrayNode {
 
 	/**
 	 * Returns the actual size of this node.
@@ -51,6 +53,13 @@ public interface IArrayNode extends Iterable<IJsonNode>, IJsonNode {
 	 * @return this node
 	 */
 	public abstract IArrayNode add(final int index, final IJsonNode element);
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IJsonNode#clone()
+	 */
+	@Override
+	public IArrayNode clone();
 
 	/**
 	 * Returns the node which is saved in the array at the specified <code>index</code>.
@@ -111,18 +120,11 @@ public interface IArrayNode extends Iterable<IJsonNode>, IJsonNode {
 	/**
 	 * Transforms this node into a standard Java-Array containing all saved nodes.
 	 * 
-	 * @return Array of all saved nodes
-	 */
-	public abstract IJsonNode[] toArray();
-
-	/**
-	 * Transforms this node into a standard Java-Array containing all saved nodes.
-	 * 
 	 * @param array
 	 *        preallocated array that should be used, when the size matches
 	 * @return Array of all saved nodes
 	 */
-	public abstract IJsonNode[] toArray(IJsonNode[] array);
+	public abstract IJsonNode[] toArray(ArrayCache<IJsonNode> arrayCache);
 
 	/**
 	 * Adds all {@link IJsonNode}s to the end of this array.
@@ -134,12 +136,15 @@ public interface IArrayNode extends Iterable<IJsonNode>, IJsonNode {
 	public abstract IArrayNode addAll(IJsonNode[] nodes);
 
 	/**
-	 * @return true if size() == 0
-	 */
-	public abstract boolean isEmpty();
-
-	/**
 	 * @param nodes
 	 */
 	public abstract void setAll(IJsonNode[] nodes);
+
+	public abstract Collection<IJsonNode> asCollection();
+
+	/**
+	 * @param node
+	 * @return
+	 */
+	public abstract boolean contains(IJsonNode node);
 }

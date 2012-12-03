@@ -3,12 +3,12 @@ package eu.stratosphere.sopremo.base;
 import org.junit.Test;
 
 import eu.stratosphere.sopremo.CoreFunctions;
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class UnionTest extends SopremoTest<Union> {
+public class UnionTest extends EqualCloneTest<Union> {
 	/* (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.SopremoTest#shouldComplyEqualsContract()
+	 * @see eu.stratosphere.sopremo.EqualCloneTest#shouldComplyEqualsContract()
 	 */
 	@Override
 	public void shouldComplyEqualsContract() {

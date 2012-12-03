@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -35,6 +35,7 @@ import eu.stratosphere.sopremo.io.Sink;
 import eu.stratosphere.sopremo.io.Source;
 import eu.stratosphere.sopremo.serialization.Schema;
 import eu.stratosphere.sopremo.serialization.SchemaFactory;
+import eu.stratosphere.util.IdentityList;
 import eu.stratosphere.util.dag.GraphTraverseListener;
 import eu.stratosphere.util.dag.OneTimeTraverser;
 
@@ -123,6 +124,18 @@ public class ElementarySopremoModule extends SopremoModule {
 		return module;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.operator.SopremoModule#clone()
+	 */
+	@Override
+	public ElementarySopremoModule clone() {
+		final ElementarySopremoModule module =
+			new ElementarySopremoModule(this.getName(), this.getNumInputs(), this.getNumOutputs());
+		module.copyPropertiesFrom(this);
+		return module;
+	}
+
 	/**
 	 * Helper class needed to assemble a Pact program from the {@link PactModule}s of several {@link Operator<?>}s.
 	 * 
@@ -137,7 +150,7 @@ public class ElementarySopremoModule extends SopremoModule {
 		private final EvaluationContext context;
 
 		public PactAssembler(final EvaluationContext context) {
-			this.context = new EvaluationContext(context);
+			this.context = context.clone();
 		}
 
 		public Collection<Contract> assemble() {
@@ -177,10 +190,10 @@ public class ElementarySopremoModule extends SopremoModule {
 					public void nodeTraversed(final Operator<?> node) {
 						final PactModule module = node.asPactModule(PactAssembler.this.context);
 						PactAssembler.this.modules.put(node, module);
-						final FileDataSink[] outputStubs = module.getOutputs();
+						final List<FileDataSink> outputStubs = module.getOutputs();
 						final List<List<Contract>> outputContracts = new ArrayList<List<Contract>>();
-						for (int index = 0; index < outputStubs.length; index++)
-							outputContracts.add(outputStubs[index].getInputs());
+						for (FileDataSink fileDataSink : outputStubs)
+							outputContracts.add(fileDataSink.getInputs());
 						PactAssembler.this.operatorOutputs.put(node, outputContracts);
 					}
 				});
@@ -191,13 +204,14 @@ public class ElementarySopremoModule extends SopremoModule {
 
 		private void addOutputtingPactInOperator(final Operator<?> operator, final Contract o,
 				final List<Contract> connectedInputs) {
-			int inputIndex = -1;
-			final FileDataSource[] inputPacts = this.modules.get(operator).getInputs();
-			for (int index = 0; index < inputPacts.length; index++)
-				if (inputPacts[index] == o) {
-					inputIndex = index;
-					break;
-				}
+			int inputIndex = new IdentityList<FileDataSource>(this.modules.get(operator).getInputs()).indexOf(o);
+			// final List<FileDataSource> inputPacts =
+			// this.modules.get(operator).getInputs();
+			// for (int index = 0; index < inputPacts.size(); index++)
+			// if (inputPacts.get(index) == o) {
+			// inputIndex = index;
+			// break;
+			// }
 
 			if (inputIndex >= operator.getInputs().size() || inputIndex == -1) {
 				connectedInputs.add(o);
@@ -216,14 +230,12 @@ public class ElementarySopremoModule extends SopremoModule {
 
 		private List<Contract> findPACTSinks() {
 			final List<Contract> pactSinks = new ArrayList<Contract>();
-			for (final Operator<?> sink : ElementarySopremoModule.this.getAllOutputs()) {
-				final FileDataSink[] outputs = this.modules.get(sink).getAllOutputs();
-				for (final FileDataSink outputStub : outputs)
+			for (final Operator<?> sink : ElementarySopremoModule.this.getAllOutputs())
+				for (final FileDataSink outputStub : this.modules.get(sink).getAllOutputs())
 					if (sink instanceof Sink)
 						pactSinks.add(outputStub);
 					else
 						pactSinks.addAll(outputStub.getInputs());
-			}
 			return pactSinks;
 		}
 	}

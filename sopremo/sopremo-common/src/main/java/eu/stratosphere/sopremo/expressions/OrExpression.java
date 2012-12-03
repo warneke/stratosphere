@@ -1,10 +1,13 @@
 package eu.stratosphere.sopremo.expressions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
@@ -49,27 +52,32 @@ public class OrExpression extends BooleanExpression {
 	}
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public BooleanNode evaluate(final IJsonNode node) {
 		// we can ignore 'target' because no new Object is created
 		for (final EvaluationExpression booleanExpression : this.expressions)
-			if (booleanExpression.evaluate(node, null, context) == BooleanNode.TRUE)
+			if (booleanExpression.evaluate(node) == BooleanNode.TRUE)
 				return BooleanNode.TRUE;
 		return BooleanNode.FALSE;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#transformRecursively(eu.stratosphere.sopremo.expressions
-	 * .TransformFunction)
+	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
 	 */
 	@Override
-	public EvaluationExpression transformRecursively(final TransformFunction function) {
-		final List<BooleanExpression> booleans =
-			BooleanExpression.ensureBooleanExpressions(this.transformChildExpressions(function, this.expressions));
-		this.expressions.clear();
-		this.expressions.addAll(booleans);
-		return function.call(this);
+	public ChildIterator iterator() {
+		return new GenericListChildIterator<BooleanExpression>(this.expressions.listIterator()) {
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * eu.stratosphere.sopremo.expressions.tree.GenericListChildIterator#convert(eu.stratosphere.sopremo.expressions
+			 * .EvaluationExpression)
+			 */
+			@Override
+			protected BooleanExpression convert(EvaluationExpression childExpression) {
+				return BooleanExpression.ensureBooleanExpression(childExpression);
+			}
+		};
 	}
 
 	/**
@@ -89,9 +97,18 @@ public class OrExpression extends BooleanExpression {
 		return result;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+	 */
 	@Override
-	public void toString(final StringBuilder builder) {
-		this.appendChildExpressions(builder, this.expressions, " OR ");
+	protected EvaluationExpression createCopy() {
+		return new OrExpression(SopremoUtil.deepClone(this.expressions));
+	}
+
+	@Override
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.appendChildExpressions(appendable, this.expressions, " OR ");
 	}
 
 	/**

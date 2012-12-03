@@ -1,5 +1,6 @@
 package eu.stratosphere.meteor;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -166,12 +167,12 @@ public class SopremoTreeAdaptor extends BaseTreeAdaptor implements TreeAdaptor {
 		}
 
 		@Override
-		public void toString(final StringBuilder builder) {
+		public void appendAsString(final Appendable appendable) throws IOException {
 			if (this.expressionClass != null)
-				builder.append(this.expressionClass.getSimpleName());
+				appendable.append(this.expressionClass.getSimpleName());
 			else
-				builder.append("<unknown>");
-			builder.append('(').append(this.params).append(')');
+				appendable.append("<unknown>");
+			appendable.append('(').append(this.params.toString()).append(')');
 		}
 	}
 

@@ -1,6 +1,5 @@
 package eu.stratosphere.sopremo.base.join;
 
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.ComparativeExpression;
 import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.operator.InputCardinality;
@@ -38,15 +37,15 @@ public class ThetaJoin extends TwoSourceJoinBase<ThetaJoin> {
 	}
 
 	public static class Implementation extends SopremoCross {
-		private final IArrayNode inputs = new ArrayNode();
+		private transient final IArrayNode inputs = new ArrayNode();
 
-		private CachingExpression<BooleanNode> comparison;
+		private ComparativeExpression comparison;
 
 		@Override
 		protected void cross(IJsonNode value1, IJsonNode value2, JsonCollector out) {
 			this.inputs.set(0, value1);
 			this.inputs.set(1, value2);
-			if (this.comparison.evaluate(this.inputs, this.getContext()) == BooleanNode.TRUE)
+			if (this.comparison.evaluate(this.inputs) == BooleanNode.TRUE)
 				out.collect(this.inputs);
 		}
 	}

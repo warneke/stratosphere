@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import eu.stratosphere.pact.common.type.Key;
+import eu.stratosphere.pact.common.util.ReflectionUtil;
+import eu.stratosphere.sopremo.AbstractSopremoType;
+import eu.stratosphere.sopremo.ISopremoType;
 
 /**
  * Abstract class to provide basic implementations for all node types.
@@ -15,7 +18,7 @@ import eu.stratosphere.pact.common.type.Key;
  * @author Michael Hopstock
  * @author Tommy Neubert
  */
-public abstract class AbstractJsonNode implements IJsonNode {
+public abstract class AbstractJsonNode extends AbstractSopremoType implements IJsonNode {
 
 	/**
 	 * 
@@ -40,23 +43,35 @@ public abstract class AbstractJsonNode implements IJsonNode {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IJsonNode#clone()
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
 	 */
-
 	@Override
-	public IJsonNode clone() {
-		try {
-			return (AbstractJsonNode) super.clone();
-		} catch (final CloneNotSupportedException e) {
-			return null;
-		}
+	protected AbstractSopremoType createCopy() {
+		return ReflectionUtil.newInstance(this.getClass());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#copyPropertiesFrom(eu.stratosphere.sopremo.AbstractSopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		this.copyValueFrom((IJsonNode) original);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#clone()
+	 */
+	@Override
+	public AbstractJsonNode clone() {
+		return (AbstractJsonNode) super.clone();
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#read(java.io.DataInput)
 	 */
-
 	@Override
 	public abstract void read(DataInput in) throws IOException;
 
@@ -77,6 +92,13 @@ public abstract class AbstractJsonNode implements IJsonNode {
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#initTransients()
+	 */
+	@Override
+	protected void initTransients() {
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#isMissing()
@@ -84,6 +106,15 @@ public abstract class AbstractJsonNode implements IJsonNode {
 	@Override
 	public boolean isMissing() {
 		return false;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IJsonNode#isCopyable(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public boolean isCopyable(IJsonNode otherNode) {
+		return otherNode.getType() == this.getType();
 	}
 
 	/*
@@ -115,13 +146,6 @@ public abstract class AbstractJsonNode implements IJsonNode {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IJsonNode#getJavaValue()
-	 */
-	@Override
-	public abstract Object getJavaValue();
-
-	/*
-	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.type.IJsonNode#compareTo(eu.stratosphere.pact.common.type.Key)
 	 */
 
@@ -145,20 +169,6 @@ public abstract class AbstractJsonNode implements IJsonNode {
 	 */
 	@Override
 	public abstract int compareToSameType(IJsonNode other);
-
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		this.toString(sb);
-		return sb.toString();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IJsonNode#toString(java.lang.StringBuilder)
-	 */
-	@Override
-	public abstract StringBuilder toString(StringBuilder sb);
 
 	@Override
 	public int getMaxNormalizedKeyLen() {

@@ -2,17 +2,20 @@ package eu.stratosphere.sopremo.serialization;
 
 import it.unimi.dsi.fastutil.ints.IntSet;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import eu.stratosphere.pact.common.type.Value;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.pact.JsonNodeWrapper;
+import eu.stratosphere.sopremo.pact.SopremoUtil;
 
 /**
  * Base class for all schema that build upon {@link JsonNodeWrapper}.
  * 
  * @author Arvid Heise
  */
-public abstract class AbstractSchema implements Schema {
+public abstract class AbstractSchema extends AbstractSopremoType implements Schema {
 	/**
 	 * 
 	 */
@@ -39,5 +42,17 @@ public abstract class AbstractSchema implements Schema {
 	@Override
 	public Class<? extends Value>[] getPactSchema() {
 		return this.pactSchema;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#appendAsString(java.lang.Appendable)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		SopremoUtil.append(appendable, this.getClass().getSimpleName(), " [");
+		for (int index = 0; index < this.pactSchema.length; index++)
+			appendable.append(this.pactSchema[index].getSimpleName()).append(' ');
+		appendable.append(']');
 	}
 }

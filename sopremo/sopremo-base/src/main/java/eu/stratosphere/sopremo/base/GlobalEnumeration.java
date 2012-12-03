@@ -1,18 +1,16 @@
 package eu.stratosphere.sopremo.base;
 
 import eu.stratosphere.nephele.configuration.Configuration;
-import eu.stratosphere.sopremo.EvaluationContext;
-import eu.stratosphere.sopremo.expressions.CachingExpression;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
-import eu.stratosphere.sopremo.expressions.InputSelection;
-import eu.stratosphere.sopremo.expressions.ObjectCreation;
-import eu.stratosphere.sopremo.expressions.SingletonExpression;
+import eu.stratosphere.sopremo.expressions.ObjectAccess;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
+import eu.stratosphere.sopremo.operator.InputCardinality;
+import eu.stratosphere.sopremo.operator.Property;
 import eu.stratosphere.sopremo.pact.JsonCollector;
 import eu.stratosphere.sopremo.pact.SopremoMap;
-import eu.stratosphere.sopremo.type.ArrayNode;
 import eu.stratosphere.sopremo.type.IArrayNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
+import eu.stratosphere.sopremo.type.INumericNode;
 import eu.stratosphere.sopremo.type.IObjectNode;
 import eu.stratosphere.sopremo.type.IntNode;
 import eu.stratosphere.sopremo.type.JsonUtil;
@@ -20,39 +18,135 @@ import eu.stratosphere.sopremo.type.LongNode;
 import eu.stratosphere.sopremo.type.ObjectNode;
 import eu.stratosphere.sopremo.type.TextNode;
 
+@InputCardinality(1)
 public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 8552367347318407324L;
 
-	public static final EvaluationExpression CONCATENATION = new SingletonExpression("String") {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -3340948936846733311L;
+	public static final EvaluationExpression CONCATENATION = new ConcatenatingExpression();
+
+	public static final EvaluationExpression LONG_COMBINATION = new LongExpression();
+
+	public final EvaluationExpression AUTO_ENUMERATION = new EvaluationExpression() {
+		private static final long serialVersionUID = -5506784974227617703L;
 
 		@Override
-		public IJsonNode evaluate(final IJsonNode node, IJsonNode target, final EvaluationContext context) {
-			return TextNode.valueOf(String.format("%d_%d", ((ArrayNode) node).get(0), ((ArrayNode) node).get(1)));
+		public IJsonNode set(IJsonNode node, IJsonNode value) {
+			if (node.isObject()) {
+				((IObjectNode) node).put(GlobalEnumeration.this.idFieldName, value);
+				return node;
+			}
+			ObjectNode objectNode = new ObjectNode();
+			objectNode.put(GlobalEnumeration.this.idFieldName, value);
+			objectNode.put(GlobalEnumeration.this.valueFieldName, node);
+			return objectNode;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+		 */
+		@Override
+		protected EvaluationExpression createCopy() {
+			return GlobalEnumeration.this.AUTO_ENUMERATION;
 		}
 
 		@Override
-		protected Object readResolve() {
-			return CONCATENATION;
+		public IJsonNode evaluate(IJsonNode node) {
+			return node;
 		}
 	};
 
-	public static final EvaluationExpression LONG_COMBINATION = new SingletonExpression("Long") {
+	private EvaluationExpression enumerationExpression = this.AUTO_ENUMERATION;
+
+	private EvaluationExpression idGeneration = CONCATENATION;
+
+	private String idFieldName = "_ID", valueFieldName = "value";
+
+	public EvaluationExpression getEnumerationExpression() {
+		return this.enumerationExpression;
+	}
+
+	public String getIdFieldName() {
+		return this.idFieldName;
+	}
+
+	public EvaluationExpression getIdGeneration() {
+		return this.idGeneration;
+	}
+
+	public EvaluationExpression getIdAccess() {
+		return new ObjectAccess(this.idFieldName);
+	}
+
+	@Property
+	public void setEnumerationExpression(final EvaluationExpression enumerationExpression) {
+		if (enumerationExpression == null)
+			throw new NullPointerException();
+
+		this.enumerationExpression = enumerationExpression;
+	}
+
+	@Property
+	public void setIdFieldName(final String enumerationFieldName) {
+		if (enumerationFieldName == null)
+			throw new NullPointerException();
+
+		this.idFieldName = enumerationFieldName;
+	}
+
+	public GlobalEnumeration withIdFieldName(String enumerationFieldName) {
+		this.setIdFieldName(enumerationFieldName);
+		return this;
+	}
+
+	public GlobalEnumeration withValueFieldName(String valueFieldName) {
+		this.setValueFieldName(valueFieldName);
+		return this;
+	}
+
+	public GlobalEnumeration withEnumerationExpression(EvaluationExpression enumerationExpression) {
+		this.setEnumerationExpression(enumerationExpression);
+		return this;
+	}
+
+	public GlobalEnumeration withIdGeneration(EvaluationExpression idGeneration) {
+		this.setIdGeneration(idGeneration);
+		return this;
+	}
+
+	@Property
+	public void setIdGeneration(final EvaluationExpression idGeneration) {
+		if (idGeneration == null)
+			throw new NullPointerException("idGeneration must not be null");
+
+		this.idGeneration = idGeneration;
+	}
+
+	public String getValueFieldName() {
+		return this.valueFieldName;
+	}
+
+	@Property
+	public void setValueFieldName(String valueFieldName) {
+		if (valueFieldName == null)
+			throw new NullPointerException("valueFieldName must not be null");
+
+		this.valueFieldName = valueFieldName;
+	}
+
+	/**
+	 * @author Arvid Heise
+	 */
+	private static final class LongExpression extends EvaluationExpression {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -9084196126957908547L;
 
-		@Override
-		protected Object readResolve() {
-			return LONG_COMBINATION;
-		}
+		private final transient LongNode result = new LongNode();
 
 		/*
 		 * (non-Javadoc)
@@ -61,80 +155,59 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		 * eu.stratosphere.sopremo.type.IJsonNode, eu.stratosphere.sopremo.EvaluationContext)
 		 */
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target, EvaluationContext context) {
-			return LongNode.valueOf((((LongNode) ((ArrayNode) node).get(0)).getLongValue() << 48)
-				+ ((LongNode) ((ArrayNode) node).get(1)).getLongValue());
+		public IJsonNode evaluate(IJsonNode node) {
+			final IArrayNode values = (IArrayNode) node;
+			this.result.setValue((((INumericNode) values.get(0)).getLongValue() << 48)
+				+ ((INumericNode) values.get(1)).getLongValue());
+			return this.result;
 		}
-	};
 
-	private static final EvaluationExpression AUTO = new EvaluationExpression() {
-		private static final long serialVersionUID = -5506784974227617703L;
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+		 */
+		@Override
+		protected EvaluationExpression createCopy() {
+			return new LongExpression();
+		}
+	}
+
+	/**
+	 * @author Arvid Heise
+	 */
+	private static final class ConcatenatingExpression extends EvaluationExpression {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3340948936846733311L;
+
+		private final transient StringBuilder builder = new StringBuilder();
+
+		private final transient TextNode result = new TextNode();
 
 		@Override
-		public IJsonNode set(IJsonNode node, IJsonNode value, EvaluationContext context) {
-			if (node.isObject()) {
-				((IObjectNode) node).put("id", value);
-				return node;
-			}
-			ObjectNode objectNode = new ObjectNode();
-			objectNode.put("id", value);
-			objectNode.put("value", node);
-			return objectNode;
+		public IJsonNode evaluate(final IJsonNode node) {
+			final IArrayNode values = (IArrayNode) node;
+			this.builder.setLength(0);
+			this.builder.append(((INumericNode) values.get(0)).getIntValue());
+			this.builder.append('_');
+			this.builder.append(((INumericNode) values.get(1)).getIntValue());
+			this.result.setValue(this.builder);
+			return this.result;
 		}
 
+		/* (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
+		 */
 		@Override
-		public IJsonNode evaluate(IJsonNode node, IJsonNode target, EvaluationContext context) {
-			return node;
+		protected EvaluationExpression createCopy() {
+			return new ConcatenatingExpression();
 		}
-	};
-
-	private EvaluationExpression enumerationExpression = AUTO;
-
-	private EvaluationExpression idGeneration = CONCATENATION;
-
-	public EvaluationExpression getEnumerationExpression() {
-		return this.enumerationExpression;
-	}
-
-	public String getEnumerationFieldName() {
-		if (this.enumerationExpression instanceof ObjectCreation
-			&& ((ObjectCreation) this.enumerationExpression).getMappingSize() == 2)
-			return (String) ((ObjectCreation) this.enumerationExpression).getMapping(1).getTarget();
-		return null;
-	}
-
-	public EvaluationExpression getIdGeneration() {
-		return this.idGeneration;
-	}
-
-	public void setEnumerationExpression(final EvaluationExpression enumerationExpression) {
-		if (enumerationExpression == null)
-			throw new NullPointerException();
-
-		this.enumerationExpression = enumerationExpression;
-	}
-
-	public void setEnumerationFieldName(final String field) {
-		if (field == null)
-			throw new NullPointerException();
-
-		final ObjectCreation objectMerge = new ObjectCreation();
-		objectMerge.addMapping(new ObjectCreation.CopyFields(new InputSelection(0)));
-		objectMerge.addMapping(field, new InputSelection(1));
-		this.enumerationExpression = objectMerge;
-	}
-
-	public void setIdGeneration(final EvaluationExpression idGeneration) {
-		if (idGeneration == null)
-			throw new NullPointerException("idGeneration must not be null");
-
-		this.idGeneration = idGeneration;
 	}
 
 	public static class Implementation extends SopremoMap {
 		private EvaluationExpression enumerationExpression;
 
-		private CachingExpression<IJsonNode> idGeneration;
+		private EvaluationExpression idGeneration;
 
 		private LongNode counter;
 
@@ -151,8 +224,8 @@ public class GlobalEnumeration extends ElementaryOperator<GlobalEnumeration> {
 		@Override
 		protected void map(final IJsonNode value, final JsonCollector out) {
 			this.counter.setValue(this.counter.getLongValue() + 1);
-			final IJsonNode id = this.idGeneration.evaluate(this.params, this.getContext());
-			out.collect(this.enumerationExpression.set(value, id, this.getContext()));
+			final IJsonNode id = this.idGeneration.evaluate(this.params);
+			out.collect(this.enumerationExpression.set(value, id));
 		}
 	}
 

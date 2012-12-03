@@ -60,10 +60,14 @@ public class DynamicMethod<ReturnType> extends DynamicInvokable<Method, Object, 
 		return (member.getModifiers() & Modifier.STATIC) == 0;
 	}
 
+	public Method getMethod(Signature signature) {
+		return super.getMember(signature);
+	}
+
 	@Override
-	protected Method findMember(final java.lang.Class<Object> clazz, final java.lang.Class<?>[] parameterTypes)
+	protected Method findMember(final String name, final java.lang.Class<Object> clazz, final java.lang.Class<?>[] parameterTypes)
 			throws NoSuchMethodException {
-		return clazz.getDeclaredMethod(this.getName(), parameterTypes);
+		return clazz.getDeclaredMethod(name, parameterTypes);
 	}
 
 	public static DynamicMethod<?> valueOf(final Class<?> clazz, final String name) {
@@ -88,7 +92,7 @@ public class DynamicMethod<ReturnType> extends DynamicInvokable<Method, Object, 
 			return true;
 		if (!super.equals(obj))
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass() != obj.getClass())
 			return false;
 		DynamicMethod<?> other = (DynamicMethod<?>) obj;
 		return this.returnType.equals(other.returnType);
@@ -100,6 +104,6 @@ public class DynamicMethod<ReturnType> extends DynamicInvokable<Method, Object, 
 	 */
 	@Override
 	public String toString() {
-		return getName();
+		return this.getName();
 	}
 }

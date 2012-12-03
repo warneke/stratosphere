@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -44,7 +44,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 		final ObjectSchema schema = new ObjectSchema("firstName", "lastName", "age");
 		final PactRecord record = schema.jsonToRecord(
 			new ObjectNode().put("firstName", TextNode.valueOf("Hans")).put("age", IntNode.valueOf(25))
-				.put("gender", TextNode.valueOf("male")), null, null);
+				.put("gender", TextNode.valueOf("male")), null);
 
 		return new LazyObjectNode(record, schema);
 	}
@@ -53,7 +53,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 	public void shouldPutIntoTheRightRecordField() {
 		this.node.put("lastName", TextNode.valueOf("Wurst"));
 		this.node.put("profession", TextNode.valueOf("Butcher"));
-		final PactRecord rec = this.node.getJavaValue();
+		final PactRecord rec = this.node.getRecord();
 		// the lastname is the second element in the mapping
 		final IJsonNode lastName = SopremoUtil.unwrap(rec.getField(1, JsonNodeWrapper.class));
 		Assert.assertEquals(TextNode.valueOf("Wurst"), lastName);
@@ -71,7 +71,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 		final ObjectSchema schema = new ObjectSchema("firstName", "lastName", "age");
 		final PactRecord record = schema.jsonToRecord(
 			new ObjectNode().put("firstName", TextNode.valueOf("Hans")).put("age", IntNode.valueOf(25))
-				.put("gender", TextNode.valueOf("female")), null, null);
+				.put("gender", TextNode.valueOf("female")), null);
 
 		return new LazyObjectNode(record, schema);
 	}
@@ -81,7 +81,7 @@ public class LazyObjectNodeTest extends ObjectNodeBaseTest<LazyObjectNode> {
 		final ObjectSchema schema = new ObjectSchema("firstName", "lastName", "age");
 		final PactRecord record = schema.jsonToRecord(
 			new ObjectNode().put("firstName", TextNode.valueOf("Hans")).put("age", IntNode.valueOf(25))
-				.put("gender", TextNode.valueOf("male")), null, null);
+				.put("gender", TextNode.valueOf("male")), null);
 
 		return new LazyObjectNode(record, schema);
 	}

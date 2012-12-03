@@ -1,5 +1,6 @@
 package eu.stratosphere.sopremo.query;
 
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.operator.Operator;
 
 public class StackedOperatorRegistry extends StackedRegistry<OperatorInfo<?>, IOperatorRegistry> implements
@@ -26,5 +27,13 @@ public class StackedOperatorRegistry extends StackedRegistry<OperatorInfo<?>, IO
 	@Override
 	public String getName(Class<? extends Operator<?>> operatorClass) {
 		return this.getTopRegistry().getName(operatorClass);
+	}
+	
+	/* (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new StackedOperatorRegistry();
 	}
 }

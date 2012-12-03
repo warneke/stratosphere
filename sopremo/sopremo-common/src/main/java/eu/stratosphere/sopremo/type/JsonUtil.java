@@ -8,9 +8,10 @@ import java.util.List;
 import eu.stratosphere.sopremo.expressions.ArrayAccess;
 import eu.stratosphere.sopremo.expressions.ArrayProjection;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
+import eu.stratosphere.sopremo.expressions.ExpressionUtil;
 import eu.stratosphere.sopremo.expressions.InputSelection;
 import eu.stratosphere.sopremo.expressions.ObjectAccess;
-import eu.stratosphere.sopremo.expressions.PathExpression;
+import eu.stratosphere.sopremo.expressions.PathSegmentExpression;
 
 /**
  * Provides a set of utility functions and objects to handle json data.
@@ -35,7 +36,6 @@ public class JsonUtil {
 	// * configured JsonFactory is needed, a new instance should be created.
 	// */
 	// public static final JsonFactory FACTORY = new JsonFactory();
-
 
 	/**
 	 * Creates an efficient read-only wrapper for the given node array.
@@ -112,9 +112,9 @@ public class JsonUtil {
 	 * @return the expression
 	 */
 	public static EvaluationExpression createPath(final List<String> parts) {
-		final List<EvaluationExpression> fragments = new ArrayList<EvaluationExpression>();
+		final List<PathSegmentExpression> fragments = new ArrayList<PathSegmentExpression>();
 		for (int index = 0; index < parts.size(); index++) {
-			EvaluationExpression segment;
+			PathSegmentExpression segment;
 			final String part = parts.get(index);
 			if (part.matches("[0-9]+"))
 				segment = new InputSelection(Integer.parseInt(part));
@@ -132,7 +132,7 @@ public class JsonUtil {
 				segment = new ObjectAccess(part);
 			fragments.add(segment);
 		}
-		return PathExpression.wrapIfNecessary(fragments);
+		return ExpressionUtil.makePath(fragments);
 	}
 
 	/**
@@ -154,8 +154,21 @@ public class JsonUtil {
 	 *        the constants that should be used to fill the array
 	 * @return the array
 	 */
-	public static ArrayNode createArrayNode(final Object... constants) {
-		return (ArrayNode) JsonUtil.OBJECT_MAPPER.valueToTree(constants);
+	public static IArrayNode createArrayNode(final Object... constants) {
+		return (IArrayNode) JsonUtil.OBJECT_MAPPER.valueToTree(constants);
+	}
+
+	/**
+	 * Creates an {@link StreamArrayNode} that contains all given constants as elements. This method converts the whole
+	 * array
+	 * of parameters to an StreamArrayNode.
+	 * 
+	 * @param constants
+	 *        the constants that should be used to fill the array
+	 * @return the array
+	 */
+	public static IStreamArrayNode createStreamArrayNode(final Object... constants) {
+		return new StreamArrayNode(createArrayNode(constants).iterator());
 	}
 
 	/**

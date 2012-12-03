@@ -2,14 +2,14 @@ package eu.stratosphere.sopremo.io;
 
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.expressions.ArrayCreation;
 import eu.stratosphere.sopremo.expressions.ConstantExpression;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 import eu.stratosphere.sopremo.type.IntNode;
 import eu.stratosphere.sopremo.type.TextNode;
 
-public class SourceTest extends SopremoTest<Source> {
+public class SourceTest extends EqualCloneTest<Source> {
 	@Override
 	@Test
 	public void shouldComplyEqualsContract() {

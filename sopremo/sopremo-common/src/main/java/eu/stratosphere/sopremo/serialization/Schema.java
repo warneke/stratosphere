@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,12 +15,9 @@
 package eu.stratosphere.sopremo.serialization;
 
 import it.unimi.dsi.fastutil.ints.IntSet;
-
-import java.io.Serializable;
-
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.Value;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.ISerializableSopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.type.IJsonNode;
 
@@ -30,7 +27,7 @@ import eu.stratosphere.sopremo.type.IJsonNode;
  * 
  * @author Arvid Heise
  */
-public interface Schema extends Serializable {
+public interface Schema extends ISerializableSopremoType {
 
 	// public static Schema Default = new Default();
 
@@ -139,7 +136,7 @@ public interface Schema extends Serializable {
 	 *        TODO
 	 * @return the converted {@link IJsonNode}
 	 */
-	public PactRecord jsonToRecord(IJsonNode value, PactRecord target, EvaluationContext context);
+	public PactRecord jsonToRecord(IJsonNode value, PactRecord target);
 
 	/**
 	 * Converts the given {@link PactRecord} to an appropriate {@link IJsonNode}. If possible the given target-node will

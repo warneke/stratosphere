@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import javolution.text.TextFormat;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 
 /**
@@ -56,11 +57,6 @@ public class DecimalNode extends AbstractNumericNode implements INumericNode {
 
 	public void setValue(final BigDecimal value) {
 		this.value = value;
-	}
-
-	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return sb.append(this.value);
 	}
 
 	@Override
@@ -163,24 +159,28 @@ public class DecimalNode extends AbstractNumericNode implements INumericNode {
 	}
 
 	@Override
-	public DecimalNode clone() {
-		return (DecimalNode) super.clone();
-	}
-
-	@Override
 	public int compareToSameType(final IJsonNode other) {
 		return this.value.compareTo(((DecimalNode) other).value);
 	}
 
 	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
-		this.checkForSameType(otherNode);
-		this.value = ((DecimalNode) otherNode).value;
+		checkNumber(otherNode);
+		this.value = ((INumericNode) otherNode).getDecimalValue();
 	}
 
 	@Override
 	public void clear() {
 		if (SopremoUtil.DEBUG)
 			this.value = BigDecimal.ZERO;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		TextFormat.getInstance(BigDecimal.class).format(this.value, appendable);
 	}
 }

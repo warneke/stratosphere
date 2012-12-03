@@ -6,6 +6,8 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import javolution.text.TypeFormat;
+
 /**
  * This node represents a boolean value.
  * 
@@ -15,13 +17,60 @@ import java.io.IOException;
 public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 
 	/**
+	 * @author Arvid Heise
+	 */
+	private static final class UnmodifiableBoolean extends BooleanNode {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3900238822834808773L;
+
+		/**
+		 * Initializes UnmodifiableBoolean.
+		 * 
+		 * @param v
+		 */
+		private UnmodifiableBoolean(boolean v) {
+			super(v);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#copy()
+		 */
+		@Override
+		public UnmodifiableBoolean clone() {
+			return this;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see eu.stratosphere.sopremo.type.BooleanNode#copyValueFrom(eu.stratosphere.sopremo.type.IJsonNode)
+		 */
+		@Override
+		public void copyValueFrom(IJsonNode otherNode) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void read(DataInput in) throws IOException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		protected Object readResolve() {
+			return this.canonicalize();
+		}
+	}
+
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 9185727528566635632L;
 
-	public final static BooleanNode TRUE = new BooleanNode(true);
+	public final static BooleanNode TRUE = new UnmodifiableBoolean(true);
 
-	public final static BooleanNode FALSE = new BooleanNode(false);
+	public final static BooleanNode FALSE = new UnmodifiableBoolean(false);
 
 	private boolean value;
 
@@ -35,11 +84,6 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 
 	private BooleanNode(final boolean v) {
 		this.value = v;
-	}
-
-	@Override
-	public Boolean getJavaValue() {
-		return this.value;
 	}
 
 	/**
@@ -57,17 +101,12 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 	 * Returns either this BooleanNode represents the value <code>true</code> or not.
 	 */
 	public boolean getBooleanValue() {
-		return this == TRUE;
+		return this.value;
 	}
 
 	@Override
-	public IJsonNode clone() {
-		return this;
-	}
-
-	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return this == TRUE ? sb.append("true") : sb.append("false");
+	public BooleanNode clone() {
+		return (BooleanNode) super.clone();
 	}
 
 	@Override
@@ -103,7 +142,8 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 		this.value = in.readInt() == 1;
 	}
 
-	private Object readResolve() {
+	@Override
+	protected Object readResolve() {
 		return valueOf(this.value);
 	}
 
@@ -153,4 +193,12 @@ public class BooleanNode extends AbstractJsonNode implements IPrimitiveNode {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		TypeFormat.format(this.value, appendable);
+	}
 }

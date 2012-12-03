@@ -5,10 +5,11 @@ import it.unimi.dsi.fastutil.ints.IntSets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import eu.stratosphere.pact.common.type.PactRecord;
-import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.pact.JsonNodeWrapper;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
@@ -32,7 +33,7 @@ public class GeneralSchema extends AbstractSchema {
 	 */
 	private static final long serialVersionUID = -4363364708964922955L;
 
-	List<EvaluationExpression> mappings = new ArrayList<EvaluationExpression>();
+	private final List<EvaluationExpression> mappings = new ArrayList<EvaluationExpression>();
 
 	/**
 	 * Initializes a new GeneralSchema with the provided {@link EvaluationExpression}s in proper sequence.
@@ -41,8 +42,7 @@ public class GeneralSchema extends AbstractSchema {
 	 *        {@link EvaluationExpression}s that should be set as mappings
 	 */
 	public GeneralSchema(final EvaluationExpression... mappings) {
-		super(mappings.length + 1, CollectionUtil.setRangeFrom(0, mappings.length));
-		this.mappings = Arrays.asList(mappings);
+		this(Arrays.asList(mappings));
 	}
 
 	/**
@@ -52,7 +52,7 @@ public class GeneralSchema extends AbstractSchema {
 	 * @param mappings
 	 *        an Iterable over all {@link EvaluationExpression}s that should be set as mappings.
 	 */
-	public GeneralSchema(final List<EvaluationExpression> mappings) {
+	public GeneralSchema(final Collection<EvaluationExpression> mappings) {
 		super(mappings.size() + 1, CollectionUtil.setRangeFrom(0, mappings.size()));
 		for (final EvaluationExpression exp : mappings)
 			this.mappings.add(exp);
@@ -75,15 +75,24 @@ public class GeneralSchema extends AbstractSchema {
 		return IntSets.singleton(index);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.AbstractSopremoType#createCopy()
+	 */
 	@Override
-	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target, final EvaluationContext context) {
+	protected AbstractSopremoType createCopy() {
+		return new GeneralSchema(SopremoUtil.deepClone(this.mappings));
+	}
+
+	@Override
+	public PactRecord jsonToRecord(final IJsonNode value, PactRecord target) {
 
 		if (target == null)
 			target = new PactRecord(this.mappings.size() + 1);
 		target.setField(this.mappings.size(), SopremoUtil.wrap(value));
 
 		for (int i = 0; i < this.mappings.size(); i++)
-			target.setField(i, SopremoUtil.wrap(this.mappings.get(i).evaluate(value, null, context)));
+			target.setField(i, SopremoUtil.wrap(this.mappings.get(i).evaluate(value)));
 
 		return target;
 	}

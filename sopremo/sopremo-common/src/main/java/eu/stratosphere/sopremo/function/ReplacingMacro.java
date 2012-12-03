@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,8 @@
  **********************************************************************************************************************/
 package eu.stratosphere.sopremo.function;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import java.io.IOException;
+
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 
 /**
@@ -34,21 +35,29 @@ public class ReplacingMacro extends MacroBase {
 
 	/*
 	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 */
+	@Override
+	public void appendAsString(Appendable appendable) throws IOException {
+		appendable.append("Replace macro ");
+		this.replacement.appendAsString(appendable);
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see eu.stratosphere.sopremo.function.Callable#call(java.lang.Object, eu.stratosphere.sopremo.EvaluationContext)
 	 */
 	@Override
-	public EvaluationExpression call(final EvaluationExpression[] params, final EvaluationExpression target,
-			final EvaluationContext context) {
+	public EvaluationExpression call(final EvaluationExpression[] params) {
 		return this.replacement;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.ISopremoType#toString(java.lang.StringBuilder)
+	 * @see eu.stratosphere.sopremo.function.Callable#clone()
 	 */
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append("Replace macro ");
-		this.replacement.toString(builder);
+	public Callable<EvaluationExpression, EvaluationExpression[]> clone() {
+		return new ReplacingMacro(this.replacement.clone());
 	}
 }

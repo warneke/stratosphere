@@ -2,10 +2,10 @@ package eu.stratosphere.sopremo.base;
 
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class UnionAllTest extends SopremoTest<UnionAll> {
+public class UnionAllTest extends EqualCloneTest<UnionAll> {
 	@Test
 	public void shouldPerformThreeWayBagUnion() {
 		final SopremoTestPlan sopremoPlan = new SopremoTestPlan(3, 1);

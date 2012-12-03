@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,10 +17,12 @@ package eu.stratosphere.sopremo.type;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
+import eu.stratosphere.sopremo.cache.ArrayCache;
 import eu.stratosphere.sopremo.pact.SopremoUtil;
 
 /**
@@ -44,9 +46,32 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 
 	@Override
 	public void copyValueFrom(final IJsonNode otherNode) {
-		this.clear();
-		for (final IJsonNode child : (IArrayNode) otherNode)
-			this.add(child);
+		this.checkForSameType(otherNode);
+		IArrayNode array = (IArrayNode) otherNode;
+		int index = 0;
+		// try to reuse existing nodes
+		for (int length = Math.max(this.size(), array.size()); index < length; index++) {
+			final IJsonNode existingNode = this.get(index);
+			final IJsonNode newNode = array.get(index);
+			if (existingNode.isCopyable(newNode))
+				existingNode.copyValueFrom(newNode);
+			else
+				this.set(index, newNode.clone());
+		}
+
+		for (int length = array.size(); index < length; index++)
+			this.add(array.get(0).clone());
+		for (int length = this.size(); index < length; length--)
+			this.remove(index);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#clone()
+	 */
+	@Override
+	public AbstractArrayNode clone() {
+		return (ArrayNode) super.clone();
 	}
 
 	@Override
@@ -72,6 +97,37 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 	public IArrayNode addAll(final IJsonNode[] nodes) {
 		this.addAll(Arrays.asList(nodes));
 		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IArrayNode#contains(eu.stratosphere.sopremo.type.IJsonNode)
+	 */
+	@Override
+	public boolean contains(IJsonNode node) {
+		for (final IJsonNode element : this)
+			if (node.equals(element))
+				return true;
+		return false;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.IArrayNode#asCollection()
+	 */
+	@Override
+	public Collection<IJsonNode> asCollection() {
+		return new AbstractCollection<IJsonNode>() {
+			@Override
+			public Iterator<IJsonNode> iterator() {
+				return this.iterator();
+			}
+
+			@Override
+			public int size() {
+				return AbstractArrayNode.this.size();
+			}
+		};
 	}
 
 	@Override
@@ -102,15 +158,17 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 	 */
 	@Override
 	public void setAll(final IJsonNode[] nodes) {
-		this.clear();
-		for (final IJsonNode node : nodes)
-			this.add(node);
+		for (int index = 0; index < nodes.length; index++)
+			this.set(index, nodes[index]);
+		final int size = this.size();
+		for (int index = size; index > nodes.length; index--)
+			this.remove(nodes.length);
 	}
 
 	@Override
-	public IJsonNode[] toArray() {
-		IJsonNode[] result = new IJsonNode[this.size()];
-		fillArray(result);
+	public IJsonNode[] toArray(ArrayCache<IJsonNode> arrayCache) {
+		IJsonNode[] result = arrayCache.getArray(this.size());
+		this.fillArray(result);
 		return result;
 	}
 
@@ -118,6 +176,25 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 		int i = 0;
 		for (final IJsonNode node : this)
 			result[i++] = node;
+	}
+
+	@Override
+	public int compareToSameType(final IJsonNode other) {
+		final IArrayNode node = (IArrayNode) other;
+		final Iterator<IJsonNode> entries1 = this.iterator(), entries2 = node.iterator();
+
+		while (entries1.hasNext() && entries2.hasNext()) {
+			final IJsonNode entry1 = entries1.next(), entry2 = entries2.next();
+			final int comparison = entry1.compareTo(entry2);
+			if (comparison != 0)
+				return comparison;
+		}
+
+		if (entries1.hasNext())
+			return 1;
+		if (entries2.hasNext())
+			return -1;
+		return 0;
 	}
 
 	/*
@@ -143,23 +220,24 @@ public abstract class AbstractArrayNode extends AbstractJsonNode implements IArr
 		if (this.getClass() != obj.getClass())
 			return false;
 
-		final Iterator<IJsonNode> thisIter = iterator(), thatIter = ((Iterable<IJsonNode>) obj).iterator();
+		final Iterator<IJsonNode> thisIter = this.iterator(), thatIter = ((Iterable<IJsonNode>) obj).iterator();
 		while (thisIter.hasNext() && thatIter.hasNext())
 			if (!thisIter.next().equals(thatIter.next()))
 				return false;
 		return thisIter.hasNext() == thatIter.hasNext();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.type.IArrayNode#toArray(eu.stratosphere.sopremo.type.IJsonNode[])
-	 */
 	@Override
-	public IJsonNode[] toArray(IJsonNode[] array) {
-		final int size = this.size();
-		if (array.length != size)
-			array = new IJsonNode[size];
-		fillArray(array);
-		return array;
+	public void appendAsString(final Appendable appendable) throws IOException {
+		appendable.append('[');
+		boolean first = true;
+		for (IJsonNode node : this) {
+			if (first)
+				first = false;
+			else
+				appendable.append(", ");
+			node.appendAsString(appendable);
+		}
+		appendable.append(']');
 	}
 }

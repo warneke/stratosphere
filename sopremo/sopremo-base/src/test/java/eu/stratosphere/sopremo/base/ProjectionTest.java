@@ -4,13 +4,13 @@ import static eu.stratosphere.sopremo.type.JsonUtil.createPath;
 
 import org.junit.Test;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.EqualCloneTest;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression;
 import eu.stratosphere.sopremo.expressions.ArithmeticExpression.ArithmeticOperator;
 import eu.stratosphere.sopremo.expressions.ObjectCreation;
 import eu.stratosphere.sopremo.testing.SopremoTestPlan;
 
-public class ProjectionTest extends SopremoTest<Projection> {
+public class ProjectionTest extends EqualCloneTest<Projection> {
 	@Override
 	protected Projection createDefaultInstance(final int index) {
 		final ObjectCreation transformation = new ObjectCreation();
@@ -20,7 +20,7 @@ public class ProjectionTest extends SopremoTest<Projection> {
 
 	/*
 	 * (non-Javadoc)
-	 * @see eu.stratosphere.sopremo.SopremoTest#shouldComplyEqualsContract()
+	 * @see eu.stratosphere.sopremo.EqualCloneTest#shouldComplyEqualsContract()
 	 */
 	@Override
 	@Test

@@ -6,12 +6,15 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import eu.stratosphere.sopremo.Singleton;
+
 /**
  * This node represents a missing value.
  * 
  * @author Michael Hopstock
  * @author Tommy Neubert
  */
+@Singleton
 public class MissingNode extends AbstractJsonNode implements IPrimitiveNode {
 
 	/**
@@ -38,8 +41,8 @@ public class MissingNode extends AbstractJsonNode implements IPrimitiveNode {
 	}
 
 	@Override
-	public StringBuilder toString(final StringBuilder sb) {
-		return sb.append("<missing>");
+	public void appendAsString(final Appendable sb) throws IOException {
+		sb.append("<missing>");
 	}
 
 	@Override
@@ -80,18 +83,18 @@ public class MissingNode extends AbstractJsonNode implements IPrimitiveNode {
 		return Type.MissingNode;
 	}
 
-	private Object readResolve() {
+	@Override
+	protected Object readResolve() {
 		return Instance;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.type.AbstractJsonNode#copy()
+	 */
 	@Override
-	public IJsonNode clone() {
+	public MissingNode clone() {
 		return this;
-	}
-
-	@Override
-	public Object getJavaValue() {
-		throw new UnsupportedOperationException("MissingNode");
 	}
 
 	@Override

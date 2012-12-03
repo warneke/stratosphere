@@ -1,6 +1,10 @@
 package eu.stratosphere.sopremo.expressions;
 
-import eu.stratosphere.sopremo.EvaluationContext;
+import java.io.IOException;
+
+import eu.stratosphere.sopremo.cache.NodeCache;
+import eu.stratosphere.sopremo.expressions.tree.ChildIterator;
+import eu.stratosphere.sopremo.expressions.tree.NamedChildIterator;
 import eu.stratosphere.sopremo.type.BooleanNode;
 import eu.stratosphere.sopremo.type.IJsonNode;
 import eu.stratosphere.sopremo.type.TypeCoercer;
@@ -15,7 +19,7 @@ public class TernaryExpression extends EvaluationExpression {
 	 */
 	private static final long serialVersionUID = -5854293822552106472L;
 
-	private CachingExpression<IJsonNode> ifClause;
+	private EvaluationExpression ifClause;
 
 	private EvaluationExpression ifExpression, thenExpression;
 
@@ -31,7 +35,7 @@ public class TernaryExpression extends EvaluationExpression {
 	 */
 	public TernaryExpression(final EvaluationExpression ifClause, final EvaluationExpression ifExpression,
 			final EvaluationExpression thenExpression) {
-		this.ifClause = CachingExpression.ofSubclass(ifClause, IJsonNode.class);
+		this.ifClause = ifClause;
 		this.ifExpression = ifExpression;
 		this.thenExpression = thenExpression;
 	}
@@ -58,38 +62,12 @@ public class TernaryExpression extends EvaluationExpression {
 	}
 
 	/**
-	 * Sets a new ifClausse-expression
-	 * 
-	 * @param ifClause
-	 *        the expression that should be set as the new ifClause
-	 */
-	public void setIfClause(final EvaluationExpression ifClause) {
-		if (ifClause == null)
-			throw new NullPointerException("ifClause must not be null");
-
-		this.ifClause = CachingExpression.ofSubclass(ifClause, IJsonNode.class);
-	}
-
-	/**
 	 * Returns the ifExpression
 	 * 
 	 * @return the ifExpression
 	 */
 	public EvaluationExpression getIfExpression() {
 		return this.ifExpression;
-	}
-
-	/**
-	 * Sets a new ifExpression
-	 * 
-	 * @param ifExpression
-	 *        the expression that should be set as the new ifExpression
-	 */
-	public void setIfExpression(final EvaluationExpression ifExpression) {
-		if (ifExpression == null)
-			throw new NullPointerException("ifExpression must not be null");
-
-		this.ifExpression = ifExpression;
 	}
 
 	/**
@@ -101,49 +79,67 @@ public class TernaryExpression extends EvaluationExpression {
 		return this.thenExpression;
 	}
 
-	/**
-	 * Sets a new thenExpression
-	 * 
-	 * @param thenExpression
-	 *        the expression that should be set as the new thenExpression
-	 */
-	public void setThenExpression(final EvaluationExpression thenExpression) {
-		if (thenExpression == null)
-			throw new NullPointerException("thenExpression must not be null");
-
-		this.thenExpression = thenExpression;
-	}
+	private final transient NodeCache nodeCache = new NodeCache();
 
 	@Override
-	public IJsonNode evaluate(final IJsonNode node, final IJsonNode target, final EvaluationContext context) {
+	public IJsonNode evaluate(final IJsonNode node) {
 		// no need to reuse the target of the coercion - a boolean node is never created anew
-		if (TypeCoercer.INSTANCE.coerce(this.ifClause.evaluate(node, context), null, BooleanNode.class) == BooleanNode.TRUE)
-			return this.ifExpression.evaluate(node, target, context);
-		return this.thenExpression.evaluate(node, target, context);
+		if (TypeCoercer.INSTANCE.coerce(this.ifClause.evaluate(node), this.nodeCache, BooleanNode.class) == BooleanNode.TRUE)
+			return this.ifExpression.evaluate(node);
+		return this.thenExpression.evaluate(node);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * eu.stratosphere.sopremo.expressions.EvaluationExpression#transformRecursively(eu.stratosphere.sopremo.expressions
-	 * .TransformFunction)
+	 * @see eu.stratosphere.sopremo.expressions.EvaluationExpression#createCopy()
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
-	public EvaluationExpression transformRecursively(final TransformFunction function) {
-		this.ifClause = (CachingExpression<IJsonNode>) function.call(this.ifClause);
-		this.ifExpression = function.call(this.ifExpression);
-		this.thenExpression = function.call(this.thenExpression);
-		return null;
+	protected EvaluationExpression createCopy() {
+		return new TernaryExpression(this.ifClause.clone(), this.ifExpression.clone(), this.thenExpression.clone());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.expressions.ExpressionParent#iterator()
+	 */
+	@Override
+	public ChildIterator iterator() {
+		return new NamedChildIterator("ifClause", "ifExpression", "thenExpression") {
+			@Override
+			protected void set(int index, EvaluationExpression childExpression) {
+				switch (index) {
+				case 0:
+					TernaryExpression.this.ifClause = childExpression;
+					break;
+				case 1:
+					TernaryExpression.this.ifExpression = childExpression;
+					break;
+				default:
+					TernaryExpression.this.thenExpression = childExpression;
+				}
+			}
+
+			@Override
+			protected EvaluationExpression get(int index) {
+				switch (index) {
+				case 0:
+					return TernaryExpression.this.ifClause;
+				case 1:
+					return TernaryExpression.this.ifExpression;
+				default:
+					return TernaryExpression.this.thenExpression;
+				}
+			}
+		};
 	}
 
 	@Override
-	public void toString(final StringBuilder builder) {
-		this.ifClause.toString(builder);
-		builder.append(" ? ");
-		this.ifExpression.toString(builder);
-		builder.append(" : ");
-		this.thenExpression.toString(builder);
+	public void appendAsString(final Appendable appendable) throws IOException {
+		this.ifClause.appendAsString(appendable);
+		appendable.append(" ? ");
+		this.ifExpression.appendAsString(appendable);
+		appendable.append(" : ");
+		this.thenExpression.appendAsString(appendable);
 	}
 
 	@Override

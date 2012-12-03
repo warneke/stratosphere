@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import eu.stratosphere.sopremo.SopremoTest;
+import eu.stratosphere.sopremo.SopremoTestUtil;
 import eu.stratosphere.sopremo.base.Selection;
 import eu.stratosphere.sopremo.execution.ExecutionRequest;
 import eu.stratosphere.sopremo.execution.ExecutionResponse;
@@ -115,12 +115,18 @@ public class SopremoServerTest {
 	}
 
 	private ExecutionResponse waitForStateToFinish(ExecutionResponse response, ExecutionState status) {
-		return SopremoTestServer.waitForStateToFinish(this.server, response, status);
+		
+		try {
+			return SopremoTestServer.waitForStateToFinish(this.server, response, status);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	static SopremoPlan createPlan() {
 		final SopremoPlan plan = new SopremoPlan();
-		final Source input = new Source(SopremoTest.createTemporaryFile("input"));
+		final Source input = new Source(SopremoTestUtil.createTemporaryFile("input"));
 		final Selection selection = new Selection().
 			withCondition(
 				new OrExpression(
@@ -128,7 +134,7 @@ public class SopremoServerTest {
 					new ComparativeExpression(JsonUtil.createPath("0", "income"), BinaryOperator.GREATER,
 						new ConstantExpression(30000)))).
 			withInputs(input);
-		final Sink output = new Sink(SopremoTest.createTemporaryFile("output")).withInputs(selection);
+		final Sink output = new Sink(SopremoTestUtil.createTemporaryFile("output")).withInputs(selection);
 		plan.setSinks(output);
 		return plan;
 	}

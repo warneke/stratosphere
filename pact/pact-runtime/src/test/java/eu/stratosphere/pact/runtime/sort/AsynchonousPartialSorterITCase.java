@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * Copyright (C) 2010 by the Stratosphere project (http://stratosphere.eu)
+ * Copyright (C) 2010-2012 by the Stratosphere project (http://stratosphere.eu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -134,7 +134,7 @@ public class AsynchonousPartialSorterITCase
 			// merge iterator
 			LOG.debug("Initializing sortmerger...");
 			Sorter<PactRecord> sorter = new AsynchronousPartialSorter<PactRecord>(this.memoryManager, source,
-				this.parentTask, this.serializer, this.comparator, 32 * 1024 * 1024);
+				this.parentTask, this.serializer, this.comparator, 10 * 1024 * 1024);
 	
 			runPartialSorter(sorter, NUM_RECORDS, 2);
 		}
@@ -157,9 +157,9 @@ public class AsynchonousPartialSorterITCase
 			// merge iterator
 			LOG.debug("Initializing sortmerger...");
 			Sorter<PactRecord> sorter = new AsynchronousPartialSorter<PactRecord>(this.memoryManager, source,
-				this.parentTask, this.serializer, this.comparator, 32 * 1024 * 1024);
+				this.parentTask, this.serializer, this.comparator, 10 * 1024 * 1024);
 	
-			runPartialSorter(sorter, NUM_RECORDS, 28);
+			runPartialSorter(sorter, NUM_RECORDS, 25);
 		}
 		catch (Exception t) {
 			t.printStackTrace();

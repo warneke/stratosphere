@@ -12,7 +12,9 @@ import eu.stratosphere.pact.common.contract.GenericDataSource;
 import eu.stratosphere.pact.common.io.FileInputFormat;
 import eu.stratosphere.pact.common.plan.PactModule;
 import eu.stratosphere.pact.testing.Equaler;
+import eu.stratosphere.sopremo.AbstractSopremoType;
 import eu.stratosphere.sopremo.EvaluationContext;
+import eu.stratosphere.sopremo.ISopremoType;
 import eu.stratosphere.sopremo.expressions.ArrayCreation;
 import eu.stratosphere.sopremo.expressions.EvaluationExpression;
 import eu.stratosphere.sopremo.operator.ElementaryOperator;
@@ -52,15 +54,15 @@ public class Source extends ElementaryOperator<Source> {
 	/**
 	 * Initializes a Source with the given {@link FileInputFormat} and the given path.
 	 * 
-	 * @param inputformat
+	 * @param inputFormat
 	 *        the InputFormat that should be used
 	 * @param inputPath
 	 *        the path to the input file
 	 */
-	public Source(final Class<? extends FileInputFormat> inputformat,
+	public Source(final Class<? extends FileInputFormat> inputFormat,
 			final String inputPath) {
 		this.inputPath = inputPath;
-		this.inputFormat = inputformat;
+		this.inputFormat = inputFormat;
 	}
 
 	/**
@@ -80,6 +82,29 @@ public class Source extends ElementaryOperator<Source> {
 	 */
 	public Source() {
 		this(new ArrayCreation());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.operator.Operator#createCopy()
+	 */
+	@Override
+	protected AbstractSopremoType createCopy() {
+		return new Source();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see eu.stratosphere.sopremo.operator.Operator#copyPropertiesFrom(eu.stratosphere.sopremo.ISopremoType)
+	 */
+	@Override
+	public void copyPropertiesFrom(ISopremoType original) {
+		super.copyPropertiesFrom(original);
+		Source source = (Source) original;
+		this.adhocExpression = source.adhocExpression == null ? null : source.adhocExpression.clone();
+		this.inputFormat = source.inputFormat;
+		this.inputPath = source.inputPath;
+		this.parameters.putAll(SopremoUtil.deepCloneIfPossible(this.parameters));
 	}
 
 	/**
@@ -165,7 +190,8 @@ public class Source extends ElementaryOperator<Source> {
 			try {
 				final URI validURI = new URI(inputPath);
 				if (validURI.getScheme() == null)
-					throw new IllegalStateException("Source does not have a valid file schema: " + inputPath);
+					throw new IllegalStateException(
+						"File name of source does not have a valid schema (such as hdfs or file): " + inputPath);
 			} catch (final URISyntaxException e) {
 				throw new IllegalStateException("Source does not have a valid path: " + inputPath, e);
 			}
@@ -238,19 +264,19 @@ public class Source extends ElementaryOperator<Source> {
 	 * 
 	 * @return the adhoc values
 	 */
-	public IJsonNode getAdhocValues(EvaluationContext context) {
+	public IJsonNode getAdhocValues() {
 		if (!this.isAdhoc())
 			throw new IllegalStateException();
-		return this.getAdhocExpression().evaluate(NullNode.getInstance(), null, context);
+		return this.getAdhocExpression().evaluate(NullNode.getInstance());
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((this.adhocExpression == null) ? 0 : this.adhocExpression.hashCode());
-		result = prime * result + ((this.inputFormat == null) ? 0 : this.inputFormat.hashCode());
-		result = prime * result + ((this.inputPath == null) ? 0 : this.inputPath.hashCode());
+		result = prime * result + (this.adhocExpression == null ? 0 : this.adhocExpression.hashCode());
+		result = prime * result + (this.inputFormat == null ? 0 : this.inputFormat.hashCode());
+		result = prime * result + (this.inputPath == null ? 0 : this.inputPath.hashCode());
 		return result;
 	}
 

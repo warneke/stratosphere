@@ -19,20 +19,19 @@ public class FieldAccessTest extends EvaluableExpressionTest<ObjectAccess> {
 	@Test
 	public void shouldAccessFieldOfSingleObject() {
 		final IJsonNode result = new ObjectAccess("fieldName").evaluate(
-			createObjectNode("fieldName", 42, "fieldName2", 12),
-			null, this.context);
+			createObjectNode("fieldName", 42, "fieldName2", 12));
 		Assert.assertEquals(createValueNode(42), result);
 	}
 
 	@Test
 	public void shouldReturnMissingNodeIfArray() {
-		final IJsonNode result = new ObjectAccess("fieldName").evaluate(createArrayNode(1, 2, 3), null, this.context);
+		final IJsonNode result = new ObjectAccess("fieldName").evaluate(createArrayNode(1, 2, 3));
 		Assert.assertSame(MissingNode.getInstance(), result);
 	}
 
 	@Test
 	public void shouldFailIfPrimitive() {
-		final IJsonNode result = new ObjectAccess("fieldName").evaluate(createValueNode(42), null, this.context);
+		final IJsonNode result = new ObjectAccess("fieldName").evaluate(createValueNode(42));
 		Assert.assertSame(MissingNode.getInstance(), result);
 	}
 
