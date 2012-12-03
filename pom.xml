@@ -462,7 +462,5 @@
     <module>pact</module>
     <module>build-tools</module>
     <module>stratosphere-dist</module>
-    <module>sopremo</module>
-    <module>meteor</module>
   </modules>
 </project>
