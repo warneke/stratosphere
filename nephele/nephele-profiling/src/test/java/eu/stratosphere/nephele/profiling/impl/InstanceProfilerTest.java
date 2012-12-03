@@ -145,14 +145,6 @@ public class InstanceProfilerTest {
 			final long totalMemory = generateProfilingData.getTotalMemory();
 			assertThat(totalMemory, is(equalTo(8052956L)));
 
-			long freeMemory = generateProfilingData.getFreeMemory();
-			assertThat(freeMemory, is(equalTo(3999880L)));
-
-			long buffers = generateProfilingData.getBufferedMemory();
-			assertThat(buffers, is(equalTo(77216L)));
-
-			long cached = generateProfilingData.getCachedMemory();
-			assertThat(cached, is(equalTo(1929640L)));
 		} catch (ProfilingException e) {
 			fail(e.getMessage());
 		}

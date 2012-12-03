@@ -41,6 +41,7 @@ import eu.stratosphere.nephele.services.memorymanager.DynamicMemoryManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryAllocationException;
 import eu.stratosphere.nephele.services.memorymanager.MemorySegment;
 import eu.stratosphere.nephele.template.AbstractInvokable;
+import eu.stratosphere.nephele.util.StringUtils;
 
 public class DefaultDynamicMemoryManager implements DynamicMemoryManager, DaemonToClientProtocol, LowMemoryListener {
 
@@ -108,6 +109,11 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	 */
 	private final int minimumRequestSize;
 
+	/**
+	 * The amount of memory initially available after startup in kilobytes.
+	 */
+	private final int initiallyAvailableMemory;
+
 	public DefaultDynamicMemoryManager() throws IOException {
 		this(DEFAULT_PAGE_SIZE, DEFAULT_MINIMUM_REQUEST_SIZE, DEFAULT_LOW_MEMORY_THRESHOLD);
 	}
@@ -166,6 +172,8 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 
 		this.freeSegments.setLowMemoryListener(lowMemoryThreshold, this);
 		this.freeSegments.increaseGrantedShareAndAdjust(grantedMemoryShare);
+
+		this.initiallyAvailableMemory = this.freeSegments.getAvailableMemory();
 	}
 
 	/*
@@ -326,6 +334,9 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 			byte[] buffer = defSeg.destroy();
 			this.freeSegments.returnBuffer(buffer);
 		}
+
+		// Check if we can relinquish memory
+		relinquishMemory();
 	}
 
 	/*
@@ -385,6 +396,9 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 				this.freeSegments.returnBuffer(buffer);
 			}
 		}
+
+		// Check if we can relinquish memory
+		relinquishMemory();
 	}
 
 	/*
@@ -414,6 +428,9 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		}
 
 		segments.clear();
+
+		// Check if we can relinquish memory
+		relinquishMemory();
 	}
 
 	// ------------------------------------------------------------------------
@@ -579,5 +596,21 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		System.out.println(" +++++++ Low Memory " + availableMemory);
 
 		this.asynchMemoryRequester.requestAdditionalMemory(this.minimumRequestSize);
+	}
+
+	private void relinquishMemory() {
+
+		final int amountToRelinquish = this.freeSegments.relinquishMemory(this.minimumRequestSize,
+			this.initiallyAvailableMemory);
+
+		System.out.println("____________________________ Relinquish " + amountToRelinquish);
+		
+		if (amountToRelinquish > 0) {
+			try {
+				this.memoryNegiatorDaemon.relinquishMemory(this.pid, amountToRelinquish);
+			} catch (IOException ioe) {
+				LOG.error(StringUtils.stringifyException(ioe));
+			}
+		}
 	}
 }

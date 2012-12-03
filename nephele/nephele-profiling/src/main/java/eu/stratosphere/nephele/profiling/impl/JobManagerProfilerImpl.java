@@ -151,10 +151,11 @@ public class JobManagerProfilerImpl implements JobManagerProfiler, ProfilerImplP
 				final SingleInstanceProfilingEvent singleInstanceProfilingEvent = new SingleInstanceProfilingEvent(
 					profilingData.getProfilingInterval(), profilingData.getIOWaitCPU(), profilingData.getIdleCPU(),
 					profilingData.getUserCPU(), profilingData.getSystemCPU(), profilingData.getHardIrqCPU(),
-					profilingData.getSoftIrqCPU(), profilingData.getTotalMemory(), profilingData.getFreeMemory(),
-					profilingData.getBufferedMemory(), profilingData.getCachedMemory(), profilingData
-						.getCachedSwapMemory(), profilingData.getReceivedBytes(), profilingData.getTransmittedBytes(),
-					jobID, timestamp, timestamp - jobProfilingData.getProfilingStart(), profilingData
+					profilingData.getSoftIrqCPU(), profilingData.getTotalMemory(),
+					profilingData.getStratosphereMemory(), profilingData.getHDFSMemory(),
+					profilingData.getOtherMemory(), profilingData.getReceivedBytes(),
+					profilingData.getTransmittedBytes(), jobID, timestamp, timestamp
+						- jobProfilingData.getProfilingStart(), profilingData
 						.getInstanceConnectionInfo().toString());
 
 				synchronized (this.registeredListeners) {
