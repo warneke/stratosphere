@@ -17,18 +17,20 @@ package eu.stratosphere.nephele.services.memorymanager.spi;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.berkeley.icsi.memngt.pools.LowMemoryListener;
 import edu.berkeley.icsi.memngt.protocols.ClientToDaemonProtocol;
 import edu.berkeley.icsi.memngt.protocols.DaemonToClientProtocol;
 import edu.berkeley.icsi.memngt.protocols.NegotiationException;
@@ -39,9 +41,8 @@ import eu.stratosphere.nephele.services.memorymanager.DynamicMemoryManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryAllocationException;
 import eu.stratosphere.nephele.services.memorymanager.MemorySegment;
 import eu.stratosphere.nephele.template.AbstractInvokable;
-import eu.stratosphere.nephele.util.StringUtils;
 
-public class DefaultDynamicMemoryManager implements DynamicMemoryManager, DaemonToClientProtocol {
+public class DefaultDynamicMemoryManager implements DynamicMemoryManager, DaemonToClientProtocol, LowMemoryListener {
 
 	/**
 	 * The default memory page size. Currently set to 32 kilobytes.
@@ -54,14 +55,14 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	public static final int MIN_PAGE_SIZE = 4 * 1024;
 
 	/**
-	 * The default value for the minimum number of pages to be allocated/released per adaptation.
-	 */
-	public static final int DEFAULT_ADAPTATION_GRANULARITY = 1024;
-
-	/**
 	 * The default value for the minimum amount of additional memory to request from the memory negotiator in kilobytes.
 	 */
 	public static final int DEFAULT_MINIMUM_REQUEST_SIZE = 512 * 1024;
+
+	/**
+	 * The default value for the low memory notification threshold in kilobytes.
+	 */
+	public static final int DEFAULT_LOW_MEMORY_THRESHOLD = 128 * 1024;
 
 	/**
 	 * The Log.
@@ -71,12 +72,11 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	/**
 	 * The port the RPC service of the local memory negotiator listens on.
 	 */
-	private static final int MEMORY_NEGOTIATOR_RPC_PORT = 8001;
+	private static final int MEMORY_NEGOTIATOR_RPC_PORT = 8010;
 
-	// --------------------------------------------------------------------------------------------
-
-	private final Object lock = new Object(); // The lock used on the shared structures.
-
+	/**
+	 * The RPC service used to talk to the memory negotiator daemon.
+	 */
 	private final RPCService rpcService;
 
 	/**
@@ -86,9 +86,11 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 
 	private final ClientToDaemonProtocol memoryNegiatorDaemon;
 
-	private final ArrayDeque<byte[]> freeSegments; // the free memory segments
+	private final MemoryPool freeSegments; // the free memory segments
 
-	private final HashMap<AbstractInvokable, Set<DefaultMemorySegment>> allocatedSegments;
+	private final ConcurrentMap<AbstractInvokable, Set<DefaultMemorySegment>> allocatedSegments;
+
+	private final AsynchronousMemoryRequester asynchMemoryRequester;
 
 	private final long roundingMask; // mask used to round down sizes to multiples of the page size
 
@@ -96,27 +98,21 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 
 	private final int pageSizeBits; // the number of bits that the power-of-two page size corresponds to
 
-	private final int adaptationGranularity; // the minimum number of pages allocated/released per adaptation
+	/**
+	 * Flag whether the close() method has already been invoked.
+	 */
+	private final AtomicBoolean isShutDown = new AtomicBoolean(false);
 
-	private final int minimumRequestSize; // minimum amount of additional memory to request from the memory negotiator
-											// in kilobytes.
-
-	private boolean isShutDown; // flag whether the close() has already been invoked.
-
-	private final int initiallyGrantedMemoryShare; // size of the initially granted memory share from the memory
-													// negotiator daemon
-
-	private int grantedMemoryShare; // the size of the granted memory share from the memory negotiator daemon
-
-	// ------------------------------------------------------------------------
-	// Constructors / Destructors
-	// ------------------------------------------------------------------------
+	/**
+	 * The minimum amount of additional memory to request from the memory negotiator in kilobytes.
+	 */
+	private final int minimumRequestSize;
 
 	public DefaultDynamicMemoryManager() throws IOException {
-		this(DEFAULT_PAGE_SIZE, DEFAULT_ADAPTATION_GRANULARITY, DEFAULT_MINIMUM_REQUEST_SIZE);
+		this(DEFAULT_PAGE_SIZE, DEFAULT_MINIMUM_REQUEST_SIZE, DEFAULT_LOW_MEMORY_THRESHOLD);
 	}
 
-	public DefaultDynamicMemoryManager(int pageSize, final int adaptationGranularity, final int minimumRequestSize)
+	public DefaultDynamicMemoryManager(int pageSize, final int minimumRequestSize, final int lowMemoryThreshold)
 			throws IOException {
 
 		if (pageSize <= MIN_PAGE_SIZE) {
@@ -135,13 +131,11 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 			log++;
 		this.pageSizeBits = log;
 
-		// set the adaptation granularity
-		this.adaptationGranularity = adaptationGranularity;
 		this.minimumRequestSize = minimumRequestSize;
 
 		// initialize the free segments and allocated segments tracking structures
-		this.freeSegments = new ArrayDeque<byte[]>();
-		this.allocatedSegments = new HashMap<AbstractInvokable, Set<DefaultMemorySegment>>();
+		this.freeSegments = new MemoryPool(this.pageSize);
+		this.allocatedSegments = new ConcurrentHashMap<AbstractInvokable, Set<DefaultMemorySegment>>();
 
 		// initialize the RPC connection to the memory
 		this.rpcService = new RPCService(MEMORY_NEGOTIATOR_RPC_PORT);
@@ -154,7 +148,10 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		}
 
 		// TODO: Make port configurable
-		this.memoryNegiatorDaemon = this.rpcService.getProxy(new InetSocketAddress(8000), ClientToDaemonProtocol.class);
+		this.memoryNegiatorDaemon = this.rpcService.getProxy(new InetSocketAddress(8009), ClientToDaemonProtocol.class);
+
+		this.asynchMemoryRequester = new AsynchronousMemoryRequester(this.pid, this.memoryNegiatorDaemon,
+			this.freeSegments);
 
 		// determine granted memory share
 		int grantedMemoryShare;
@@ -164,67 +161,11 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		} catch (NegotiationException re) {
 			throw new IOException(re);
 		}
-		this.grantedMemoryShare = grantedMemoryShare;
-		this.initiallyGrantedMemoryShare = grantedMemoryShare;
 
-		LOG.info("Memory negotiator daemon granted memory share of " + this.grantedMemoryShare + " kilobytes");
+		LOG.info("Memory negotiator daemon granted memory share of " + grantedMemoryShare + " kilobytes");
 
-		// fill segment pool
-		synchronized (this) {
-			adaptMemoryResources();
-		}
-	}
-
-	/**
-	 * Adapts the resources of the memory manager according to the granted memory share of
-	 * the memory negotiator daemon.
-	 */
-	private void adaptMemoryResources() {
-
-		LOG.debug("Adapting memory resources");
-
-		final int pid = ClientUtils.getPID();
-
-		int added = 0;
-		while (ClientUtils.getPhysicalMemorySize(pid) < this.grantedMemoryShare) {
-			for (int i = 0; i < this.adaptationGranularity; ++i) {
-				this.freeSegments.add(new byte[this.pageSize]);
-				++added;
-			}
-		}
-
-		int removed = 0;
-		while (ClientUtils.getPhysicalMemorySize(pid) > this.grantedMemoryShare) {
-			for (int i = 0; i < this.adaptationGranularity; ++i) {
-				this.freeSegments.poll();
-				++removed;
-
-				// No more free segments to relinquish
-				if (this.freeSegments.isEmpty()) {
-					break;
-				}
-			}
-
-			// No more free segments to relinquish
-			if (this.freeSegments.isEmpty()) {
-				break;
-			}
-
-			System.gc();
-		}
-
-		if (ClientUtils.getPhysicalMemorySize(pid) > this.grantedMemoryShare) {
-			LOG.info("Need to relinquish more memory ");
-		}
-
-		if (LOG.isInfoEnabled()) {
-			LOG.info("Physical memory size is " + ClientUtils.getPhysicalMemorySize(pid) +
-				", granted memory share is " + this.grantedMemoryShare + " (added " + added +
-				" memory segments, reliquished " + removed + ", now " + this.freeSegments.size()
-				+ " free pages are available)");
-		}
-
-		ClientUtils.dumpMemoryUtilization();
+		this.freeSegments.setLowMemoryListener(lowMemoryThreshold, this);
+		this.freeSegments.increaseGrantedShareAndAdjust(grantedMemoryShare);
 	}
 
 	/*
@@ -234,29 +175,25 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	@Override
 	public void shutdown() {
 
-		// -------------------- BEGIN CRITICAL SECTION -------------------
-		synchronized (this.lock) {
+		if (this.isShutDown.compareAndSet(false, true)) {
 
-			if (!this.isShutDown) {
-				if (LOG.isDebugEnabled())
-					LOG.debug("Shutting down MemoryManager instance " + toString());
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("Shutting down MemoryManager instance " + toString());
+			}
 
-				// mark as shutdown and release memory
-				this.isShutDown = true;
-				this.freeSegments.clear();
+			// mark as shutdown and release memory
+			this.freeSegments.clear();
 
-				// go over all allocated segments and release them
-				for (Set<DefaultMemorySegment> segments : this.allocatedSegments.values()) {
-					for (DefaultMemorySegment seg : segments) {
-						seg.destroy();
-					}
+			// go over all allocated segments and release them
+			for (Set<DefaultMemorySegment> segments : this.allocatedSegments.values()) {
+				for (DefaultMemorySegment seg : segments) {
+					seg.destroy();
 				}
 			}
-		}
-		// -------------------- END CRITICAL SECTION -------------------
 
-		// shut down memory negotiator RPC service
-		this.rpcService.shutDown();
+			// shut down memory negotiator RPC service
+			this.rpcService.shutDown();
+		}
 	}
 
 	// ------------------------------------------------------------------------
@@ -298,32 +235,31 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 
 		System.out.println(owner.getEnvironment().getTaskName() + " asks for " + numPages + " pages");
 
-		// -------------------- BEGIN CRITICAL SECTION -------------------
-		synchronized (this.lock) {
+		if (this.isShutDown.get()) {
+			throw new IllegalStateException("Memory manager has been shut down.");
+		}
 
-			if (this.isShutDown) {
-				throw new IllegalStateException("Memory manager has been shut down.");
-			}
+		if (numPages > this.freeSegments.size()) {
+			throw new MemoryAllocationException("Could not allocate " + numPages + " pages. Only " +
+				this.freeSegments.size() + " pages are remaining.");
+		}
 
-			if (numPages > this.freeSegments.size()) {
-				throw new MemoryAllocationException("Could not allocate " + numPages + " pages. Only " +
-					this.freeSegments.size() + " pages are remaining.");
-			}
-
-			Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
-			if (segmentsForOwner == null) {
-				segmentsForOwner = new HashSet<DefaultMemorySegment>(4 * numPages / 3 + 1);
-				this.allocatedSegments.put(owner, segmentsForOwner);
-			}
-
-			for (int i = numPages; i > 0; i--) {
-				byte[] buffer = this.freeSegments.poll();
-				final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
-				target.add(segment);
-				segmentsForOwner.add(segment);
+		Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
+		if (segmentsForOwner == null) {
+			segmentsForOwner = new HashSet<DefaultMemorySegment>(4 * numPages / 3 + 1); // TODO: Reconsider choice of
+																						// set implementation here
+			final Set<DefaultMemorySegment> oldValue = this.allocatedSegments.putIfAbsent(owner, segmentsForOwner);
+			if (oldValue != null) {
+				segmentsForOwner = oldValue;
 			}
 		}
-		// -------------------- END CRITICAL SECTION -------------------
+
+		for (int i = numPages; i > 0; i--) {
+			byte[] buffer = this.freeSegments.requestBuffer();
+			final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
+			target.add(segment);
+			segmentsForOwner.add(segment);
+		}
 	}
 
 	/*
@@ -369,32 +305,27 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		final DefaultMemorySegment defSeg = (DefaultMemorySegment) segment;
 		final AbstractInvokable owner = defSeg.owner;
 
-		// -------------------- BEGIN CRITICAL SECTION -------------------
-		synchronized (this.lock) {
-
-			if (this.isShutDown) {
-				throw new IllegalStateException("Memory manager has been shut down.");
-			}
-
-			// remove the reference in the map for the owner
-			try {
-				Set<DefaultMemorySegment> segsForOwner = this.allocatedSegments.get(owner);
-
-				if (segsForOwner != null) {
-					segsForOwner.remove(defSeg);
-					if (segsForOwner.isEmpty()) {
-						this.allocatedSegments.remove(owner);
-					}
-				}
-			} catch (Throwable t) {
-				LOG.error("Error removing book-keeping reference to allocated memory segment.", t);
-			} finally {
-				// release the memory in any case
-				byte[] buffer = defSeg.destroy();
-				this.freeSegments.add(buffer);
-			}
+		if (this.isShutDown.get()) {
+			throw new IllegalStateException("Memory manager has been shut down.");
 		}
-		// -------------------- END CRITICAL SECTION -------------------
+
+		// remove the reference in the map for the owner
+		try {
+			final Set<DefaultMemorySegment> segsForOwner = this.allocatedSegments.get(owner);
+
+			if (segsForOwner != null) {
+				segsForOwner.remove(defSeg);
+				if (segsForOwner.isEmpty()) {
+					this.allocatedSegments.remove(owner);
+				}
+			}
+		} catch (Throwable t) {
+			LOG.error("Error removing book-keeping reference to allocated memory segment.", t);
+		} finally {
+			// release the memory in any case
+			byte[] buffer = defSeg.destroy();
+			this.freeSegments.returnBuffer(buffer);
+		}
 	}
 
 	/*
@@ -412,51 +343,48 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		final Iterator<T> segmentsIterator = segments.iterator();
 
 		// -------------------- BEGIN CRITICAL SECTION -------------------
-		synchronized (this.lock) {
 
-			if (this.isShutDown) {
-				throw new IllegalStateException("Memory manager has been shut down.");
+		if (this.isShutDown.get()) {
+			throw new IllegalStateException("Memory manager has been shut down.");
+		}
+
+		AbstractInvokable lastOwner = null;
+		Set<DefaultMemorySegment> segsForOwner = null;
+
+		// go over all segments
+		while (segmentsIterator.hasNext()) {
+
+			final MemorySegment seg = segmentsIterator.next();
+			if (seg.isFreed()) {
+				continue;
 			}
 
-			AbstractInvokable lastOwner = null;
-			Set<DefaultMemorySegment> segsForOwner = null;
+			final DefaultMemorySegment defSeg = (DefaultMemorySegment) seg;
+			final AbstractInvokable owner = defSeg.owner;
 
-			// go over all segments
-			while (segmentsIterator.hasNext()) {
-
-				final MemorySegment seg = segmentsIterator.next();
-				if (seg.isFreed()) {
-					continue;
+			try {
+				// get the list of segments by this owner only if it is a different owner than for
+				// the previous one (or it is the first segment)
+				if (lastOwner != owner) {
+					lastOwner = owner;
+					segsForOwner = this.allocatedSegments.get(owner);
 				}
 
-				final DefaultMemorySegment defSeg = (DefaultMemorySegment) seg;
-				final AbstractInvokable owner = defSeg.owner;
-
-				try {
-					// get the list of segments by this owner only if it is a different owner than for
-					// the previous one (or it is the first segment)
-					if (lastOwner != owner) {
-						lastOwner = owner;
-						segsForOwner = this.allocatedSegments.get(owner);
+				// remove the segment from the list
+				if (segsForOwner != null) {
+					segsForOwner.remove(defSeg);
+					if (segsForOwner.isEmpty()) {
+						this.allocatedSegments.remove(owner);
 					}
-
-					// remove the segment from the list
-					if (segsForOwner != null) {
-						segsForOwner.remove(defSeg);
-						if (segsForOwner.isEmpty()) {
-							this.allocatedSegments.remove(owner);
-						}
-					}
-				} catch (Throwable t) {
-					LOG.error("Error removing book-keeping reference to allocated memory segment.", t);
-				} finally {
-					// release the memory in any case
-					byte[] buffer = defSeg.destroy();
-					this.freeSegments.add(buffer);
 				}
+			} catch (Throwable t) {
+				LOG.error("Error removing book-keeping reference to allocated memory segment.", t);
+			} finally {
+				// release the memory in any case
+				byte[] buffer = defSeg.destroy();
+				this.freeSegments.returnBuffer(buffer);
 			}
 		}
-		// -------------------- END CRITICAL SECTION -------------------
 	}
 
 	/*
@@ -467,30 +395,25 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	@Override
 	public void releaseAll(AbstractInvokable owner) {
 
-		// -------------------- BEGIN CRITICAL SECTION -------------------
-		synchronized (this.lock) {
-
-			if (this.isShutDown) {
-				throw new IllegalStateException("Memory manager has been shut down.");
-			}
-
-			// get all segments
-			final Set<DefaultMemorySegment> segments = this.allocatedSegments.remove(owner);
-
-			// all segments may have been freed previously individually
-			if (segments == null || segments.isEmpty()) {
-				return;
-			}
-
-			// free each segment
-			for (DefaultMemorySegment seg : segments) {
-				final byte[] buffer = seg.destroy();
-				this.freeSegments.add(buffer);
-			}
-
-			segments.clear();
+		if (this.isShutDown.get()) {
+			throw new IllegalStateException("Memory manager has been shut down.");
 		}
-		// -------------------- END CRITICAL SECTION -------------------
+
+		// get all segments
+		final Set<DefaultMemorySegment> segments = this.allocatedSegments.remove(owner);
+
+		// all segments may have been freed previously individually
+		if (segments == null || segments.isEmpty()) {
+			return;
+		}
+
+		// free each segment
+		for (DefaultMemorySegment seg : segments) {
+			final byte[] buffer = seg.destroy();
+			this.freeSegments.returnBuffer(buffer);
+		}
+
+		segments.clear();
 	}
 
 	// ------------------------------------------------------------------------
@@ -566,11 +489,7 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 
 		LOG.info("Received request to adjust granted memory share to " + sizeOfNewShare + " kilobytes");
 
-		synchronized (this.lock) {
-
-			this.grantedMemoryShare = sizeOfNewShare;
-			adaptMemoryResources();
-		}
+		this.freeSegments.increaseGrantedShareAndAdjust(sizeOfNewShare - this.freeSegments.getGrantedMemorySize());
 	}
 
 	/**
@@ -588,7 +507,7 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 	 */
 	@Override
 	public void allocateAdditionalPages(final AbstractInvokable owner, final List<MemorySegment> target,
-			final int numPages) throws MemoryAllocationException {
+			final int numPages) throws MemoryAllocationException, InterruptedException {
 
 		// sanity check
 		if (owner == null) {
@@ -600,70 +519,44 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 			((ArrayList<MemorySegment>) target).ensureCapacity(numPages);
 		}
 
+		// while (true) {
+
+		if (this.isShutDown.get()) {
+			throw new IllegalStateException("Memory manager has been shut down.");
+		}
+
 		while (true) {
 
-			synchronized (this.lock) {
+			if (numPages <= this.freeSegments.size()) {
 
-				if (this.isShutDown) {
-					throw new IllegalStateException("Memory manager has been shut down.");
+				final Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
+				if (segmentsForOwner == null) {
+					throw new IllegalStateException("No segmentsForOwner data structure found");
 				}
 
-				if (numPages <= this.freeSegments.size()) {
-
-					final Set<DefaultMemorySegment> segmentsForOwner = this.allocatedSegments.get(owner);
-					if (segmentsForOwner == null) {
-						throw new IllegalStateException("No segmentsForOwner data structure found");
-					}
-
-					for (int i = 0; i < numPages; ++i) {
-						final byte[] buffer = this.freeSegments.poll();
-						final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
-						target.add(segment);
-						segmentsForOwner.add(segment);
-					}
-					return;
-
+				for (int i = 0; i < numPages; ++i) {
+					final byte[] buffer = this.freeSegments.requestBuffer();
+					final DefaultMemorySegment segment = new DefaultMemorySegment(owner, buffer, 0, this.pageSize);
+					target.add(segment);
+					segmentsForOwner.add(segment);
 				}
+				return;
+
 			}
 
 			// Check with memory negotiator daemon if we are allowed to allocated additional memory
-			final int amountOfAdditionallyRequstedMemory = calculateAdditionalAmountOfMemoryToRequest(numPages);
-			if (LOG.isInfoEnabled()) {
-				LOG.info("Requesting " + amountOfAdditionallyRequstedMemory
-					+ " kilobytes of additional memory from memory negotiator daemon");
-			}
-			try {
-				if (!this.memoryNegiatorDaemon.requestAdditionalMemory(this.pid, amountOfAdditionallyRequstedMemory)) {
-					LOG.info("Memory negotiator daemon turned request down");
-					break;
-				}
-			} catch (NegotiationException ne) {
-				LOG.warn(StringUtils.stringifyException(ne));
-				break;
-			} catch (IOException ioe) {
-				LOG.error(StringUtils.stringifyException(ioe));
-				break;
-			}
+			final int oldGrantedMemory = this.freeSegments.getGrantedMemorySize();
+			this.asynchMemoryRequester.requestAdditionalMemory(this.minimumRequestSize);
+			this.asynchMemoryRequester.waitForMemoryRequestToFinish();
 
-			synchronized (this) {
-				System.out.println("Adding " + amountOfAdditionallyRequstedMemory);
-				this.grantedMemoryShare += amountOfAdditionallyRequstedMemory;
-
-				adaptMemoryResources();
+			// The allocation did not succeed
+			if (oldGrantedMemory <= this.freeSegments.getGrantedMemorySize()) {
+				break;
 			}
 		}
 
 		throw new MemoryAllocationException("Could not allocate " + numPages + " pages. Only " +
 			this.freeSegments.size() + " pages are remaining.");
-	}
-
-	private int calculateAdditionalAmountOfMemoryToRequest(final int numPages) {
-
-		// Round the number of the requested pages to the nearest multiple of this adaptation granularity
-		final int roundedNumPages = ((numPages + this.adaptationGranularity - 1) / this.adaptationGranularity)
-			* this.adaptationGranularity;
-
-		return Math.max(roundedNumPages * (this.pageSize / 1024), this.minimumRequestSize);
 	}
 
 	/**
@@ -675,5 +568,16 @@ public class DefaultDynamicMemoryManager implements DynamicMemoryManager, Daemon
 		LOG.error("additionalMemoryOffered called on user-type process");
 
 		return 0;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void indicateLowMemory(final int availableMemory) {
+
+		System.out.println(" +++++++ Low Memory " + availableMemory);
+
+		this.asynchMemoryRequester.requestAdditionalMemory(this.minimumRequestSize);
 	}
 }
