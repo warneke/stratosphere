@@ -25,11 +25,10 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-        <groupId>javolution</groupId>
-        <artifactId>javolution</artifactId>
-        <version>5.5.1</version>
+      <groupId>javolution</groupId>
+      <artifactId>javolution</artifactId>
+      <version>5.5.1</version>
     </dependency>
-
     <!-- 		<dependency> -->
     <!-- 			<groupId>dk.brics.automaton</groupId> -->
     <!-- 			<artifactId>automaton</artifactId> -->

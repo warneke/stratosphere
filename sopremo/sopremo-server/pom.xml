@@ -28,13 +28,11 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-
     <dependency>
-        <groupId>eu.stratosphere</groupId>
-        <artifactId>nephele-hdfs</artifactId>
-        <version>${project.version}</version>
+      <groupId>eu.stratosphere</groupId>
+      <artifactId>nephele-hdfs</artifactId>
+      <version>${project.version}</version>
     </dependency>
-
     <dependency>
       <groupId>eu.stratosphere</groupId>
       <artifactId>pact-tests</artifactId>
