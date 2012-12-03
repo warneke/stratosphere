@@ -20,11 +20,11 @@ import java.lang.reflect.Constructor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.configuration.ConfigConstants;
 import eu.stratosphere.nephele.configuration.GlobalConfiguration;
 import eu.stratosphere.nephele.instance.InstanceManager;
 import eu.stratosphere.nephele.jobmanager.scheduler.AbstractScheduler;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.util.StringUtils;
 
 /**

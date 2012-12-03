@@ -37,6 +37,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.cli.UnrecognizedOptionException;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.configuration.ConfigConstants;
 import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.nephele.configuration.GlobalConfiguration;
@@ -45,7 +46,6 @@ import eu.stratosphere.nephele.jobgraph.JobID;
 import eu.stratosphere.nephele.jobgraph.JobStatus;
 import eu.stratosphere.nephele.protocols.ExtendedManagementProtocol;
 import eu.stratosphere.nephele.rpc.ManagementTypeUtils;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.util.StringUtils;
 import eu.stratosphere.pact.client.nephele.api.Client;
 import eu.stratosphere.pact.client.nephele.api.ErrorInPlanAssemblerException;

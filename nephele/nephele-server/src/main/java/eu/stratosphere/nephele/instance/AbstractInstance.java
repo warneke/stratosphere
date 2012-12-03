@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Set;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.deployment.TaskDeploymentDescriptor;
 import eu.stratosphere.nephele.execution.librarycache.LibraryCacheManager;
 import eu.stratosphere.nephele.execution.librarycache.LibraryCacheProfileRequest;
@@ -29,7 +30,6 @@ import eu.stratosphere.nephele.executiongraph.ExecutionVertexID;
 import eu.stratosphere.nephele.io.channels.ChannelID;
 import eu.stratosphere.nephele.jobgraph.JobID;
 import eu.stratosphere.nephele.protocols.TaskOperationProtocol;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.taskmanager.TaskCancelResult;
 import eu.stratosphere.nephele.taskmanager.TaskCheckpointResult;
 import eu.stratosphere.nephele.taskmanager.TaskKillResult;

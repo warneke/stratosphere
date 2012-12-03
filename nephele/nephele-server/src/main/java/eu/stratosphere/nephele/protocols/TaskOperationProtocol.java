@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
+import edu.berkeley.icsi.memngt.rpc.RPCProtocol;
 import eu.stratosphere.nephele.deployment.TaskDeploymentDescriptor;
 import eu.stratosphere.nephele.execution.librarycache.LibraryCacheProfileRequest;
 import eu.stratosphere.nephele.execution.librarycache.LibraryCacheProfileResponse;
 import eu.stratosphere.nephele.execution.librarycache.LibraryCacheUpdate;
 import eu.stratosphere.nephele.executiongraph.ExecutionVertexID;
 import eu.stratosphere.nephele.io.channels.ChannelID;
-import eu.stratosphere.nephele.rpc.RPCProtocol;
 import eu.stratosphere.nephele.taskmanager.TaskCancelResult;
 import eu.stratosphere.nephele.taskmanager.TaskCheckpointResult;
 import eu.stratosphere.nephele.taskmanager.TaskKillResult;

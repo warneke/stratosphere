@@ -30,6 +30,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.client.JobClient;
 import eu.stratosphere.nephele.configuration.ConfigConstants;
 import eu.stratosphere.nephele.configuration.Configuration;
@@ -41,7 +42,6 @@ import eu.stratosphere.nephele.jobmanager.JobManager;
 import eu.stratosphere.nephele.jobmanager.scheduler.local.LocalScheduler;
 import eu.stratosphere.nephele.protocols.ExtendedManagementProtocol;
 import eu.stratosphere.nephele.rpc.ManagementTypeUtils;
-import eu.stratosphere.nephele.rpc.RPCService;
 
 /**
  * @author Erik Nijkamp

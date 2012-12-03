@@ -17,10 +17,10 @@ package eu.stratosphere.nephele.protocols;
 
 import java.io.IOException;
 
+import edu.berkeley.icsi.memngt.rpc.RPCProtocol;
 import eu.stratosphere.nephele.executiongraph.ExecutionVertexID;
 import eu.stratosphere.nephele.jobgraph.JobID;
 import eu.stratosphere.nephele.jobmanager.splitassigner.InputSplitWrapper;
-import eu.stratosphere.nephele.rpc.RPCProtocol;
 
 /**
  * The input split provider protocol is used to facilitate RPC calls related to the lazy split assignment which Nephele

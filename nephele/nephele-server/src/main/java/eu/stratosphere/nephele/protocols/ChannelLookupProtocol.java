@@ -17,10 +17,10 @@ package eu.stratosphere.nephele.protocols;
 
 import java.io.IOException;
 
+import edu.berkeley.icsi.memngt.rpc.RPCProtocol;
 import eu.stratosphere.nephele.instance.InstanceConnectionInfo;
 import eu.stratosphere.nephele.io.channels.ChannelID;
 import eu.stratosphere.nephele.jobgraph.JobID;
-import eu.stratosphere.nephele.rpc.RPCProtocol;
 import eu.stratosphere.nephele.taskmanager.routing.ConnectionInfoLookupResponse;
 
 /**

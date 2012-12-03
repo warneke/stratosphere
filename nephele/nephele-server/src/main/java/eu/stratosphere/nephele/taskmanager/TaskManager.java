@@ -43,6 +43,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.checkpointing.ReplayTask;
 import eu.stratosphere.nephele.checkpointing.CheckpointUtils;
 import eu.stratosphere.nephele.configuration.ConfigConstants;
@@ -74,7 +75,6 @@ import eu.stratosphere.nephele.protocols.ChannelLookupProtocol;
 import eu.stratosphere.nephele.protocols.InputSplitProviderProtocol;
 import eu.stratosphere.nephele.protocols.JobManagerProtocol;
 import eu.stratosphere.nephele.protocols.TaskOperationProtocol;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.rpc.ServerTypeUtils;
 import eu.stratosphere.nephele.services.iomanager.IOManager;
 import eu.stratosphere.nephele.services.memorymanager.MemoryManager;

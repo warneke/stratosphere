@@ -11,9 +11,9 @@
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
-      <groupId>com.esotericsoftware.kryo</groupId>
-      <artifactId>kryo</artifactId>
-      <version>2.20</version>
+      <groupId>edu.berkeley.icsi</groupId>
+      <artifactId>memngt-common</artifactId>
+      <version>0.1</version>
     </dependency>
   </dependencies>
   <build>

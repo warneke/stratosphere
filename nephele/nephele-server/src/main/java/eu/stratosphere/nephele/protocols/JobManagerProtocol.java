@@ -17,9 +17,9 @@ package eu.stratosphere.nephele.protocols;
 
 import java.io.IOException;
 
+import edu.berkeley.icsi.memngt.rpc.RPCProtocol;
 import eu.stratosphere.nephele.instance.HardwareDescription;
 import eu.stratosphere.nephele.instance.InstanceConnectionInfo;
-import eu.stratosphere.nephele.rpc.RPCProtocol;
 import eu.stratosphere.nephele.taskmanager.TaskCheckpointState;
 import eu.stratosphere.nephele.taskmanager.TaskExecutionState;
 

@@ -17,12 +17,12 @@ package eu.stratosphere.nephele.protocols;
 
 import java.io.IOException;
 
+import edu.berkeley.icsi.memngt.rpc.RPCProtocol;
 import eu.stratosphere.nephele.client.JobCancelResult;
 import eu.stratosphere.nephele.client.JobProgressResult;
 import eu.stratosphere.nephele.client.JobSubmissionResult;
 import eu.stratosphere.nephele.jobgraph.JobGraph;
 import eu.stratosphere.nephele.jobgraph.JobID;
-import eu.stratosphere.nephele.rpc.RPCProtocol;
 
 /**
  * The JobManagementProtocol specifies methods required to manage

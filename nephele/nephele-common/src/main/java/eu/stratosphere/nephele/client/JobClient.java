@@ -22,6 +22,7 @@ import java.util.Iterator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.configuration.ConfigConstants;
 import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.nephele.event.job.AbstractEvent;
@@ -30,7 +31,6 @@ import eu.stratosphere.nephele.jobgraph.JobGraph;
 import eu.stratosphere.nephele.jobgraph.JobStatus;
 import eu.stratosphere.nephele.protocols.JobManagementProtocol;
 import eu.stratosphere.nephele.rpc.CommonTypeUtils;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.util.StringUtils;
 
 /**

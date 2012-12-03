@@ -23,11 +23,11 @@ import org.apache.commons.logging.LogFactory;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.configuration.ConfigConstants;
 import eu.stratosphere.nephele.configuration.GlobalConfiguration;
 import eu.stratosphere.nephele.protocols.ExtendedManagementProtocol;
 import eu.stratosphere.nephele.rpc.ManagementTypeUtils;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.util.StringUtils;
 import eu.stratosphere.nephele.visualization.swt.SWTVisualizationGUI;
 

@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.configuration.GlobalConfiguration;
 import eu.stratosphere.nephele.executiongraph.ExecutionGraph;
 import eu.stratosphere.nephele.jobgraph.JobID;
@@ -44,7 +45,6 @@ import eu.stratosphere.nephele.profiling.types.OutputGateProfilingEvent;
 import eu.stratosphere.nephele.profiling.types.SingleInstanceProfilingEvent;
 import eu.stratosphere.nephele.profiling.types.ThreadProfilingEvent;
 import eu.stratosphere.nephele.rpc.ProfilingTypeUtils;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.util.StringUtils;
 
 public class JobManagerProfilerImpl implements JobManagerProfiler, ProfilerImplProtocol {

@@ -26,12 +26,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.configuration.ConfigConstants;
 import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.nephele.event.job.RecentJobEvent;
 import eu.stratosphere.nephele.protocols.ExtendedManagementProtocol;
 import eu.stratosphere.nephele.rpc.ManagementTypeUtils;
-import eu.stratosphere.nephele.rpc.RPCService;
 
 /**
  * @author Stephan Ewen (stephan.ewen@tu-berlin.com)

@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.berkeley.icsi.memngt.rpc.RPCService;
 import eu.stratosphere.nephele.configuration.Configuration;
 import eu.stratosphere.nephele.configuration.GlobalConfiguration;
 import eu.stratosphere.nephele.execution.Environment;
@@ -43,7 +44,6 @@ import eu.stratosphere.nephele.profiling.impl.types.InternalExecutionVertexThrea
 import eu.stratosphere.nephele.profiling.impl.types.InternalInstanceProfilingData;
 import eu.stratosphere.nephele.profiling.impl.types.InternalProfilingData;
 import eu.stratosphere.nephele.rpc.ProfilingTypeUtils;
-import eu.stratosphere.nephele.rpc.RPCService;
 import eu.stratosphere.nephele.taskmanager.runtime.RuntimeTask;
 import eu.stratosphere.nephele.util.StringUtils;
 
